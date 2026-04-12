@@ -1,8 +1,10 @@
-const express = require('express')
+//EXPRESS js ( API Bridge )
+
+const express = require('express')  //create server
 const mongoose = require('mongoose')
-const cors = require('cors')
-const axios = require('axios')
-require('dotenv').config();
+const cors = require('cors')  //allows frontend to connect
+const axios = require('axios') //send http request
+require('dotenv').config();    //load env variables
 
 const app =  express();
 const PORT = process.env.PORT || 4000;
