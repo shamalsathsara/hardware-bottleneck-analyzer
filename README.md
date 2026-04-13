@@ -39,3 +39,12 @@ Installed your heavy-lifting server packages: express, mongoose, cors, axios, an
 # Mongodb
 
 mongodb+srv://tai303860_db_user:<db_password>@cluster0.zbaoi7m.mongodb.net/?appName=Cluster0
+
+# DAY 02...
+
+5. Connected to MongoDB Atlas.
+
+create seed file.
+run first testing.
+update server folder.
+completed backend development.
