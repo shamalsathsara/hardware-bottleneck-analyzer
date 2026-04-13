@@ -34,3 +34,8 @@ Wrapped Aura in a Flask web server and brought her online to listen for internet
 Initialized your Node.js environment in the backend-node folder.
 
 Installed your heavy-lifting server packages: express, mongoose, cors, axios, and dotenv.
+
+
+# Mongodb
+
+mongodb+srv://tai303860_db_user:<db_password>@cluster0.zbaoi7m.mongodb.net/?appName=Cluster0
