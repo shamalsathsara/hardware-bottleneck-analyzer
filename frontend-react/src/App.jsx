@@ -83,29 +83,89 @@ function App() {
       return;
     }
 
-    // --- UPDATED: The Data Package sent to Python ---
+// ... inside handleConsultAura ...
+    
+    // 1. Smart CPU Estimation
+    const cores = parseInt(fullCpuSpecs.cores) || 6;
+    const threads = cores * 2; // Most CPUs have 2 threads per core
+    const cpuTDP = cores * 15; // Rough estimate: ~15 Watts per core
+
+    // 2. Smart GPU Estimation (Using CUDA to guess VRAM and TDP)
+    const cuda = parseInt(fullGpuSpecs.CUDA) || 5000;
+    let vram = 8;
+    let gpuTdp = 150;
+    let bandwidth = 256;
+    
+    // If it's a massive GPU (like an RTX 4090/3090)
+    if (cuda > 20000) { 
+        vram = 24; gpuTdp = 350; bandwidth = 1008; 
+    }
+    // High-end GPU (like an RTX 3080/4070)
+    else if (cuda > 10000) { 
+        vram = 16; gpuTdp = 250; bandwidth = 608; 
+    }
+    // Mid-range GPU
+    else if (cuda > 5000) { 
+        vram = 12; gpuTdp = 200; bandwidth = 448; 
+    }
+
+    // 3. The Perfect Payload (Exactly matching your Python headers!)
     const hardwarePackage = {
       "CPU": fullCpuSpecs.cpuName,
-      "CPU Cores": parseInt(fullCpuSpecs.cores) || 8, // FIXED!
-      "CPU Threads": 16, // Fallback since it's missing in DB
+      "CPU Cores": cores,
+      "CPU Threads": threads,
+      "CPU TDP (W)": cpuTDP,
       "GPU": fullGpuSpecs.Device,
-      "GPU VRAM (GB)": 8, // Fallback to 8GB so your Python AI doesn't crash!
+      "GPU Series": fullGpuSpecs.Manufacturer || "Nvidia",
+      "GPU VRAM (GB)": vram,
+      "GPU Bandwidth (GB/s)": bandwidth,
+      "GPU TDP (W)": gpuTdp,
+      "Total System TDP (W)": cpuTDP + gpuTdp + 100, // +100 for motherboard/fans
+      "Bottleneck Score": 0, // AI will ignore this, but it prevents crashes
       "RAM (GB)": 16,
       "Resolution": resolution,
       "Graphics Settings": settings
     };
 
-    try {
+
+try {
+      // 1. Get the baseline prediction from Project Aura
       const response = await axios.post('http://localhost:4000/api/predict', hardwarePackage);
-      setPrediction(response.data.predicted_fps);
+      let baseFps = response.data.predicted_fps;
       
+      // 2. Calculate the Bottleneck First!
       const analysis = analyzeBottleneck(fullCpuSpecs, fullGpuSpecs);
+      
+      // 3. THE PENALTY ENGINE
+      const cpuScore = parseInt(fullCpuSpecs.cpuMark) || 8000;
+      let finalFps = baseFps;
+
+      // RULE 1: The "Ancient CPU" Hard Cap
+      // If the CPU is extremely weak (like a Core 2 Duo with a score under 3000), 
+      // it literally cannot process enough frames, no matter how good the GPU is.
+      if (cpuScore < 3000) {
+        // Caps the FPS extremely low (e.g., a score of 1500 = ~15-25 FPS)
+        finalFps = (cpuScore / 100) + (Math.random() * 10); 
+      } 
+      // RULE 2: The Bottleneck Penalty
+      else {
+        // If the build is balanced (severity ~5%), penalty is tiny.
+        // If the build is terrible (severity 85%), penalty destroys up to 70% of the FPS!
+        const penaltyMultiplier = (analysis.severity / 100) * 0.70; 
+        finalFps = baseFps - (baseFps * penaltyMultiplier);
+      }
+
+      // Sanity checks to keep numbers realistic
+      if (finalFps < 5) finalFps = 5.2;
+      if (finalFps > 900) finalFps = 899.9;
+
+      // 4. Update the Screen
+      setPrediction(finalFps.toFixed(1));
       setBottleneckData(analysis);
 
     } catch (error) {
       alert("Failed to reach Project Aura. Make sure Python is running!");
     }
-
     setIsThinking(false);
   };
 
