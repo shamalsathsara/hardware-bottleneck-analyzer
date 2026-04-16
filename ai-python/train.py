@@ -42,7 +42,7 @@ print(f"✅ AI Training Complete! Average Prediction Error: {error:.2f} FPS")
 
 #Saving Ai using joblib
 print("💾 Saving the trained AI model to disk...")
-joblib.dump(model, 'bottleneck_ai.joblib')
+joblib.dump(model, 'project_aura.joblib')
 joblib.dump(list(X.columns), 'ai_columns.joblib') # Save the data structure
 print("✅ Brain successfully saved!")
 
