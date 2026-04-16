@@ -19,6 +19,10 @@ function App() {
       try {
         const cpuResponse = await axios.get('http://localhost:4000/api/cpus');
         const gpuResponse = await axios.get('http://localhost:4000/api/gpus');
+   
+        console.log("Here is the CPU data:", cpuResponse.data);
+        console.log("Here is the GPU data:", gpuResponse.data);
+        
         setCpuList(cpuResponse.data);
         setGpuList(gpuResponse.data);
       } catch (error) {
@@ -28,29 +32,31 @@ function App() {
     fetchHardware();
   }, []);
 
-  // --- NEW: The Recommendation Engine ---
+// --- UPDATED: The Smart Benchmark Engine ---
   const analyzeBottleneck = (cpu, gpu) => {
-    // We safely grab the core counts and VRAM, defaulting to standard numbers if missing
-    const cores = cpu.Cores || 6; 
-    const vram = gpu.Memory || 8;
+    // 1. Grab CPU Cores (and turn the text "8" into a real number 8)
+    const cores = parseInt(cpu.cores) || 6; 
+    
+    // 2. Grab the GPU CUDA Benchmark Score (proxy for GPU power)
+    const gpuPower = parseInt(gpu.CUDA) || 50000; 
     
     let severity = 10;
     let message = "✅ Balanced Build: Your CPU and GPU are working perfectly together!";
     let color = "#10b981"; // Green
 
-    // Logic: Weak CPU + Strong GPU
-    if (cores <= 4 && vram >= 8) {
-      severity = 75;
-      message = "⚠️ CPU Bottleneck: Your processor is too weak for this graphics card. It is holding your FPS back. Consider upgrading to a CPU with at least 6 or 8 cores.";
+    // Logic: Weak CPU (4 cores or less) + Massive GPU (CUDA score over 80,000)
+    if (cores <= 4 && gpuPower > 80000) {
+      severity = 85;
+      message = "⚠️ CPU Bottleneck: Your processor is way too weak for this graphics card. It is severely holding your FPS back. Upgrade to a modern 6 or 8-core CPU.";
       color = "#ef4444"; // Red
     } 
-    // Logic: Strong CPU + Weak GPU
-    else if (vram <= 4 && cores >= 8) {
-      severity = 65;
-      message = "⚠️ GPU Bottleneck: Your graphics card is holding back your high-end processor. Consider upgrading to a GPU with more VRAM for better gaming.";
+    // Logic: Strong CPU (8+ cores) + Weak GPU (CUDA score under 30,000)
+    else if (cores >= 8 && gpuPower < 30000) {
+      severity = 70;
+      message = "⚠️ GPU Bottleneck: Your graphics card is holding back your high-end processor. Consider upgrading to a GPU with a higher compute score.";
       color = "#f59e0b"; // Orange
     } 
-    // Minor bottleneck calculations
+    // Minor bottleneck calculation
     else {
       severity = Math.floor(Math.random() * 15) + 5; 
     }
@@ -71,19 +77,19 @@ function App() {
     const fullCpuSpecs = cpuList.find(c => c.cpuName === selectedCpu);
     const fullGpuSpecs = gpuList.find(g => g.Device === selectedGpu);
 
-    // If the user typed a name that isn't in the list, stop them
     if (!fullCpuSpecs || !fullGpuSpecs) {
       alert("Please select a valid CPU and GPU from the dropdown list!");
       setIsThinking(false);
       return;
     }
 
+    // --- UPDATED: The Data Package sent to Python ---
     const hardwarePackage = {
       "CPU": fullCpuSpecs.cpuName,
-      "CPU Cores": fullCpuSpecs.Cores || 8,
-      "CPU Threads": fullCpuSpecs.Threads || 16,
+      "CPU Cores": parseInt(fullCpuSpecs.cores) || 8, // FIXED!
+      "CPU Threads": 16, // Fallback since it's missing in DB
       "GPU": fullGpuSpecs.Device,
-      "GPU VRAM (GB)": fullGpuSpecs.Memory || 8,
+      "GPU VRAM (GB)": 8, // Fallback to 8GB so your Python AI doesn't crash!
       "RAM (GB)": 16,
       "Resolution": resolution,
       "Graphics Settings": settings
@@ -93,7 +99,6 @@ function App() {
       const response = await axios.post('http://localhost:4000/api/predict', hardwarePackage);
       setPrediction(response.data.predicted_fps);
       
-      // Calculate the Bottleneck!
       const analysis = analyzeBottleneck(fullCpuSpecs, fullGpuSpecs);
       setBottleneckData(analysis);
 
