@@ -1,5 +1,10 @@
 # Smart PC Hardware Bottleneck Analyzer
 
+ai-python = python app.py
+backend-node = node server.js
+frontend-react =npm run dev
+
+
 # DAY 01...
 
 What We Accomplished Today
