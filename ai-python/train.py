@@ -12,7 +12,7 @@ data = pd.read_csv('FpsTest/fps_dataset.csv') #This is the csv file location
 
 #Select features like I/O
 X = data.drop(columns=['Min FPS','Avg FPS','Max FPS','Bottleneck Score','Total System TDP (W)'])
-y = data['Avg FPS']
+y = data['Avg FPS']  #What we want to predict (Output)
 
 #Data preprocessing ENCODING
 #translate all dummy text to binaries
@@ -41,7 +41,7 @@ error =  mean_absolute_error(y_test, predictions)
 print(f"✅ AI Training Complete! Average Prediction Error: {error:.2f} FPS")
 
 #Saving Ai using joblib
-print("💾 Saving the trained AI model to disk...")
+print(" Saving the trained AI model to disk...")
 joblib.dump(model, 'project_aura.joblib')
 joblib.dump(list(X.columns), 'ai_columns.joblib') # Save the data structure
 print("✅ Brain successfully saved!")
