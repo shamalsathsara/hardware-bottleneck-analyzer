@@ -54,7 +54,7 @@ app.get('/api/gpus', async (req, res) => {
 app.post('/api/predict', async (req, res) => {
     try{
         console.log("Received Hardware Data from Frontend...") //checking
-        const auraResponse =  await axios.post('http://127.0.0.1:5000/predict', req.body);
+        const auraResponse =  await axios.post('http://127.0.0.1:5000/predict', req.body);  //Node js called Aura AI
 
         res.json(auraResponse.data); //send aura's answer to the front end
     

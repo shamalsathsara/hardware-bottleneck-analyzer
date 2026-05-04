@@ -25,11 +25,11 @@
   --ease:          cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Reset ────────────────────────────────────────────────── */
+/*  Reset*/
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 a { text-decoration: none; color: inherit; }
 
-/* ── Body / Page ──────────────────────────────────────────── */
+/* Body / Page */
 body {
   font-family: 'Inter', system-ui, sans-serif;
   background-color: var(--bg-base);
@@ -64,7 +64,7 @@ body::after {
 @keyframes orb1 { to { transform: translate(60px, 50px) scale(1.15); } }
 @keyframes orb2 { to { transform: translate(-50px, -40px) scale(1.1); } }
 
-/* ── Nav Header ───────────────────────────────────────────── */
+/*  Nav Header  */
 .site-nav {
   position: sticky;
   top: 0;
@@ -134,7 +134,7 @@ body::after {
   border-radius: 100px;
 }
 
-/* ── Main content area ────────────────────────────────────── */
+/*  Main content area  */
 main {
   flex: 1;
   position: relative;
@@ -146,7 +146,7 @@ main {
   gap: 3rem;
 }
 
-/* ── Hero ─────────────────────────────────────────────────── */
+/* Hero */
 .hero {
   text-align: center;
   max-width: 700px;
@@ -216,7 +216,7 @@ main {
   margin-top: 0.2rem;
 }
 
-/* ── Analyzer Card ────────────────────────────────────────── */
+/* Analyzer Card */
 .analyzer-card {
   position: relative;
   width: 100%;
@@ -258,7 +258,7 @@ main {
   font-size: 1.2rem;
 }
 
-/* ── Section labels ───────────────────────────────────────── */
+/* Section labels*/
 .section-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -278,7 +278,7 @@ main {
   background: var(--border);
 }
 
-/* ── Form ─────────────────────────────────────────────────── */
+/* Form */
 .form-group { display: flex; flex-direction: column; margin-bottom: 1rem; }
 .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
@@ -324,7 +324,7 @@ input[type="text"]::placeholder {
   font-size: 0.83rem;
 }
 
-/* ── Analyze Button ───────────────────────────────────────── */
+/* Analyze Button */
 .action-btn {
   width: 100%;
   padding: 1rem;
@@ -360,7 +360,7 @@ input[type="text"]::placeholder {
   50%       { box-shadow: 0 4px 44px rgba(56,189,248,0.5); }
 }
 
-/* ── Error Banner ─────────────────────────────────────────── */
+/*  Error Banner*/
 .error-banner {
   display: flex; align-items: flex-start; gap: 0.6rem;
   margin-top: 1.4rem;
@@ -374,7 +374,7 @@ input[type="text"]::placeholder {
   animation: fadeUp 0.3s var(--ease) both;
 }
 
-/* ── Results Card ─────────────────────────────────────────── */
+/*  Results Card  */
 .results-card {
   margin-top: 2rem;
   padding: 1.8rem;
@@ -402,7 +402,7 @@ input[type="text"]::placeholder {
 
 .bottleneck-message { font-size: 0.88rem; line-height: 1.65; color: var(--text-sub); text-align: center; }
 
-/* ── About Me Section ─────────────────────────────────────── */
+/*About Me Section*/
 .about-section {
   width: 100%;
   max-width: 700px;
@@ -471,7 +471,7 @@ input[type="text"]::placeholder {
   white-space: nowrap;
 }
 
-/* ── Footer ───────────────────────────────────────────────── */
+/*  Footer  */
 .site-footer {
   position: relative;
   z-index: 1;
@@ -587,13 +587,13 @@ input[type="text"]::placeholder {
   font-weight: 600;
 }
 
-/* ── Animations ───────────────────────────────────────────── */
+/* Animations */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Responsive ───────────────────────────────────────────── */
+/*  Responsive*/
 @media (max-width: 768px) {
   .footer-top { grid-template-columns: 1fr; padding: 2.5rem 1.5rem; gap: 2rem; }
   .footer-bottom { padding: 1.2rem 1.5rem; flex-direction: column; gap: 0.5rem; text-align: center; }
@@ -603,7 +603,7 @@ input[type="text"]::placeholder {
   .analyzer-card, .about-section { padding: 1.8rem 1.4rem; }
 }
 
-/* ── Scrollbar ────────────────────────────────────────────── */
+/*  Scrollbar*/
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }

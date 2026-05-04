@@ -6,11 +6,11 @@ app = Flask(__name__)
 
 #Starting auta AI
 print("Starting Aura AI....")
-model = joblib.load('project_aura.joblib')
-model_columns = joblib.load('ai_columns.joblib')
+model = joblib.load('project_aura.joblib') #Load model from brain
+model_columns = joblib.load('ai_columns.joblib') #Load columns
 
 #Create the communication ( API )
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['POST']) #POST - sending data to server
 def predict():
     try:
         #Get the hardware req from backend (node.js)
