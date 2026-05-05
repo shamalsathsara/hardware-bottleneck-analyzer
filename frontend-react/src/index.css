@@ -169,6 +169,12 @@ main {
   margin-bottom: 1.2rem;
 }
 
+.hero-tag-icon {
+  display: flex;
+  align-items: center;
+}
+.hero-tag-icon svg { width: 14px; height: 14px; stroke: var(--primary); }
+
 .hero h1 {
   font-size: clamp(2.5rem, 6vw, 4.2rem);
   font-weight: 900;
@@ -255,8 +261,10 @@ main {
 }
 
 .card-title-icon {
-  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
 }
+.card-title-icon svg { width: 18px; height: 18px; fill: var(--primary); }
 
 /* Section labels*/
 .section-label {
@@ -340,9 +348,15 @@ input[type="text"]::placeholder {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
   transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), opacity 0.2s;
   box-shadow: 0 4px 28px rgba(56,189,248,0.28);
 }
+.btn-icon { display: flex; align-items: center; }
+.btn-icon svg { width: 17px; height: 17px; stroke: #fff; }
 .action-btn::before {
   content: '';
   position: absolute; inset: 0;
@@ -373,6 +387,8 @@ input[type="text"]::placeholder {
   line-height: 1.5;
   animation: fadeUp 0.3s var(--ease) both;
 }
+.error-icon { display: flex; align-items: center; flex-shrink: 0; margin-top: 1px; }
+.error-icon svg { width: 16px; height: 16px; stroke: #fca5a5; }
 
 /*  Results Card  */
 .results-card {
@@ -400,7 +416,17 @@ input[type="text"]::placeholder {
 .bar-fill   { height: 100%; border-radius: 100px; transition: width 1.3s cubic-bezier(0.4,0,0.2,1); position: relative; }
 .bar-fill::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 18px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.35)); }
 
-.bottleneck-message { font-size: 0.88rem; line-height: 1.65; color: var(--text-sub); text-align: center; }
+.bottleneck-msg-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.msg-icon { display: flex; align-items: center; flex-shrink: 0; margin-top: 2px; }
+.msg-icon svg { width: 16px; height: 16px; }
+.msg-ok  svg { stroke: #10b981; }
+.msg-warn svg { stroke: #f59e0b; }
+.msg-err  svg { stroke: #ef4444; }
+.bottleneck-message { font-size: 0.88rem; line-height: 1.65; color: var(--text-sub); }
 
 /*About Me Section*/
 .about-section {
@@ -436,7 +462,10 @@ input[type="text"]::placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
   flex-shrink: 0;
   box-shadow: 0 0 20px rgba(56,189,248,0.3);
 }
@@ -559,11 +588,14 @@ input[type="text"]::placeholder {
 }
 
 .contact-icon {
-  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
-  margin-top: 0.05rem;
+  margin-top: 2px;
   color: var(--primary);
 }
+.contact-icon svg { width: 14px; height: 14px; stroke: var(--primary); fill: none; }
+.footer-col .contact-icon svg[fill="currentColor"] { fill: var(--primary); stroke: none; }
 
 .contact-item a:hover { color: var(--primary); text-decoration: underline; }
 
