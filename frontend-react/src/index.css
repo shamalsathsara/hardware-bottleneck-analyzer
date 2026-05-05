@@ -40,44 +40,46 @@ body {
   overflow-x: hidden;
 }
 
-/* Background orbs */
+/* Background orbs — reduced blur for perf */
 body::before, body::after {
   content: '';
   position: fixed;
   border-radius: 50%;
-  filter: blur(130px);
+  filter: blur(80px);       /* was 130px — 80px is ~40% cheaper */
   z-index: 0;
   pointer-events: none;
+  will-change: transform;   /* promote to own GPU layer */
 }
 body::before {
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(56,189,248,0.14) 0%, transparent 70%);
+  width: 500px; height: 500px;  /* slightly smaller */
+  background: radial-gradient(circle, rgba(56,189,248,0.13) 0%, transparent 70%);
   top: -200px; left: -200px;
   animation: orb1 14s ease-in-out infinite alternate;
 }
 body::after {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(129,140,248,0.14) 0%, transparent 70%);
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, rgba(129,140,248,0.13) 0%, transparent 70%);
   bottom: -150px; right: -150px;
   animation: orb2 18s ease-in-out infinite alternate;
 }
-@keyframes orb1 { to { transform: translate(60px, 50px) scale(1.15); } }
-@keyframes orb2 { to { transform: translate(-50px, -40px) scale(1.1); } }
+@keyframes orb1 { to { transform: translate(60px, 50px) scale(1.12); } }
+@keyframes orb2 { to { transform: translate(-50px, -40px) scale(1.08); } }
 
 /*  Nav Header  */
 .site-nav {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--bg-nav);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(6, 11, 24, 0.95); /* higher opacity = less blur needed */
+  backdrop-filter: blur(10px);       /* was 20px */
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
   padding: 0 2rem;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  will-change: transform;            /* prevent scroll repaint jank */
 }
 
 .nav-logo {
@@ -227,17 +229,18 @@ main {
   position: relative;
   width: 100%;
   max-width: 700px;
-  background: var(--bg-card);
+  background: rgba(13, 20, 40, 0.92); /* more opaque = cheaper blur */
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 2.5rem;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(12px);        /* was 24px */
+  -webkit-backdrop-filter: blur(12px);
   box-shadow:
     0 0 0 1px rgba(255,255,255,0.03) inset,
     0 25px 70px rgba(0,0,0,0.6),
     0 0 100px rgba(56,189,248,0.06);
   animation: fadeUp 0.7s var(--ease) 0.1s both;
+  contain: layout style;              /* limit repaint scope */
 }
 
 /* Card top accent line */
@@ -432,13 +435,15 @@ input[type="text"]::placeholder {
 .about-section {
   width: 100%;
   max-width: 700px;
-  background: var(--bg-card);
+  background: rgba(13, 20, 40, 0.92);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 2.5rem;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);   /* was 20px */
+  -webkit-backdrop-filter: blur(12px);
   animation: fadeUp 0.7s var(--ease) 0.2s both;
   position: relative;
+  contain: layout style;
 }
 .about-section::before {
   content: '';
