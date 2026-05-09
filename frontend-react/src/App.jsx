@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import AuthPage from './AuthPage';
 
-/* ── Contact Info ─────────────────────────────── */
+/*  Contact Info*/
 const CONTACT = {
   name:     'Shamal Sathsara',
   role:     'Full-Stack Developer & AI Enthusiast',
@@ -14,7 +15,7 @@ const CONTACT = {
   linkedin: 'https://linkedin.com/in/shamalsathsara',
 };
 
-/* ── SVG Icon Library ─────────────────────────── */
+/* SVG Icon Library */
 const IconCpu = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8"/>
@@ -98,8 +99,23 @@ const IconWhatsapp = () => (
   </svg>
 );
 
-/* ── Main App ─────────────────────────────────── */
+/* Main App */
 function App() {
+  //  Auth state 
+  const [currentUser, setCurrentUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('aura_user')) || null; }
+    catch { return null; }
+  });
+
+  const handleLogin = useCallback((user) => setCurrentUser(user), []);
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('aura_token');
+    localStorage.removeItem('aura_user');
+    setCurrentUser(null);
+  }, []);
+
+  // Analyzer state 
   const [cpuList, setCpuList]           = useState([]);
   const [gpuList, setGpuList]           = useState([]);
   const [selectedCpu, setSelectedCpu]   = useState('');
@@ -202,6 +218,9 @@ function App() {
     setIsThinking(false);
   };
 
+  // Gate: show auth page if not logged in 
+  if (!currentUser) return <AuthPage onLogin={handleLogin} />;
+
   return (
     <>
       {/* Navigation */}
@@ -215,6 +234,10 @@ function App() {
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
           <span className="nav-badge">AI Powered</span>
+          <div className="nav-user-info">
+            <span className="nav-username">{currentUser.username}</span>
+            <button id="nav-logout-btn" className="nav-logout-btn" onClick={handleLogout}>Logout</button>
+          </div>
         </div>
       </nav>
 

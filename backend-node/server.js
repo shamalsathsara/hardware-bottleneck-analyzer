@@ -1,16 +1,21 @@
 //EXPRESS js ( API Bridge )
 
-const express = require('express')  //create server
+const express  = require('express')  //create server
 const mongoose = require('mongoose')
-const cors = require('cors')  //allows frontend to connect
-const axios = require('axios') //send http request
-require('dotenv').config();    //load env variables
+const cors     = require('cors')     //allows frontend to connect
+const axios    = require('axios')    //send http request
+require('dotenv').config();          //load env variables
 
-const app =  express();
+const authRouter = require('./routes/auth'); //Auth routes
+
+const app  = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());         //Allow frontend to talk this server
 app.use(express.json()); //Tells the server to accept json
+
+//Auth routes
+app.use('/api/auth', authRouter);
 
 //DATABASE Blueprints
 const cpuSchema = new mongoose.Schema({}, { strict: false });

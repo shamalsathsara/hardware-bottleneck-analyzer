@@ -124,7 +124,7 @@ print("=" * 60)
 print(f"  {'Actual FPS':>12}  {'Predicted FPS':>14}  {'Error':>8}  {'Status':>10}")
 print("  " + "-" * 52)
 for actual, pred, err in zip(y_test.values[:10], y_pred[:10], errors.values[:10]):
-    status = '✅ Good' if err <= 5 else ('⚠️  Fair' if err <= 10 else '❌ High')
+    status = '✅ Good' if err <= 5 else (' Fair' if err <= 10 else '❌ High')
     print(f"  {actual:>12.1f}  {pred:>14.2f}  {err:>7.2f}  {status:>10}")
 
 # ── 10. Final Verdict ──────────────────────────────────────
@@ -147,7 +147,7 @@ print(f"  Model Grade     : {grade}")
 print(f"  R² Score        : {r2:.6f} (1.0 = perfect)")
 print(f"  Avg FPS error   : {mae:.2f} FPS")
 print(f"  CV Stability    : {cv_mae.std():.4f} std dev (lower = more stable)")
-print(f"  Overfitting Risk: {'Low ✅' if abs(cv_mae.mean() - mae) < 5 else 'Possible ⚠️'}")
+print(f"  Overfitting Risk: {'Low ✅' if abs(cv_mae.mean() - mae) < 5 else 'Possible '}")
 
 print("\n" + "=" * 60)
 print("  Report generated for: Project Aura (project_aura.joblib)")
