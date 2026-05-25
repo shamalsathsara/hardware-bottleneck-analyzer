@@ -27,7 +27,10 @@ const GPU = mongoose.model('GPU', gpuSchema);
 //Database conn
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ Successfully connected to MongoDB Atlas!'))
-    .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+    .catch((err) => {
+        console.error('❌ MongoDB Connection Error:', err);
+        process.exit(1);
+    });
 
 //API Routes 
 //get all CPU's for frontend ( react )

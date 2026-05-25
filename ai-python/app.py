@@ -32,8 +32,8 @@ def predict():
         return jsonify({'predicted_fps': round(prediction[0], 2)})
     
     except Exception as e: #Err handling
-        return jsonify({'error': str(e)})
+        return jsonify({'error': str(e)}), 500
     
 if __name__ == '__main__': 
     print("✅ Project Aura is online and listening on port 5000!")
-    app.run(port=5000, debug=True)
+    app.run(port=5000, debug=False)

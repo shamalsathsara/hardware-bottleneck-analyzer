@@ -192,7 +192,6 @@ function App() {
       'CPU': fullCpu.cpuName, 'CPU Cores': cores, 'CPU Threads': threads, 'CPU TDP (W)': cpuTDP,
       'GPU': fullGpu.Device, 'GPU Series': fullGpu.Manufacturer || 'Nvidia',
       'GPU VRAM (GB)': vram, 'GPU Bandwidth (GB/s)': bandwidth, 'GPU TDP (W)': gpuTdp,
-      'Total System TDP (W)': cpuTDP + gpuTdp + 100, 'Bottleneck Score': 0,
       'RAM (GB)': parseInt(ram), 'Resolution': resolution, 'Graphics Settings': settings,
     };
 
