@@ -49,16 +49,24 @@ const IconWarning = () => (
 
 /*  AuthPage Component */
 export default function AuthPage({ onLogin }) {
-  const [mode, setMode]           = useState('login');   // 'login' | 'register'
+  // --------------------------------------------------------------------------
+  // STATE VARIABLES
+  // --------------------------------------------------------------------------
+  const [mode, setMode]           = useState('login');   // Determines if we are showing 'login' or 'register'
   const [username, setUsername]   = useState('');
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
   const [confirm, setConfirm]     = useState('');
-  const [showPass, setShowPass]   = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
-  const [success, setSuccess]     = useState('');
+  const [showPass, setShowPass]   = useState(false);     // Toggles password visibility (the eye icon)
+  
+  const [loading, setLoading]     = useState(false);     // Shows the loading spinner when talking to the server
+  const [error, setError]         = useState('');        // Holds error messages (like "Wrong password")
+  const [success, setSuccess]     = useState('');        // Holds success messages
 
+  // --------------------------------------------------------------------------
+  // UI LOGIC
+  // --------------------------------------------------------------------------
+  // This switches between the "Sign In" and "Sign Up" tabs and clears out the form
   const switchMode = (newMode) => {
     setMode(newMode);
     setError('');
@@ -69,11 +77,15 @@ export default function AuthPage({ onLogin }) {
     setConfirm('');
   };
 
+  // --------------------------------------------------------------------------
+  // FORM SUBMISSION (TALKING TO BACKEND)
+  // --------------------------------------------------------------------------
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Stops the webpage from reloading when you press submit
     setError('');
     setSuccess('');
 
+    // 1. Validation for Registration
     if (mode === 'register') {
       if (!username.trim()) return setError('Username is required.');
       if (password.length < 6) return setError('Password must be at least 6 characters.');
@@ -82,27 +94,32 @@ export default function AuthPage({ onLogin }) {
 
     setLoading(true);
     try {
+      // 2. Decide whether we are sending data to the Login route or Register route
       const endpoint = mode === 'login'
         ? `${import.meta.env.VITE_API_URL}/api/auth/login`
         : `${import.meta.env.VITE_API_URL}/api/auth/register`;
 
+      // 3. Prepare the data to send
       const body = mode === 'login'
         ? { email, password }
         : { username, email, password };
 
+      // 4. Send the request to our Node.js backend
       const { data } = await axios.post(endpoint, body);
 
-      // Persist token + user info
+      // 5. If successful, save the login token to localStorage so the user stays logged in
       localStorage.setItem('aura_token', data.token);
       localStorage.setItem('aura_user', JSON.stringify(data.user));
 
+      // 6. Alert the main App that someone logged in
       if (mode === 'register') {
         setSuccess('Account created! Signing you in…');
-        setTimeout(() => onLogin(data.user), 800);
+        setTimeout(() => onLogin(data.user), 800); // Small delay to let them read the success message
       } else {
         onLogin(data.user);
       }
     } catch (err) {
+      // If the backend sends an error (like "Invalid email"), display it in the UI
       setError(err.response?.data?.error || 'Something went wrong. Try again.');
     }
     setLoading(false);
