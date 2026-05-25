@@ -16,11 +16,6 @@ async function seedDatabase() {  //This function runs everything step-by-step us
         await mongoose.connect(process.env.MONGO_URI);
         console.log("✅ Connected!");
 
-        //Clear old test data
-        console.log("Clearing old data...")
-        await CPU.deleteMany({});  //Deletes ALL existing data
-        await GPU.deleteMany({});
-
         //Read all CPU Files and combine
         console.log("Reading CPU CSV files...");
         const cpuData1 = await csv().fromFile('./CPU/cpu_data1.csv'); //Read CSV Files and convert to Json
@@ -33,6 +28,11 @@ async function seedDatabase() {  //This function runs everything step-by-step us
         const gpuData1 = await csv().fromFile('./GPU/gpu_data1.csv');
         const gptData2 = await csv().fromFile('./GPU/gpu_data2.csv');
         const allGpuData = [...gpuData1,...gptData2];
+
+        //Clear old test data
+        console.log("Clearing old data...")
+        await CPU.deleteMany({});  //Deletes ALL existing data
+        await GPU.deleteMany({});
 
         //Upload to the cloud
         console.log(`Uploading ${allCpuData.length} CPUs and ${allGpuData.length} GPUs to the cloud `);

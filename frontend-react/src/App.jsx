@@ -127,18 +127,21 @@ function App() {
   const [bottleneckData, setBottleneck] = useState(null);
   const [isThinking, setIsThinking]     = useState(false);
   const [error, setError]               = useState(null);
+  const [loadingData, setLoadingData]   = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
         const [c, g] = await Promise.all([
-          axios.get('http://localhost:4000/api/cpus'),
-          axios.get('http://localhost:4000/api/gpus'),
+          axios.get(`${import.meta.env.VITE_API_URL}/api/cpus`),
+          axios.get(`${import.meta.env.VITE_API_URL}/api/gpus`),
         ]);
         setCpuList(c.data);
         setGpuList(g.data);
       } catch {
         setError('Could not connect to the backend. Make sure the Node.js server is running on port 4000.');
+      } finally {
+        setLoadingData(false);
       }
     })();
   }, []);
@@ -159,7 +162,7 @@ function App() {
       color     = '#f59e0b';
       cardClass = 'has-bottleneck-warning';
     } else {
-      severity = Math.floor(Math.random() * 15) + 5;
+      severity = 5;
       message  = 'Balanced Build: Your CPU and GPU work perfectly together — solid gaming setup.';
     }
     return { severity, message, color, cardClass };
@@ -196,7 +199,7 @@ function App() {
     };
 
     try {
-      const { data } = await axios.post('http://localhost:4000/api/predict', payload);
+      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/predict`, payload);
       const analysis = analyzeBottleneck(fullCpu, fullGpu);
       const cpuScore = parseInt(fullCpu.cpuMark) || 8000;
       let finalFps = data.predicted_fps;
@@ -206,8 +209,8 @@ function App() {
       } else {
         finalFps = finalFps - finalFps * (analysis.severity / 100) * 0.70;
       }
-      if (finalFps < 5)   finalFps = 5.2;
-      if (finalFps > 900) finalFps = 899.9;
+      if (finalFps < 5)   finalFps = 5;
+      if (finalFps > 900) finalFps = 900;
 
       setPrediction(finalFps.toFixed(1));
       setBottleneck(analysis);
@@ -275,6 +278,13 @@ function App() {
             <span className="card-title-icon"><IconBolt /></span>
             Hardware Configuration
           </div>
+
+          {loadingData && (
+            <div style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>
+              <span className="btn-icon" style={{ display: 'inline-block', marginRight: '5px', animation: 'pulse-btn 1.8s infinite' }}>⏳</span>
+              Loading hardware database (CPUs & GPUs)...
+            </div>
+          )}
 
           <div className="section-label">Your Components</div>
 

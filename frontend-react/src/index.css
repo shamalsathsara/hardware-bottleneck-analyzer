@@ -613,7 +613,8 @@ input[type="text"]::placeholder {
   .footer-bottom { padding: 1.2rem 1.5rem; flex-direction: column; gap: 0.5rem; text-align: center; }
   .hero-stats { gap: 1.5rem; }
   .form-row { grid-template-columns: 1fr; }
-  .nav-links { display: none; }
+  .nav-links { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 1rem; margin-top: 10px; }
+  .site-nav { height: auto; padding: 1rem; flex-direction: column; }
   .analyzer-card, .about-section { padding: 1.8rem 1.4rem; }
 }
 

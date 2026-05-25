@@ -11,7 +11,7 @@ const authRouter = require('./routes/auth'); //Auth routes
 const app  = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());         //Allow frontend to talk this server
+app.use(cors({ origin: 'http://localhost:5173' }));         //Allow frontend to talk this server
 app.use(express.json()); //Tells the server to accept json
 
 //Auth routes
@@ -62,7 +62,7 @@ app.get('/api/gpus', async (req, res) => {
 app.post('/api/predict', async (req, res) => {
     try{
         console.log("Received Hardware Data from Frontend...") //checking
-        const auraResponse =  await axios.post('http://127.0.0.1:5000/predict', req.body);  //Node js called Aura AI
+        const auraResponse =  await axios.post('http://127.0.0.1:5000/predict', req.body, { timeout: 10000 });  //Node js called Aura AI
 
         res.json(auraResponse.data); //send aura's answer to the front end
     

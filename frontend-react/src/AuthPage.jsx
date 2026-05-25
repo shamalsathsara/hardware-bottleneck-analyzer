@@ -83,8 +83,8 @@ export default function AuthPage({ onLogin }) {
     setLoading(true);
     try {
       const endpoint = mode === 'login'
-        ? 'http://localhost:4000/api/auth/login'
-        : 'http://localhost:4000/api/auth/register';
+        ? `${import.meta.env.VITE_API_URL}/api/auth/login`
+        : `${import.meta.env.VITE_API_URL}/api/auth/register`;
 
       const body = mode === 'login'
         ? { email, password }
