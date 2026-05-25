@@ -1,0 +1,19 @@
+# Environments
+.env
+.env.local
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.Python
+
+# Mac/System
+.DS_Store
+Thumbs.db
