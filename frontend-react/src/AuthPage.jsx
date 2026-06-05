@@ -1,4 +1,4 @@
-//The entire visual Sign In and Sign Up screen
+// Authentication component (Login / Signup)
 
 import { useState } from 'react';
 import axios from 'axios';
@@ -49,24 +49,20 @@ const IconWarning = () => (
 
 /*  AuthPage Component */
 export default function AuthPage({ onLogin }) {
-  // --------------------------------------------------------------------------
-  // STATE VARIABLES
-  // --------------------------------------------------------------------------
-  const [mode, setMode]           = useState('login');   // Determines if we are showing 'login' or 'register'
+  // Form state
+  const [mode, setMode]           = useState('login');
   const [username, setUsername]   = useState('');
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
   const [confirm, setConfirm]     = useState('');
-  const [showPass, setShowPass]   = useState(false);     // Toggles password visibility (the eye icon)
+  const [showPass, setShowPass]   = useState(false);
   
-  const [loading, setLoading]     = useState(false);     // Shows the loading spinner when talking to the server
-  const [error, setError]         = useState('');        // Holds error messages (like "Wrong password")
-  const [success, setSuccess]     = useState('');        // Holds success messages
+  // UI state
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [success, setSuccess]     = useState('');
 
-  // --------------------------------------------------------------------------
-  // UI LOGIC
-  // --------------------------------------------------------------------------
-  // This switches between the "Sign In" and "Sign Up" tabs and clears out the form
+  // Toggle between auth modes and reset form
   const switchMode = (newMode) => {
     setMode(newMode);
     setError('');
@@ -77,15 +73,13 @@ export default function AuthPage({ onLogin }) {
     setConfirm('');
   };
 
-  // --------------------------------------------------------------------------
-  // FORM SUBMISSION (TALKING TO BACKEND)
-  // --------------------------------------------------------------------------
+  // Handle form submission and authentication API calls
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Stops the webpage from reloading when you press submit
+    e.preventDefault();
     setError('');
     setSuccess('');
 
-    // 1. Validation for Registration
+    // Validation
     if (mode === 'register') {
       if (!username.trim()) return setError('Username is required.');
       if (password.length < 6) return setError('Password must be at least 6 characters.');
@@ -94,32 +88,32 @@ export default function AuthPage({ onLogin }) {
 
     setLoading(true);
     try {
-      // 2. Decide whether we are sending data to the Login route or Register route
+      // Resolve endpoint based on auth mode
       const endpoint = mode === 'login'
         ? `${import.meta.env.VITE_API_URL}/api/auth/login`
         : `${import.meta.env.VITE_API_URL}/api/auth/register`;
 
-      // 3. Prepare the data to send
+      // Build payload
       const body = mode === 'login'
         ? { email, password }
         : { username, email, password };
 
-      // 4. Send the request to our Node.js backend
+      // Dispatch request
       const { data } = await axios.post(endpoint, body);
 
-      // 5. If successful, save the login token to localStorage so the user stays logged in
+      // Persist auth token
       localStorage.setItem('aura_token', data.token);
       localStorage.setItem('aura_user', JSON.stringify(data.user));
 
-      // 6. Alert the main App that someone logged in
+      // Trigger app login callback
       if (mode === 'register') {
         setSuccess('Account created! Signing you in…');
-        setTimeout(() => onLogin(data.user), 800); // Small delay to let them read the success message
+        setTimeout(() => onLogin(data.user), 800); // UI delay for success feedback
       } else {
         onLogin(data.user);
       }
     } catch (err) {
-      // If the backend sends an error (like "Invalid email"), display it in the UI
+      // Map API error responses to UI state
       setError(err.response?.data?.error || 'Something went wrong. Try again.');
     }
     setLoading(false);

@@ -101,63 +101,47 @@ const IconWhatsapp = () => (
 
 /* Main App */
 function App() {
-  // --------------------------------------------------------------------------
-  // AUTHENTICATION LOGIC
-  // --------------------------------------------------------------------------
-  
-  // Keep track of the currently logged-in user. We check localStorage first
-  // so the user stays logged in even if they refresh the page.
+  // Restore session from localStorage to persist login
   const [currentUser, setCurrentUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('aura_user')) || null; }
     catch { return null; }
   });
 
-  // Called when a user successfully logs in from the AuthPage component
   const handleLogin = useCallback((user) => setCurrentUser(user), []);
 
-  // Wipes the user session and logs them out
+  // Clear session data
   const handleLogout = useCallback(() => {
     localStorage.removeItem('aura_token');
     localStorage.removeItem('aura_user');
     setCurrentUser(null);
   }, []);
 
-  // --------------------------------------------------------------------------
-  // ANALYZER STATE VARIABLES
-  // --------------------------------------------------------------------------
+  // Hardware collections
+  const [cpuList, setCpuList]           = useState([]);
+  const [gpuList, setGpuList]           = useState([]);
   
-  const [cpuList, setCpuList]           = useState([]); // Holds all CPUs from the database
-  const [gpuList, setGpuList]           = useState([]); // Holds all GPUs from the database
-  
-  // User's current hardware selections from the dropdowns
+  // Form state
   const [selectedCpu, setSelectedCpu]   = useState('');
   const [selectedGpu, setSelectedGpu]   = useState('');
-  
-  // Game settings chosen by the user
   const [resolution, setResolution]     = useState('1080p');
   const [settings, setSettings]         = useState('High');
   const [ram, setRam]                   = useState('16');
   
-  // Data returned from the AI and our bottleneck logic
+  // Analysis results
   const [prediction, setPrediction]     = useState(null);
   const [bottleneckData, setBottleneck] = useState(null);
   const [confidence, setConfidence]     = useState(null);
+  const [recommendation, setRecommendation] = useState(null);
   
-  // UI states (loading spinners and error messages)
+  // UI state
   const [isThinking, setIsThinking]     = useState(false);
   const [error, setError]               = useState(null);
   const [loadingData, setLoadingData]   = useState(true);
 
-  // --------------------------------------------------------------------------
-  // INITIAL DATA FETCH
-  // --------------------------------------------------------------------------
-  
-  // As soon as the App loads, we fetch the massive list of CPUs and GPUs
-  // from our Node.js backend so the user can search through them in the UI.
+  // Parallel fetch for hardware datasets on mount
   useEffect(() => {
     (async () => {
       try {
-        // Fetch both lists at the exact same time (in parallel) to save time
         const [c, g] = await Promise.all([
           axios.get(`${import.meta.env.VITE_API_URL}/api/cpus`),
           axios.get(`${import.meta.env.VITE_API_URL}/api/gpus`),
@@ -167,63 +151,67 @@ function App() {
       } catch {
         setError('Could not connect to the backend. Make sure the Node.js server is running on port 4000.');
       } finally {
-        // Hide the loading text once data arrives (or fails)
         setLoadingData(false);
       }
     })();
   }, []);
 
-  // --------------------------------------------------------------------------
-  // BOTTLENECK ANALYSIS LOGIC
-  // --------------------------------------------------------------------------
-  
-  // This function acts as an expert PC builder. It looks at the chosen
-  // CPU and GPU, compares their relative power, and decides if one is
-  // severely holding the other back.
+  // Calculate hardware imbalances
   const analyzeBottleneck = (cpu, gpu) => {
     const cores    = parseInt(cpu.cores) || 6;
     const gpuPower = parseInt(gpu.CUDA)  || 50000;
     
-    // Default to a happy, balanced build
-    let severity = 10, message = '', color = '#10b981', cardClass = 'has-bottleneck-ok';
+    // Base balanced state
+    let severity = 10, message = '', color = '#10b981', cardClass = 'has-bottleneck-ok', type = null;
 
     if (cores <= 4 && gpuPower > 80000) {
-      // Very weak CPU paired with a very strong GPU
+      // CPU bottleneck condition
       severity  = 85;
       message   = 'CPU Bottleneck: Your processor is way too weak for this graphics card. It is severely holding your FPS back. Upgrade to a modern 6- or 8-core CPU.';
       color     = '#ef4444'; // Red alert color
       cardClass = 'has-bottleneck-severe';
+      type      = 'cpu';
     } else if (cores >= 8 && gpuPower < 30000) {
-      // Very strong CPU paired with a very weak GPU
+      // GPU bottleneck condition
       severity  = 70;
       message   = 'GPU Bottleneck: Your graphics card is holding back your high-end processor. Consider upgrading to a GPU with a higher compute score.';
       color     = '#f59e0b'; // Yellow warning color
       cardClass = 'has-bottleneck-warning';
+      type      = 'gpu';
     } else {
-      // Components are perfectly matched
-      severity = 5; // A tiny 5% natural bottleneck exists in all systems
+      severity = 5; // Baseline variance
       message  = 'Balanced Build: Your CPU and GPU work perfectly together — solid gaming setup.';
     }
-    return { severity, message, color, cardClass };
+    return { severity, message, color, cardClass, type };
   };
 
-  // --------------------------------------------------------------------------
-  // AI PREDICTION SUBMISSION
-  // --------------------------------------------------------------------------
-  
-  // This triggers when the user clicks the "Run Analysis" button.
-  // It builds the exact data structure our Random Forest AI was trained on,
-  // sends it to the backend (which forwards it to Flask), and handles the result.
+  // Suggest component upgrades based on bottleneck type
+  const getRecommendation = (type, currentCpu, currentGpu) => {
+    if (type === 'cpu') {
+      const currentCores = parseInt(currentCpu.cores) || 0;
+      const targetCores = Math.max(6, currentCores + 2);
+      const betterCpus = cpuList.filter(c => parseInt(c.cores) >= targetCores).sort((a,b) => parseInt(a.cpuMark || 0) - parseInt(b.cpuMark || 0));
+      if (betterCpus.length > 0) return { title: 'Recommended CPU', hardware: betterCpus[0].cpuName };
+    } else if (type === 'gpu') {
+      const currentCUDA = parseInt(currentGpu.CUDA) || 0;
+      const targetCUDA = Math.max(50000, currentCUDA * 2);
+      const betterGpus = gpuList.filter(g => parseInt(g.CUDA) >= targetCUDA).sort((a,b) => parseInt(a.CUDA || 0) - parseInt(b.CUDA || 0));
+      if (betterGpus.length > 0) return { title: 'Recommended GPU', hardware: betterGpus[0].Device };
+    }
+    return null;
+  };
+
+  // Prepare and dispatch analysis payload
   const handleConsultAura = async () => {
     setError(null);
     
-    // 1. Validate that the user actually picked hardware
+    // Validation
     if (!selectedCpu || !selectedGpu) {
       setError('Please select both a CPU and a GPU before analyzing.');
       return;
     }
     
-    // 2. Find the full database records for the chosen names
+    // Map selections to full dataset objects
     const fullCpu = cpuList.find(c => c.cpuName === selectedCpu);
     const fullGpu = gpuList.find(g => g.Device  === selectedGpu);
     if (!fullCpu || !fullGpu) {
@@ -231,21 +219,20 @@ function App() {
       return;
     }
 
-    // 3. Reset the UI and show the loading animation
-    setIsThinking(true); setPrediction(null); setBottleneck(null); setConfidence(null);
+    setIsThinking(true); setPrediction(null); setBottleneck(null); setConfidence(null); setRecommendation(null);
 
-    // 4. Estimate technical specs that our AI needs if they are missing
+    // Fallback estimates for missing metrics
     const cores = parseInt(fullCpu.cores) || 6;
     const threads = cores * 2, cpuTDP = cores * 15;
     const cuda = parseInt(fullGpu.CUDA) || 5000;
     
-    // We estimate GPU specs based on CUDA core counts to feed the AI realistic numbers
+    // Interpolate missing GPU specs via CUDA grouping
     let vram = 8, gpuTdp = 150, bandwidth = 256;
     if      (cuda > 20000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }
     else if (cuda > 10000) { vram = 16; gpuTdp = 250; bandwidth = 608;  }
     else if (cuda > 5000)  { vram = 12; gpuTdp = 200; bandwidth = 448;  }
 
-    // 5. Construct the payload matching the Python pandas DataFrame
+    // Serialize payload for ML inference
     const payload = {
       'CPU': fullCpu.cpuName, 'CPU Cores': cores, 'CPU Threads': threads, 'CPU TDP (W)': cpuTDP,
       'GPU': fullGpu.Device, 'GPU Series': fullGpu.Manufacturer || 'Nvidia',
@@ -254,7 +241,6 @@ function App() {
     };
 
     try {
-      // 6. Send the payload to Node.js, which talks to the Python AI
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/predict`, payload);
       const analysis = analyzeBottleneck(fullCpu, fullGpu);
       const cpuScore = parseInt(fullCpu.cpuMark) || 8000;
@@ -268,20 +254,21 @@ function App() {
       if (finalFps < 5)   finalFps = 5;
       if (finalFps > 900) finalFps = 900;
 
-      // Calculate dynamic AI accuracy/confidence
+      // Compute dynamic confidence interval
       const baseConf = 99.2;
-      const penalty = (analysis.severity / 100) * 8.5; // up to 8.5% drop for severe bottlenecks
+      const penalty = (analysis.severity / 100) * 8.5;
       setConfidence((baseConf - penalty).toFixed(1));
 
       setPrediction(finalFps.toFixed(1));
       setBottleneck(analysis);
+      setRecommendation(getRecommendation(analysis.type, fullCpu, fullGpu));
     } catch {
       setError('Could not reach Project Aura. Make sure the Python AI server is running on port 5000.');
     }
     setIsThinking(false);
   };
 
-  // Gate: show auth page if not logged in 
+  // Auth boundary guard
   if (!currentUser) return <AuthPage onLogin={handleLogin} />;
 
   return (
@@ -423,35 +410,52 @@ function App() {
           )}
 
           {prediction && bottleneckData && (
-            <div className={`results-card ${bottleneckData.cardClass}`}>
-              <div className="fps-display">
-                <div className="fps-label">Predicted Performance</div>
-                <div className="fps-value">
-                  {prediction}<span className="fps-unit">FPS</span>
+            <div className="results-wrapper">
+              <div className={`results-card ${bottleneckData.cardClass}`}>
+                <div className="fps-display">
+                  <div className="fps-label">Predicted Performance</div>
+                  <div className="fps-value">
+                    {prediction}<span className="fps-unit">FPS</span>
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    AI Accuracy is: {confidence}%
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  AI Accuracy is: {confidence}%
+                <div className="bottleneck-header">
+                  <span className="bottleneck-label">Bottleneck Severity</span>
+                  <span className="bottleneck-pct">{bottleneckData.severity}%</span>
+                </div>
+                <div className="bar-track">
+                  <div className="bar-fill" style={{ width: `${bottleneckData.severity}%`, background: bottleneckData.color }} />
+                </div>
+                <div className="bottleneck-msg-wrap">
+                  {bottleneckData.cardClass === 'has-bottleneck-ok' && (
+                    <span className="msg-icon msg-ok"><IconCheck /></span>
+                  )}
+                  {bottleneckData.cardClass === 'has-bottleneck-warning' && (
+                    <span className="msg-icon msg-warn"><IconWarning /></span>
+                  )}
+                  {bottleneckData.cardClass === 'has-bottleneck-severe' && (
+                    <span className="msg-icon msg-err"><IconWarning /></span>
+                  )}
+                  <p className="bottleneck-message">{bottleneckData.message}</p>
                 </div>
               </div>
-              <div className="bottleneck-header">
-                <span className="bottleneck-label">Bottleneck Severity</span>
-                <span className="bottleneck-pct">{bottleneckData.severity}%</span>
-              </div>
-              <div className="bar-track">
-                <div className="bar-fill" style={{ width: `${bottleneckData.severity}%`, background: bottleneckData.color }} />
-              </div>
-              <div className="bottleneck-msg-wrap">
-                {bottleneckData.cardClass === 'has-bottleneck-ok' && (
-                  <span className="msg-icon msg-ok"><IconCheck /></span>
-                )}
-                {bottleneckData.cardClass === 'has-bottleneck-warning' && (
-                  <span className="msg-icon msg-warn"><IconWarning /></span>
-                )}
-                {bottleneckData.cardClass === 'has-bottleneck-severe' && (
-                  <span className="msg-icon msg-err"><IconWarning /></span>
-                )}
-                <p className="bottleneck-message">{bottleneckData.message}</p>
-              </div>
+
+              {recommendation && (
+                <div className="recommendation-card">
+                  <div className="rec-header">
+                    <span className="rec-icon"><IconCheck /></span>
+                    {recommendation.title}
+                  </div>
+                  <div className="rec-hardware">
+                    {recommendation.hardware}
+                  </div>
+                  <p className="rec-desc">
+                    Upgrading to this component will significantly reduce your system bottleneck and increase overall gaming performance.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </section>
