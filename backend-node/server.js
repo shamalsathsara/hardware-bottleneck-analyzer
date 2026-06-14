@@ -53,7 +53,7 @@ app.get('/api/cpus', async(req, res) => {
     try{
         console.log("Fetching CPUs from Database...");
         // Sort alphabetically by the CPU name before sending it back
-        const cpus = await CPU.find().sort({ CPU:1}); 
+        const cpus = await CPU.find().sort({ cpuName: 1 }); 
         res.json(cpus);
     }catch (error){
         res.status(500).json({ error:"❌ Failed to fetch CPUs"});
@@ -64,7 +64,7 @@ app.get('/api/cpus', async(req, res) => {
 app.get('/api/gpus', async (req, res) => {
     try{
         console.log('Fetching GPUs from Database...');
-        const gpus = await GPU.find().sort({ GPU:1 });
+        const gpus = await GPU.find().sort({ Device: 1 });
         res.json(gpus);
     }catch (error){
         res.status(500).json({ error: "❌ Failed to fetch GPUs" })

@@ -33,10 +33,18 @@ async function seedDatabase() {
 
         // 3. Read the GPU data from the local computer
         console.log("Reading GPU CSV Files...")
-        const gpuData1 = await csv().fromFile('./GPU/gpu_data1.csv');
-        const gptData2 = await csv().fromFile('./GPU/gpu_data2.csv');
+        const gpuData1Raw = await csv().fromFile('./GPU/gpu_data1.csv');
+        const gpuData2 = await csv().fromFile('./GPU/gpu_data2.csv');
+        
+        // Normalize gpuData1 so it has 'Device' and 'CUDA' fields like gpuData2
+        const gpuData1 = gpuData1Raw.map(g => ({
+            ...g,
+            Device: g.gpuName,
+            CUDA: g.CUDA || (g.G3Dmark ? parseInt(g.G3Dmark) * 10 : 0)
+        }));
+
         // Merge the two lists together
-        const allGpuData = [...gpuData1, ...gptData2];
+        const allGpuData = [...gpuData1, ...gpuData2];
 
         // 4. Clear out the old data so we don't get duplicates
         console.log("Clearing old data...")

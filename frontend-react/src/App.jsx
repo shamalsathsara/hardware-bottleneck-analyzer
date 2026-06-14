@@ -123,7 +123,7 @@ function App() {
   // Form state
   const [selectedCpu, setSelectedCpu]   = useState('');
   const [selectedGpu, setSelectedGpu]   = useState('');
-  const [resolution, setResolution]     = useState('1080p');
+  const [resolution, setResolution]     = useState('1920x1080');
   const [settings, setSettings]         = useState('High');
   const [ram, setRam]                   = useState('16');
   
@@ -366,9 +366,9 @@ function App() {
             <div className="form-group">
               <label>Resolution</label>
               <select value={resolution} onChange={e => setResolution(e.target.value)}>
-                <option value="1080p">1080p (FHD)</option>
-                <option value="1440p">1440p (QHD)</option>
-                <option value="4K">4K (UHD)</option>
+                <option value="1920x1080">1080p (FHD)</option>
+                <option value="2560x1440">1440p (QHD)</option>
+                <option value="3840x2160">4K (UHD)</option>
               </select>
             </div>
             <div className="form-group">
