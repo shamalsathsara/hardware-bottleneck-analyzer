@@ -255,9 +255,9 @@ function App() {
       if (finalFps > 900) finalFps = 900;
 
       // Compute dynamic confidence interval
-      const baseConf = 99.2;
-      const penalty = (analysis.severity / 100) * 8.5;
-      setConfidence((baseConf - penalty).toFixed(1));
+      const baseConf = 99.2; // Base confidence level (99.2%)
+      const penalty = (analysis.severity / 100) * 8.5; // Penalty increases with bottleneck severity
+      setConfidence((baseConf - penalty).toFixed(1)); // Subtract penalty and round to 1 decimal place
 
       setPrediction(finalFps.toFixed(1));
       setBottleneck(analysis);
@@ -338,6 +338,7 @@ function App() {
 
           <div className="form-group">
             <label>Processor (CPU)</label>
+            {/* Dynamically populated from MongoDB via the /api/cpus API endpoint */}
             <input
               type="text" list="cpu-options"
               placeholder="Type to search CPUs…"
@@ -350,6 +351,7 @@ function App() {
 
           <div className="form-group">
             <label>Graphics Card (GPU)</label>
+            {/* Dynamically populated from MongoDB via the /api/gpus API endpoint */}
             <input
               type="text" list="gpu-options"
               placeholder="Type to search GPUs…"
@@ -417,6 +419,7 @@ function App() {
                   <div className="fps-value">
                     {prediction}<span className="fps-unit">FPS</span>
                   </div>
+                  {/* Displays the AI confidence level calculated after running the prediction */}
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     AI Accuracy is: {confidence}%
                   </div>
