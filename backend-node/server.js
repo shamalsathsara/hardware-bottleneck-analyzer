@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 4000; // Run on port 4000 unless specified othe
 // --------------------------------------------------------------------------
 // MIDDLEWARE CONFIGURATION
 // --------------------------------------------------------------------------
-app.use(cors({ origin: 'http://localhost:5173' })); // Only allow our React frontend to talk to this server
+app.use(cors()); // Allow our React frontend to talk to this server from any local port (5173, 5174, etc.)
 app.use(express.json()); // Tells the server to understand incoming JSON data (like form submissions)
 
 // Auth routes (handles /api/auth/login and /api/auth/register)

@@ -58,7 +58,14 @@ const IconMail = () => (
 
 const IconPhone = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </svg>
+);
+
+const IconArrowLeft = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
   </svg>
 );
 
@@ -137,6 +144,7 @@ function App() {
   const [isThinking, setIsThinking]     = useState(false);
   const [error, setError]               = useState(null);
   const [loadingData, setLoadingData]   = useState(true);
+
 
   // Parallel fetch for hardware datasets on mount
   useEffect(() => {
@@ -268,6 +276,18 @@ function App() {
     setIsThinking(false);
   };
 
+  
+  // RESET / BACK BUTTON FUNCTION
+  // This function clears all the currently saved analysis results.
+  // By setting them to "null", the React frontend instantly hides the 
+  // results card and returns the user back to the empty hardware selection form.
+  const handleResetAnalysis = () => {
+    setPrediction(null);
+    setBottleneckData(null);
+    setRecommendation(null);
+    setError(null);
+  };
+
   // Auth boundary guard
   if (!currentUser) return <AuthPage onLogin={handleLogin} />;
 
@@ -395,24 +415,51 @@ function App() {
             </select>
           </div>
 
-          <button
-            className={`action-btn${isThinking ? ' loading' : ''}`}
-            onClick={handleConsultAura}
-            disabled={isThinking}
-          >
-            <span className="btn-icon"><IconScan /></span>
-            {isThinking ? 'Aura is Analyzing…' : 'Run Analysis'}
-          </button>
-
+          <div className="action-buttons-row" style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+            <button
+              className={`action-btn${isThinking ? ' loading' : ''}`}
+              onClick={handleConsultAura}
+              disabled={isThinking}
+              style={{ flex: '1', minWidth: '200px' }}
+            >
+              <span className="btn-icon"><IconScan /></span>
+              {isThinking ? 'Aura is Analyzing…' : 'Run Analysis'}
+            </button>
+          </div>
           {error && (
-            <div className="error-banner">
+            <div className="error-banner" style={{ marginTop: '1rem' }}>
               <span className="error-icon"><IconWarning /></span>
               <span>{error}</span>
             </div>
           )}
 
+          {/* If we have a successful prediction, show the Results Wrapper */}
           {prediction && bottleneckData && (
             <div className="results-wrapper">
+              
+              {/* Back Button to Reset the UI */}
+              <button 
+                onClick={handleResetAnalysis}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-sub)',
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: 'var(--radius)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  marginBottom: '1rem',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-sub)'; }}
+              >
+                <span style={{ width: '18px', height: '18px' }}><IconArrowLeft /></span>
+                Back to Selection
+              </button>
               <div className={`results-card ${bottleneckData.cardClass}`}>
                 <div className="fps-display">
                   <div className="fps-label">Predicted Performance</div>

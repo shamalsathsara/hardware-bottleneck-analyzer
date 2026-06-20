@@ -109,4 +109,122 @@ router.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
+// --------------------------------------------------------------------------
+// PASSWORD RESET WORKFLOW (The 3-Step Process)
+// --------------------------------------------------------------------------
+
+/* 
+   STEP 1: POST /api/auth/forgot-password 
+   Goal: Generate a 6-digit code and "send" it to the user.
+*/
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
+
+    // Step 1a: Check if this email actually exists in our database
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      // Security trick: Even if the email doesn't exist, we tell the hacker 
+      // "If it exists, we sent it." This prevents hackers from guessing which 
+      // emails are registered on our site.
+      return res.json({ message: 'If an account with that email exists, a reset code has been sent.' });
+    }
+
+    // Step 1b: Use math to generate a random number between 100000 and 999999
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Step 1c: Save this code to the user's database profile. 
+    // We also set an expiration timer for 15 minutes from exactly right now.
+    user.resetCode = code;
+    user.resetCodeExpires = Date.now() + 15 * 60 * 1000;
+    await user.save();
+
+    // Step 1d: "Send" the email. Since we don't have a real email server hooked up, 
+    // we are just printing it to the backend terminal so you can test it!
+    console.log('\n=============================================');
+    console.log(`🔐 PASSWORD RESET CODE FOR ${user.email}`);
+    console.log(`CODE: ${code}`);
+    console.log('=============================================\n');
+
+    res.json({ message: 'If an account with that email exists, a reset code has been sent.' });
+  } catch (err) {
+    console.error('Forgot password error:', err.message);
+    res.status(500).json({ error: 'Server error. Please try again.' });
+  }
+});
+
+/* 
+   STEP 2: POST /api/auth/verify-code 
+   Goal: Check if the code the user typed in is correct and hasn't expired.
+*/
+router.post('/verify-code', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ error: 'Email and code are required.' });
+
+    // Step 2a: Look for a user who matches BOTH the email AND the 6-digit code.
+    // The `$gt: Date.now()` part ensures the code hasn't expired yet!
+    const user = await User.findOne({ 
+      email: email.toLowerCase(),
+      resetCode: code,
+      resetCodeExpires: { $gt: Date.now() } // $gt means "Greater Than"
+    });
+
+    if (!user) {
+      // If we didn't find them, either the code was wrong, or 15 minutes passed.
+      return res.status(400).json({ error: 'Invalid or expired verification code.' });
+    }
+
+    // If we made it here, the code is good! Tell the frontend to show the "New Password" screen.
+    res.json({ message: 'Code verified successfully.' });
+  } catch (err) {
+    console.error('Verify code error:', err.message);
+    res.status(500).json({ error: 'Server error. Please try again.' });
+  }
+});
+
+/* 
+   STEP 3: POST /api/auth/reset-password 
+   Goal: Save the brand new password to the database and delete the temporary code.
+*/
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: 'All fields are required.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    }
+
+    // Step 3a: Do one final security check to make sure the code is still valid.
+    // This stops hackers from bypassing Step 2.
+    const user = await User.findOne({ 
+      email: email.toLowerCase(),
+      resetCode: code,
+      resetCodeExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired verification code.' });
+    }
+
+    // Step 3b: Encrypt the brand new password so it's safe.
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    
+    // Step 3c: Delete the 6-digit code and expiration timer from the database.
+    // This makes it impossible to reuse the code again!
+    user.resetCode = undefined;
+    user.resetCodeExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Password has been successfully reset.' });
+  } catch (err) {
+    console.error('Reset password error:', err.message);
+    res.status(500).json({ error: 'Server error. Please try again.' });
+  }
+});
+
 module.exports = router;

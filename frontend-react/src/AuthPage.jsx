@@ -47,14 +47,22 @@ const IconWarning = () => (
   </svg>
 );
 
+const IconArrowLeft = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
+  </svg>
+);
+
 /*  AuthPage Component */
 export default function AuthPage({ onLogin }) {
   // Form state
-  const [mode, setMode]           = useState('login');
+  const [mode, setMode]           = useState('login'); // 'login', 'register', 'forgot', 'verify', 'reset'
   const [username, setUsername]   = useState('');
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
   const [confirm, setConfirm]     = useState('');
+  const [resetCode, setResetCode] = useState('');
   const [showPass, setShowPass]   = useState(false);
   
   // UI state
@@ -67,8 +75,13 @@ export default function AuthPage({ onLogin }) {
     setMode(newMode);
     setError('');
     setSuccess('');
-    setUsername('');
-    setEmail('');
+    
+    // Don't clear email/code if we are progressing through the reset flow
+    if (newMode !== 'verify' && newMode !== 'reset') {
+      setUsername('');
+      setEmail('');
+      setResetCode('');
+    }
     setPassword('');
     setConfirm('');
   };
@@ -79,7 +92,7 @@ export default function AuthPage({ onLogin }) {
     setError('');
     setSuccess('');
 
-    // Validation
+    // Validation for registration
     if (mode === 'register') {
       if (!username.trim()) return setError('Username is required.');
       if (password.length < 6) return setError('Password must be at least 6 characters.');
@@ -88,32 +101,67 @@ export default function AuthPage({ onLogin }) {
 
     setLoading(true);
     try {
-      // Resolve endpoint based on auth mode
-      const endpoint = mode === 'login'
-        ? `${import.meta.env.VITE_API_URL}/api/auth/login`
-        : `${import.meta.env.VITE_API_URL}/api/auth/register`;
+       
+      // PASSWORD RECOVERY: STEP 1 (Send Email)
+      if (mode === 'forgot') {
+        // Send the email to the backend to generate a code
+        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, { email });
+        setSuccess(data.message);
+        
+        // Wait 2 seconds so the user can read the success message, then show the "Verify Code" screen
+        setTimeout(() => switchMode('verify'), 2000);
+      } 
+       
+      // PASSWORD RECOVERY: STEP 2 (Verify Code)
+       
+      else if (mode === 'verify') {
+        // Send both the email AND the code they just typed to see if it's correct
+        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-code`, { email, code: resetCode });
+        setSuccess('Code verified! Set your new password.');
+        
+        // Wait 1 second, then show the "New Password" screen
+        setTimeout(() => switchMode('reset'), 1000);
+      } 
+       
+      // PASSWORD RECOVERY: STEP 3 (Save New Password)
+       
+      else if (mode === 'reset') {
+        // Basic security check on the frontend before bothering the backend
+        if (password.length < 6) { setLoading(false); return setError('Password must be at least 6 characters.'); }
+        if (password !== confirm) { setLoading(false); return setError('Passwords do not match.'); }
+        
+        // Send the email, the code, AND the brand new password to save it
+        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/reset-password`, { 
+          email, code: resetCode, newPassword: password 
+        });
+        setSuccess('Password reset successfully! Please sign in.');
+        
+        // Send them back to the login screen so they can use their new password
+        setTimeout(() => switchMode('login'), 2000);
+      } 
+      else {
+        // Normal Login / Register flow
+        const endpoint = mode === 'login'
+          ? `${import.meta.env.VITE_API_URL}/api/auth/login`
+          : `${import.meta.env.VITE_API_URL}/api/auth/register`;
 
-      // Build payload
-      const body = mode === 'login'
-        ? { email, password }
-        : { username, email, password };
+        const body = mode === 'login'
+          ? { email, password }
+          : { username, email, password };
 
-      // Dispatch request
-      const { data } = await axios.post(endpoint, body);
+        const { data } = await axios.post(endpoint, body);
 
-      // Persist auth token
-      localStorage.setItem('aura_token', data.token);
-      localStorage.setItem('aura_user', JSON.stringify(data.user));
+        localStorage.setItem('aura_token', data.token);
+        localStorage.setItem('aura_user', JSON.stringify(data.user));
 
-      // Trigger app login callback
-      if (mode === 'register') {
-        setSuccess('Account created! Signing you in…');
-        setTimeout(() => onLogin(data.user), 800); // UI delay for success feedback
-      } else {
-        onLogin(data.user);
+        if (mode === 'register') {
+          setSuccess('Account created! Signing you in…');
+          setTimeout(() => onLogin(data.user), 800);
+        } else {
+          onLogin(data.user);
+        }
       }
     } catch (err) {
-      // Map API error responses to UI state
       setError(err.response?.data?.error || 'Something went wrong. Try again.');
     }
     setLoading(false);
@@ -131,32 +179,69 @@ export default function AuthPage({ onLogin }) {
           </div>
         </div>
 
-        {/* Toggle tabs */}
-        <div className="auth-tabs">
-          <button
-            id="auth-tab-login"
-            className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
-            onClick={() => switchMode('login')}
-          >
-            Sign In
-          </button>
-          <button
-            id="auth-tab-register"
-            className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
-            onClick={() => switchMode('register')}
-          >
-            Sign Up
-          </button>
-          <div className={`auth-tab-indicator ${mode === 'register' ? 'right' : ''}`} />
-        </div>
+        {/* Toggle tabs (Only show on login/register) */}
+        {['login', 'register'].includes(mode) && (
+          <div className="auth-tabs">
+            <button
+              className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+              onClick={() => switchMode('login')}
+            >
+              Sign In
+            </button>
+            <button
+              className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
+              onClick={() => switchMode('register')}
+            >
+              Sign Up
+            </button>
+            <div className={`auth-tab-indicator ${mode === 'register' ? 'right' : ''}`} />
+          </div>
+        )}
+
+        {/* 
+            UNIVERSAL BACK BUTTON
+            This button only shows up if the user is NOT on the main 'login' screen.
+            If they click "Forgot Password", "Verify Code", or "Sign Up", they 
+            can click this to instantly reset the 'mode' back to 'login'.
+         */}
+        {mode !== 'login' && (
+          <div style={{ marginBottom: '1rem' }}>
+            <button 
+              onClick={() => switchMode('login')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-sub)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                cursor: 'pointer',
+                fontWeight: '600',
+                padding: '0.4rem 0',
+                transition: 'color 0.2s ease',
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-sub)'; }}
+            >
+              <span style={{ width: '16px', height: '16px' }}><IconArrowLeft /></span>
+              Back to Login
+            </button>
+          </div>
+        )}
 
         {/* Heading */}
         <div className="auth-heading">
-          {mode === 'login' ? 'Welcome back' : 'Create your account'}
+          {mode === 'login' && 'Welcome back'}
+          {mode === 'register' && 'Create your account'}
+          {mode === 'forgot' && 'Reset Password'}
+          {mode === 'verify' && 'Check Your Email'}
+          {mode === 'reset' && 'Create New Password'}
           <p className="auth-subheading">
-            {mode === 'login'
-              ? 'Sign in to access the AI-powered analyzer.'
-              : 'Join Project Aura and start analyzing your hardware.'}
+            {mode === 'login' && 'Sign in to access the AI-powered analyzer.'}
+            {mode === 'register' && 'Join Project Aura and start analyzing your hardware.'}
+            {mode === 'forgot' && 'Enter your email and we will send you a 6-digit code.'}
+            {mode === 'verify' && `We've sent a 6-digit code to ${email}`}
+            {mode === 'reset' && 'Enter a strong new password.'}
           </p>
         </div>
 
@@ -180,48 +265,81 @@ export default function AuthPage({ onLogin }) {
             </div>
           )}
 
-          <div className="auth-field">
-            <label htmlFor="auth-email">Email Address</label>
-            <div className="auth-input-wrap">
-              <span className="auth-input-icon"><IconMail /></span>
-              <input
-                id="auth-email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
+          {/* Email input - used in login, register, and forgot password */}
+          {['login', 'register', 'forgot'].includes(mode) && (
+            <div className="auth-field">
+              <label htmlFor="auth-email">Email Address</label>
+              <div className="auth-input-wrap">
+                <span className="auth-input-icon"><IconMail /></span>
+                <input
+                  id="auth-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="auth-field">
-            <label htmlFor="auth-password">Password</label>
-            <div className="auth-input-wrap">
-              <span className="auth-input-icon"><IconLock /></span>
-              <input
-                id="auth-password"
-                type={showPass ? 'text' : 'password'}
-                placeholder={mode === 'register' ? 'Minimum 6 characters' : 'Enter your password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                required
-              />
-              <button
-                type="button"
-                className="auth-eye-btn"
-                id="auth-toggle-password"
-                onClick={() => setShowPass(v => !v)}
-                tabIndex={-1}
-              >
-                {showPass ? <IconEyeOff /> : <IconEye />}
-              </button>
+          {/* 6-Digit Code input - used in verify mode */}
+          {mode === 'verify' && (
+            <div className="auth-field">
+              <label htmlFor="auth-code">6-Digit Code</label>
+              <div className="auth-input-wrap">
+                <span className="auth-input-icon"><IconLock /></span>
+                <input
+                  id="auth-code"
+                  type="text"
+                  placeholder="123456"
+                  value={resetCode}
+                  onChange={e => setResetCode(e.target.value.replace(/\D/g, ''))} // numbers only
+                  maxLength={6}
+                  required
+                  style={{ letterSpacing: '0.2em', fontWeight: 'bold' }}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {mode === 'register' && (
+          {/* Password input - used in login, register, and reset mode */}
+          {['login', 'register', 'reset'].includes(mode) && (
+            <div className="auth-field">
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <label htmlFor="auth-password">{mode === 'reset' ? 'New Password' : 'Password'}</label>
+                {mode === 'login' && (
+                  <button type="button" onClick={() => switchMode('forgot')} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', padding: 0, fontWeight: '600' }}>
+                    Forgot Password?
+                  </button>
+                )}
+              </div>
+              <div className="auth-input-wrap">
+                <span className="auth-input-icon"><IconLock /></span>
+                <input
+                  id="auth-password"
+                  type={showPass ? 'text' : 'password'}
+                  placeholder={['register', 'reset'].includes(mode) ? 'Minimum 6 characters' : 'Enter your password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-eye-btn"
+                  onClick={() => setShowPass(v => !v)}
+                  tabIndex={-1}
+                >
+                  {showPass ? <IconEyeOff /> : <IconEye />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Confirm Password input */}
+          {['register', 'reset'].includes(mode) && (
             <div className="auth-field">
               <label htmlFor="auth-confirm">Confirm Password</label>
               <div className="auth-input-wrap">
@@ -242,7 +360,7 @@ export default function AuthPage({ onLogin }) {
           {error && (
             <div className="auth-error">
               <span className="auth-error-icon"><IconWarning /></span>
-              {error}
+               {error}
             </div>
           )}
           {success && (
@@ -250,19 +368,28 @@ export default function AuthPage({ onLogin }) {
           )}
 
           <button
-            id="auth-submit-btn"
             type="submit"
             className={`auth-submit-btn${loading ? ' loading' : ''}`}
             disabled={loading}
           >
-            {loading
-              ? (mode === 'login' ? 'Signing in…' : 'Creating account…')
-              : (mode === 'login' ? 'Sign In' : 'Create Account')}
+            {loading ? (
+               mode === 'login' ? 'Signing in…' : 
+               mode === 'register' ? 'Creating account…' : 
+               mode === 'forgot' ? 'Sending Code…' :
+               mode === 'verify' ? 'Verifying…' :
+               'Resetting…'
+            ) : (
+               mode === 'login' ? 'Sign In' : 
+               mode === 'register' ? 'Create Account' : 
+               mode === 'forgot' ? 'Send Code' :
+               mode === 'verify' ? 'Verify Code' :
+               'Reset Password'
+            )}
           </button>
         </form>
 
         <div className="auth-footer-note">
-          {mode === 'login'
+          {['login', 'forgot', 'verify', 'reset'].includes(mode)
             ? <>Don't have an account? <button className="auth-link-btn" onClick={() => switchMode('register')}>Sign Up</button></>
             : <>Already have an account? <button className="auth-link-btn" onClick={() => switchMode('login')}>Sign In</button></>
           }
