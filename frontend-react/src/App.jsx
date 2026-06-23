@@ -15,7 +15,41 @@ const CONTACT = {
   linkedin: 'https://linkedin.com/in/shamalsathsara',
 };
 
-/* SVG Icon Library */
+/* ============================================================
+   NEW FEATURE 04 — Sri Lankan PC Store Data
+   This is a static list of trusted Sri Lankan PC stores.
+   Each store has a name, website link, and a short description.
+   This data is used to display the "Need Help?" store cards.
+   ============================================================ */
+const SRI_LK_STORES = [
+  {
+    name: 'Nanotek',
+    url: 'https://www.nanotek.lk',
+    description: 'One of Sri Lanka\'s leading computer hardware retailers with a wide range of CPUs, GPUs, and accessories.',
+  },
+  {
+    name: 'Redline Technologies',
+    url: 'https://www.redline.lk',
+    description: 'A premium tech store offering high-performance gaming components and custom PC builds.',
+  },
+  {
+    name: 'Barclays Computer',
+    url: 'https://www.barclayscomputer.lk',
+    description: 'A well-established store known for competitive prices on computer parts and peripherals.',
+  },
+  {
+    name: 'Gamestreet',
+    url: 'https://www.gamestreet.lk',
+    description: 'Sri Lanka\'s go-to destination for gaming gear, from graphics cards to gaming monitors.',
+  },
+  {
+    name: 'Tecroot',
+    url: 'https://www.tecroot.lk',
+    description: 'A modern tech retailer specializing in the latest PC hardware with fast island-wide delivery.',
+  },
+];
+
+/* SVG Icon Library — Existing Icons (unchanged) */
 const IconCpu = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8"/>
@@ -106,8 +140,81 @@ const IconWhatsapp = () => (
   </svg>
 );
 
+/* ============================================================
+   NEW ICONS for the new features
+   ============================================================ */
+
+/* Icon used for store cards and sidebar headings */
+const IconStore = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+);
+
+/* Icon used for Q&A question items */
+const IconQuestion = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
+/* Icon used for the explanation section */
+const IconInfo = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+);
+
+/* Icon for the upward chevron used in accordion toggle */
+const IconChevronDown = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+);
+
+/* Icon for external link on store cards */
+const IconExternalLink = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+    <polyline points="15 3 21 3 21 9"/>
+    <line x1="10" y1="14" x2="21" y2="3"/>
+  </svg>
+);
+
+/* Icon for upgrade / arrow right */
+const IconArrowRight = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/>
+    <polyline points="12 5 19 12 12 19"/>
+  </svg>
+);
+
+/* Icon for RAM */
+const IconRam = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="8" width="20" height="8" rx="2"/>
+    <path d="M6 8V6M10 8V6M14 8V6M18 8V6M6 16v2M10 16v2M14 16v2M18 16v2"/>
+  </svg>
+);
+
+/* Icon for GPU */
+const IconGpu = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="6" width="20" height="12" rx="2"/>
+    <circle cx="8" cy="12" r="2"/>
+    <circle cx="16" cy="12" r="2"/>
+    <path d="M2 10h2M20 10h2M2 14h2M20 14h2"/>
+  </svg>
+);
+
 /* Main App */
 function App() {
+  // ── EXISTING STATE (unchanged) ──────────────────────────────
   // Restore session from localStorage to persist login
   const [currentUser, setCurrentUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('aura_user')) || null; }
@@ -126,25 +233,45 @@ function App() {
   // Hardware collections
   const [cpuList, setCpuList]           = useState([]);
   const [gpuList, setGpuList]           = useState([]);
-  
+
   // Form state
   const [selectedCpu, setSelectedCpu]   = useState('');
   const [selectedGpu, setSelectedGpu]   = useState('');
   const [resolution, setResolution]     = useState('1920x1080');
   const [settings, setSettings]         = useState('High');
   const [ram, setRam]                   = useState('16');
-  
+
   // Analysis results
   const [prediction, setPrediction]     = useState(null);
   const [bottleneckData, setBottleneck] = useState(null);
   const [confidence, setConfidence]     = useState(null);
   const [recommendation, setRecommendation] = useState(null);
-  
+
   // UI state
   const [isThinking, setIsThinking]     = useState(false);
   const [error, setError]               = useState(null);
   const [loadingData, setLoadingData]   = useState(true);
 
+  // ── NEW STATE — Feature 01: Smart Component Recommendation Panel ──
+  // Tracks which component the user wants to upgrade (CPU, GPU, or RAM)
+  const [selectedUpgradeComponent, setSelectedUpgradeComponent] = useState(null);
+  // Holds the generated smart recommendation object for the chosen component
+  const [smartRec, setSmartRec] = useState(null);
+
+  // ── NEW STATE — Feature 02: Explanation Type Toggle ──
+  // Tracks whether to show 'technical' or 'nontechnical' explanation
+  const [explanationType, setExplanationType] = useState(null);
+
+  // ── NEW STATE — Feature 04 & 05: Need Help Panel ──
+  // Controls whether the store cards and Q&A section are visible
+  const [showHelp, setShowHelp] = useState(false);
+
+  // ── NEW STATE — Feature 05: Q&A Accordion ──
+  // Tracks which Q&A item is currently expanded (by index number)
+  const [openQA, setOpenQA] = useState(null);
+
+
+  // ── EXISTING LOGIC (unchanged) ─────────────────────────────
 
   // Parallel fetch for hardware datasets on mount
   useEffect(() => {
@@ -168,7 +295,7 @@ function App() {
   const analyzeBottleneck = (cpu, gpu) => {
     const cores    = parseInt(cpu.cores) || 6;
     const gpuPower = parseInt(gpu.CUDA)  || 50000;
-    
+
     // Base balanced state
     let severity = 10, message = '', color = '#10b981', cardClass = 'has-bottleneck-ok', type = null;
 
@@ -194,17 +321,80 @@ function App() {
   };
 
   // Suggest component upgrades based on bottleneck type
+  // Called automatically after analysis runs (shows the original recommendation card)
   const getRecommendation = (type, currentCpu, currentGpu) => {
+
     if (type === 'cpu') {
-      const currentCores = parseInt(currentCpu.cores) || 0;
-      const targetCores = Math.max(6, currentCores + 2);
-      const betterCpus = cpuList.filter(c => parseInt(c.cores) >= targetCores).sort((a,b) => parseInt(a.cpuMark || 0) - parseInt(b.cpuMark || 0));
-      if (betterCpus.length > 0) return { title: 'Recommended CPU', hardware: betterCpus[0].cpuName };
+      // ── CPU IS THE BOTTLENECK → suggest a better CPU ──
+      const currentCpuMark = parseInt(currentCpu.cpuMark) || 3000;
+      const currentGpuCUDA = parseInt(currentGpu.CUDA)    || 5000;
+
+      // What CPU mark does this GPU need to be fully utilized without bottleneck?
+      let targetCpuMark;
+      if      (currentGpuCUDA < 1000)  targetCpuMark = 3000;
+      else if (currentGpuCUDA < 2000)  targetCpuMark = 5000;
+      else if (currentGpuCUDA < 4000)  targetCpuMark = 8000;
+      else if (currentGpuCUDA < 8000)  targetCpuMark = 12000;
+      else if (currentGpuCUDA < 12000) targetCpuMark = 17000;
+      else                             targetCpuMark = 22000;
+
+      // Find CPUs: better than current + closest to what this GPU actually needs
+      let candidates = cpuList
+        .filter(c => (parseInt(c.cpuMark) || 0) > currentCpuMark)
+        .sort((a, b) => {
+          const diffA = Math.abs((parseInt(a.cpuMark) || 0) - targetCpuMark);
+          const diffB = Math.abs((parseInt(b.cpuMark) || 0) - targetCpuMark);
+          return diffA - diffB;
+        });
+
+      if (candidates.length > 0) return { title: 'Recommended CPU', hardware: candidates[0].cpuName };
+
     } else if (type === 'gpu') {
-      const currentCUDA = parseInt(currentGpu.CUDA) || 0;
-      const targetCUDA = Math.max(50000, currentCUDA * 2);
-      const betterGpus = gpuList.filter(g => parseInt(g.CUDA) >= targetCUDA).sort((a,b) => parseInt(a.CUDA || 0) - parseInt(b.CUDA || 0));
-      if (betterGpus.length > 0) return { title: 'Recommended GPU', hardware: betterGpus[0].Device };
+      // ── GPU IS THE BOTTLENECK → suggest a better GPU, capped by CPU capability ──
+      const currentCpuMark = parseInt(currentCpu.cpuMark) || 3000;
+      const currentCUDA    = parseInt(currentGpu.CUDA)    || 0;
+
+      // Realistic GPU CUDA ceiling for each CPU performance tier.
+      // Calibrated to real-world CPU-GPU pairing benchmarks:
+      //   cpuMark < 1000  → Core2 Duo, early Pentiums  → GTX 750 Ti max (~640 CUDA)
+      //   cpuMark < 2500  → i3 2nd-4th gen             → GTX 1060 max (~1280 CUDA)
+      //   cpuMark < 5000  → i5 4th-6th gen             → GTX 1080 Ti max (~3584 CUDA)
+      //   cpuMark < 10000 → i5 8th-10th gen            → RTX 2080 max (~2944 CUDA)
+      //   cpuMark < 18000 → i7, Ryzen 7               → RTX 3080 max (~8704 CUDA)
+      //   cpuMark < 28000 → i9, Ryzen 9               → RTX 4090 range (~16384 CUDA)
+      let maxGpuCUDA;
+      if      (currentCpuMark < 1000)  maxGpuCUDA = 640;    // Very old → GTX 750 Ti class
+      else if (currentCpuMark < 2500)  maxGpuCUDA = 1280;   // Old CPU → GTX 1060 class
+      else if (currentCpuMark < 5000)  maxGpuCUDA = 3584;   // Low-mid → GTX 1080 Ti class
+      else if (currentCpuMark < 10000) maxGpuCUDA = 5888;   // Mid → RTX 3070 class
+      else if (currentCpuMark < 18000) maxGpuCUDA = 10496;  // Good → RTX 3090 class
+      else if (currentCpuMark < 28000) maxGpuCUDA = 16384;  // High-end → RTX 4090 class
+      else                             maxGpuCUDA = 999999;  // Top-tier → no limit
+
+      const idealCUDA = Math.min(currentCUDA * 2, maxGpuCUDA);
+      const minCUDA   = Math.max(256, currentCUDA * 1.2); // at least 20% better than current
+
+      // Find GPUs: better than current AND within CPU-compatible ceiling
+      let candidates = gpuList
+        .filter(g => {
+          const cuda = parseInt(g.CUDA) || 0;
+          return cuda >= minCUDA && cuda <= maxGpuCUDA;
+        })
+        .sort((a, b) => {
+          const diffA = Math.abs((parseInt(a.CUDA) || 0) - idealCUDA);
+          const diffB = Math.abs((parseInt(b.CUDA) || 0) - idealCUDA);
+          return diffA - diffB;
+        });
+
+      // Fallback: current GPU already at or beyond the CPU ceiling
+      if (candidates.length === 0) {
+        // Return the best GPU the CPU can still handle, even if not an upgrade
+        candidates = gpuList
+          .filter(g => (parseInt(g.CUDA) || 0) <= maxGpuCUDA && (parseInt(g.CUDA) || 0) > 0)
+          .sort((a, b) => (parseInt(b.CUDA) || 0) - (parseInt(a.CUDA) || 0));
+      }
+
+      if (candidates.length > 0) return { title: 'Recommended GPU', hardware: candidates[0].Device };
     }
     return null;
   };
@@ -212,13 +402,13 @@ function App() {
   // Prepare and dispatch analysis payload
   const handleConsultAura = async () => {
     setError(null);
-    
+
     // Validation
     if (!selectedCpu || !selectedGpu) {
       setError('Please select both a CPU and a GPU before analyzing.');
       return;
     }
-    
+
     // Map selections to full dataset objects
     const fullCpu = cpuList.find(c => c.cpuName === selectedCpu);
     const fullGpu = gpuList.find(g => g.Device  === selectedGpu);
@@ -233,7 +423,7 @@ function App() {
     const cores = parseInt(fullCpu.cores) || 6;
     const threads = cores * 2, cpuTDP = cores * 15;
     const cuda = parseInt(fullGpu.CUDA) || 5000;
-    
+
     // Interpolate missing GPU specs via CUDA grouping
     let vram = 8, gpuTdp = 150, bandwidth = 256;
     if      (cuda > 20000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }
@@ -276,24 +466,369 @@ function App() {
     setIsThinking(false);
   };
 
-  
+
   // RESET / BACK BUTTON FUNCTION
   // This function clears all the currently saved analysis results.
-  // By setting them to "null", the React frontend instantly hides the 
+  // By setting them to "null", the React frontend instantly hides the
   // results card and returns the user back to the empty hardware selection form.
   const handleResetAnalysis = () => {
     setPrediction(null);
-    setBottleneckData(null);
+    setBottleneck(null);        // also reset bottleneckData (was bottleneckData before)
     setRecommendation(null);
     setError(null);
+    // Also reset the new feature states so they don't persist on next run
+    setSelectedUpgradeComponent(null);
+    setSmartRec(null);
+    setExplanationType(null);
+    setShowHelp(false);
+    setOpenQA(null);
   };
 
-  // Auth boundary guard
+
+  
+  // NEW FEATURE 01 — Smart Component Recommendation Helper
+  // Called when the user clicks CPU, GPU, or RAM in the results panel.
+  // All recommendations are CPU-GPU aware — a weak CPU limits which
+  // GPU can be suggested, and vice versa.
+  
+  const generateSmartRecommendation = (component) => {
+    setSelectedUpgradeComponent(component);
+    if (!bottleneckData) return;
+
+    // Look up the full data objects for the currently selected CPU and GPU
+    const currentCpuData = cpuList.find(c => c.cpuName === selectedCpu);
+    const currentGpuData = gpuList.find(g => g.Device  === selectedGpu);
+
+    const currentCpuMark  = parseInt(currentCpuData?.cpuMark) || 3000;
+    const currentCpuCores = parseInt(currentCpuData?.cores)   || 4;
+    const currentGpuCUDA  = parseInt(currentGpuData?.CUDA)    || 5000;
+    const currentRamGB    = parseInt(ram) || 16;
+
+    let result = {};
+
+    //  CPU UPGRADE 
+    if (component === 'CPU') {
+      // Goal: find a CPU that is (a) better than current AND
+      //       (b) matched to the GPU's tier so neither bottlenecks the other.
+
+      // What CPU mark does the current GPU actually need?
+      let targetCpuMark;
+      if      (currentGpuCUDA < 1000)  targetCpuMark = 3000;
+      else if (currentGpuCUDA < 2000)  targetCpuMark = 5000;
+      else if (currentGpuCUDA < 4000)  targetCpuMark = 8000;
+      else if (currentGpuCUDA < 8000)  targetCpuMark = 12000;
+      else if (currentGpuCUDA < 12000) targetCpuMark = 17000;
+      else                             targetCpuMark = 22000;
+
+      // Only suggest CPUs that are genuinely better than current
+      let betterCpus = cpuList
+        .filter(c => (parseInt(c.cpuMark) || 0) > currentCpuMark)
+        .sort((a, b) => {
+          const diffA = Math.abs((parseInt(a.cpuMark) || 0) - targetCpuMark);
+          const diffB = Math.abs((parseInt(b.cpuMark) || 0) - targetCpuMark);
+          return diffA - diffB;
+        });
+
+      // Also find the best GPU that MATCHES the current CPU
+      // (useful if user has no budget for CPU and wants to downgrade GPU instead)
+      let maxGpuForCurrentCpu;
+      if      (currentCpuMark < 1000)  maxGpuForCurrentCpu = 640;
+      else if (currentCpuMark < 2500)  maxGpuForCurrentCpu = 1280;
+      else if (currentCpuMark < 5000)  maxGpuForCurrentCpu = 3584;
+      else if (currentCpuMark < 10000) maxGpuForCurrentCpu = 5888;
+      else if (currentCpuMark < 18000) maxGpuForCurrentCpu = 10496;
+      else                             maxGpuForCurrentCpu = 999999;
+
+      const matchedGpus = gpuList
+        .filter(g => (parseInt(g.CUDA) || 0) <= maxGpuForCurrentCpu && (parseInt(g.CUDA) || 0) > 0)
+        .sort((a, b) => (parseInt(b.CUDA) || 0) - (parseInt(a.CUDA) || 0));
+
+      const matchedGpu = matchedGpus[0]; // best GPU for the current CPU
+      const gpuIsOverSpec = currentGpuCUDA > maxGpuForCurrentCpu; // GPU is too powerful for the CPU
+
+      result = {
+        recommended: betterCpus.length > 0
+          ? betterCpus[0].cpuName
+          : 'A modern multi-core CPU matched to your GPU tier',
+        improvement: bottleneckData.type === 'cpu'
+          ? 'Up to 40% FPS improvement — CPU is your main bottleneck'
+          : '5–15% FPS improvement — minor gain since CPU is not the issue',
+        compatibility: 'Check motherboard socket type before purchasing (LGA1700, AM5, etc.)',
+        priority: bottleneckData.type === 'cpu'
+          ? '🔴 High Priority — CPU is the bottleneck'
+          : '🟢 Optional — System is not CPU-bottlenecked',
+        tip: bottleneckData.type === 'cpu' && gpuIsOverSpec
+          // CPU is bottleneck AND GPU is over-spec → give both options
+          ? ` Option A — With upgrade budget:\n  → Upgrade CPU to ${betterCpus.length > 0 ? betterCpus[0].cpuName : 'a modern CPU'}.\n  → This unlocks your GPU's full performance and removes the bottleneck.\n\n Option B — No upgrade budget:\n  → Switch GPU to ${matchedGpu ? matchedGpu.Device : 'a smaller GPU'}.\n  → This GPU matches your current CPU — removes bottleneck and may save money.\n  → Selling your current GPU may help offset the cost.`
+          : bottleneckData.type === 'cpu'
+          ? 'Your CPU cannot keep up with the GPU. Upgrading it will give the biggest FPS boost for this build.'
+          : 'Your CPU is performing well. An upgrade is optional unless you plan to get a much more powerful GPU.',
+      };
+
+    //  GPU UPGRADE 
+    } else if (component === 'GPU') {
+      // CRITICAL RULE: Suggested GPU must stay within what the CPU can utilize.
+      // Example: Core2 Duo (cpuMark ~600) → max ~640 CUDA. Suggesting RTX 3060 is wrong.
+
+      // Realistic GPU CUDA ceiling per CPU tier (calibrated to real benchmarks)
+      let maxGpuCUDA;
+      if      (currentCpuMark < 1000)  maxGpuCUDA = 640;    // Very old (Core2, Atom) → GTX 750 Ti class
+      else if (currentCpuMark < 2500)  maxGpuCUDA = 1280;   // Old (i3 2nd gen) → GTX 1060 class
+      else if (currentCpuMark < 5000)  maxGpuCUDA = 3584;   // Low-mid (i5 4th-6th gen) → GTX 1080 Ti class
+      else if (currentCpuMark < 10000) maxGpuCUDA = 5888;   // Mid (i5 8th-10th gen) → RTX 3070 class
+      else if (currentCpuMark < 18000) maxGpuCUDA = 10496;  // Good (i7, Ryzen 7) → RTX 3090 class
+      else if (currentCpuMark < 28000) maxGpuCUDA = 16384;  // High-end (i9, Ryzen 9) → RTX 4090 class
+      else                             maxGpuCUDA = 999999;  // Top-tier → no limit
+
+      // Ideal target: 2× current GPU CUDA, capped by CPU ceiling
+      const idealCUDA = Math.min(currentGpuCUDA * 2, maxGpuCUDA);
+      // Minimum: at least 20% better than current (lowered from 30% to find more options)
+      const minCUDA   = Math.max(256, currentGpuCUDA * 1.2);
+
+      // Find GPUs: better than current AND within the CPU-compatible ceiling
+      let betterGpus = gpuList
+        .filter(g => {
+          const cuda = parseInt(g.CUDA) || 0;
+          return cuda >= minCUDA && cuda <= maxGpuCUDA;
+        })
+        .sort((a, b) => {
+          // Pick closest to ideal (2× current, CPU-capped)
+          const diffA = Math.abs((parseInt(a.CUDA) || 0) - idealCUDA);
+          const diffB = Math.abs((parseInt(b.CUDA) || 0) - idealCUDA);
+          return diffA - diffB;
+        });
+
+      // ── CASE A: A valid GPU upgrade exists within the CPU ceiling ──
+      if (betterGpus.length > 0) {
+        const cpuNote = maxGpuCUDA < 999999
+          ? `Suggestions are capped at your CPU's capability (~${maxGpuCUDA} CUDA). A stronger GPU would just bottleneck your CPU.`
+          : 'Your CPU can handle any GPU without bottlenecking.';
+
+        result = {
+          recommended: betterGpus[0].Device,
+          improvement: bottleneckData.type === 'gpu'
+            ? 'Up to 60% FPS improvement — GPU is your main bottleneck'
+            : '10–25% FPS improvement at higher resolutions',
+          compatibility: `Check PCIe slot, PSU wattage & case clearance. ${cpuNote}`,
+          priority: bottleneckData.type === 'gpu'
+            ? '🔴 High Priority — GPU is the bottleneck'
+            : '🟢 Beneficial — Will improve visual performance',
+          tip: bottleneckData.type === 'gpu'
+            ? `Your GPU is the main bottleneck. Upgrading to ${betterGpus[0].Device} will give the biggest FPS gain for your current CPU.`
+            : `Upgrading your GPU improves FPS at higher resolutions. This suggestion stays within your CPU's ability to feed the GPU.`,
+        };
+
+      // ── CASE B: GPU already at or beyond the CPU ceiling ──
+      // The user CANNOT upgrade GPU without first upgrading CPU.
+      // BUT — if they have no money, suggest a SMALLER GPU that actually MATCHES
+      // their current CPU, eliminating the bottleneck and possibly saving them money.
+      } else {
+
+        // ── Option A (No budget): Find a GPU that MATCHES the current CPU ──
+        // This is the BEST GPU the CPU can properly utilize.
+        // It might be SMALLER than the user's current GPU — that's intentional.
+        // Switching to it removes the mismatch and stops the CPU from being bottlenecked.
+        const matchedGpus = gpuList
+          .filter(g => (parseInt(g.CUDA) || 0) <= maxGpuCUDA && (parseInt(g.CUDA) || 0) > 0)
+          .sort((a, b) => (parseInt(b.CUDA) || 0) - (parseInt(a.CUDA) || 0)); // strongest within CPU limit
+
+        const matchedGpu = matchedGpus[0]; // e.g. GTX 750 Ti for a Core2 Duo
+        const isActualDowngrade = matchedGpu && (parseInt(matchedGpu.CUDA) || 0) < currentGpuCUDA;
+
+        // ── Option B (With budget): Find a CPU that unlocks the current GPU ──
+        // Target CPU mark = the mark needed to properly feed the user's current GPU tier
+        const neededCpuMark = (() => {
+          if      (currentGpuCUDA <= 640)   return 1000;
+          else if (currentGpuCUDA <= 1280)  return 2500;
+          else if (currentGpuCUDA <= 3584)  return 5000;
+          else if (currentGpuCUDA <= 5888)  return 10000;
+          else if (currentGpuCUDA <= 10496) return 18000;
+          else                              return 28000;
+        })();
+
+        const cpuCandidates = cpuList
+          .filter(c => (parseInt(c.cpuMark) || 0) > currentCpuMark)
+          .sort((a, b) => {
+            const diffA = Math.abs((parseInt(a.cpuMark) || 0) - neededCpuMark);
+            const diffB = Math.abs((parseInt(b.cpuMark) || 0) - neededCpuMark);
+            return diffA - diffB;
+          });
+
+        const suggestedCpu = cpuCandidates.length > 0
+          ? cpuCandidates[0].cpuName
+          : 'a modern mid-range CPU';
+
+        result = {
+          // Primary recommendation = the GPU that MATCHES the CPU (may be a downgrade)
+          recommended: matchedGpu
+            ? `${matchedGpu.Device}${isActualDowngrade ? ' (downgrade — better balance with your CPU)' : ' (best match for your CPU)'}`
+            : `Upgrade CPU to ${suggestedCpu} to unlock GPU options`,
+
+          // Explain what switching to the matched GPU actually achieves
+          improvement: isActualDowngrade
+            ? `Switching to ${matchedGpu.Device} removes the CPU bottleneck — your CPU can fully utilize this GPU. You may also sell your current GPU to recover budget.`
+            : `${matchedGpu?.Device} is the most powerful GPU your CPU can currently feed without bottleneck.`,
+
+          // Show the CPU ceiling clearly
+          compatibility: `Your CPU (cpuMark ≈ ${currentCpuMark}) can feed GPUs up to ~${maxGpuCUDA} CUDA. Your current GPU (${currentGpuCUDA} CUDA) exceeds this — causing CPU bottleneck.`,
+
+          // Signal this needs a decision
+          priority: '🟡 Two Paths Available — Choose based on your budget',
+
+          // The tip explains BOTH options clearly so the user can choose
+          tip: `💡 Option A — No upgrade budget:\n  → Switch to ${matchedGpu ? matchedGpu.Device : 'a smaller GPU'}.\n  → This removes the CPU bottleneck entirely.\n  → Your CPU can fully utilize it — better real-world performance.\n  → Selling your current GPU may help offset cost.\n\n💡 Option B — With upgrade budget:\n  → Upgrade CPU to ${suggestedCpu}.\n  → This unlocks your current GPU's full performance.\n  → Return here after CPU upgrade for a GPU recommendation.`,
+        };
+      }
+
+    // ── RAM UPGRADE ────────────────────────────────────────────
+    } else if (component === 'RAM') {
+      // RAM recommendation: context-aware based on current amount and system tier
+      const recommendedRam = currentRamGB < 16 ? 16 : currentRamGB < 32 ? 32 : 64;
+
+      // Also consider whether the CPU is even capable of utilizing more RAM efficiently
+      const ramSpeedSuggestion = currentCpuMark > 10000
+        ? 'DDR5 (if motherboard supports it) or DDR4 3600MHz CL16 for best results.'
+        : 'DDR4 3200MHz is sufficient for this CPU tier.';
+
+      result = {
+        recommended: `${recommendedRam} GB — ${ramSpeedSuggestion}`,
+        improvement: currentRamGB < 16
+          ? 'Up to 30% reduction in stuttering — low RAM is a common bottleneck'
+          : '5–10% improvement in multitasking and background load',
+        compatibility: 'Check maximum RAM supported by your motherboard and available slots',
+        priority: currentRamGB < 16
+          ? '🟠 Recommended — Low RAM causes stuttering in modern games'
+          : '🟢 Optional — Current RAM is adequate for gaming',
+        tip: currentRamGB < 16
+          ? 'Low RAM is causing stuttering and forced page file usage. This is a cheap upgrade with a noticeable real-world difference.'
+          : 'Your RAM is adequate. More RAM mainly helps with multitasking and future-proofing rather than raw FPS gains.',
+      };
+    }
+
+    setSmartRec(result);
+  };
+
+
+  // ============================================================
+  // NEW FEATURE 02 — Explanation Generator
+  // This function returns the explanation text based on:
+  //   - The current bottleneck data (type: cpu / gpu / null)
+  //   - The style selected by the user (technical / nontechnical)
+  //
+  // It is a pure function — it reads state but doesn't modify it.
+  // ============================================================
+  const getExplanation = (data, style) => {
+    // No bottleneck data available yet
+    if (!data) return '';
+
+    // ── CPU Bottleneck Explanations ──
+    if (data.type === 'cpu') {
+      if (style === 'technical') {
+        return `The processor is operating at or near 100% utilization while the GPU still has available compute headroom. This CPU bottleneck scenario occurs because the processor cannot generate render commands fast enough to keep the GPU fully saturated. The result is reduced GPU utilization and lower overall FPS than the graphics card is capable of delivering.`;
+      } else {
+        return `Your computer's brain (the CPU) is working so hard that it's struggling to keep up with your graphics card. Imagine a chef cooking orders too slowly — the kitchen (GPU) is sitting idle waiting. This makes your games run slower than they should.`;
+      }
+    }
+
+    // ── GPU Bottleneck Explanations ──
+    if (data.type === 'gpu') {
+      if (style === 'technical') {
+        return `The GPU is operating at maximum utilization (close to 100% render load) while the CPU still has available processing headroom. This GPU bottleneck occurs because the graphics card cannot render frames fast enough to match the processor's output rate. The result is the CPU waiting on the GPU, which limits overall FPS.`;
+      } else {
+        return `Your graphics card is working much harder than the rest of your computer. It's like a car engine running at full speed but the wheels can't keep up. This slows down your overall gaming performance, especially at higher resolutions.`;
+      }
+    }
+
+    // ── Balanced Build Explanations ──
+    if (style === 'technical') {
+      return `The CPU and GPU are operating with a balanced utilization ratio. Neither component is a significant limiting factor for the other, which means the system can sustain consistent frame delivery. Performance is optimized across both processing units.`;
+    } else {
+      return `Great news! Your CPU and GPU are working well together as a team. Neither one is holding the other back. This means you get smooth, consistent gaming performance without any major weak links in your system.`;
+    }
+  };
+
+
+  // ============================================================
+  // NEW FEATURE 05 — Q&A Generator
+  // This function returns 3 helpful Q&A items based on the
+  // current bottleneck result. The questions and answers
+  // change dynamically depending on whether it's a CPU,
+  // GPU, or balanced build.
+  // ============================================================
+  const generateQA = (data) => {
+    // Default Q&A for when no analysis has been run yet
+    if (!data) {
+      return [
+        { q: 'What is a bottleneck?', a: 'A bottleneck happens when one component in your PC is much slower than the others, limiting overall performance.' },
+        { q: 'How does Project Aura detect bottlenecks?', a: 'Project Aura uses a trained AI model to predict FPS and then checks if your CPU and GPU power levels are balanced.' },
+        { q: 'What should I do first?', a: 'Run an analysis by selecting your CPU, GPU, and game settings, then click "Run Analysis".' },
+      ];
+    }
+
+    // Q&A tailored for CPU bottleneck
+    if (data.type === 'cpu') {
+      return [
+        {
+          q: 'Why is my setup bottlenecked?',
+          a: 'Your CPU has too few cores or is too slow to send enough render commands to keep your GPU busy. The GPU ends up waiting, which reduces your FPS.',
+        },
+        {
+          q: 'Will upgrading the GPU improve my performance?',
+          a: 'Not much — since the CPU is the bottleneck, a stronger GPU would still be limited by the slow processor. Upgrading the CPU first will give you a much bigger improvement.',
+        },
+        {
+          q: 'What should I upgrade first?',
+          a: 'Upgrade your CPU. Look for a modern processor with 6 or more cores. This will free up your GPU to perform at its full potential.',
+        },
+      ];
+    }
+
+    // Q&A tailored for GPU bottleneck
+    if (data.type === 'gpu') {
+      return [
+        {
+          q: 'Why is my setup bottlenecked?',
+          a: 'Your GPU is not powerful enough to keep up with what your CPU is capable of processing. The graphics card becomes the weakest link, capping your FPS.',
+        },
+        {
+          q: 'Will upgrading the GPU improve my performance?',
+          a: 'Yes! Since the GPU is the main limiting component, upgrading to a more powerful graphics card will directly give you higher FPS and smoother gameplay.',
+        },
+        {
+          q: 'What should I upgrade first?',
+          a: 'Upgrade your GPU. Look for a card with a higher CUDA core count or compute score. This will immediately improve your gaming performance.',
+        },
+      ];
+    }
+
+    // Q&A for a balanced, well-matched build
+    return [
+      {
+        q: 'Why is my build performing well?',
+        a: 'Your CPU and GPU are well-matched — neither one is significantly slower than the other, so they work together efficiently.',
+      },
+      {
+        q: 'Should I still upgrade anything?',
+        a: 'There is no urgent need. However, if you want higher FPS at 4K or Ultra settings, upgrading the GPU first usually gives the best improvement.',
+      },
+      {
+        q: 'What is the best future upgrade path?',
+        a: 'Start by upgrading your GPU for better visuals, then upgrade RAM if you\'re multitasking heavily. Your CPU is in good shape.',
+      },
+    ];
+  };
+
+
+  // Auth boundary guard — show login page if not logged in (unchanged)
   if (!currentUser) return <AuthPage onLogin={handleLogin} />;
+
+  // ── Compute the dynamic Q&A for the right sidebar ──
+  // This runs every render, so it always reflects the latest bottleneck result
+  const qaItems = generateQA(bottleneckData);
 
   return (
     <>
-      {/* Navigation */}
+      {/* Navigation — unchanged */}
       <nav className="site-nav">
         <div className="nav-logo">
           <div className="nav-logo-dot" />
@@ -311,234 +846,535 @@ function App() {
         </div>
       </nav>
 
-      <main>
+      {/* ============================================================
+          NEW FEATURE 03 — Three-Column Layout Shell
+          This wraps the existing main content in a responsive 3-column
+          dashboard layout:
+            Left column  → Quick action sidebar buttons
+            Center column → Existing app (completely unchanged)
+            Right column → Results, tips, stores, Q&A panels
+          On tablets and mobile, the sidebars stack or hide appropriately.
+          ============================================================ */}
+      <div className="dashboard-shell">
 
-        {/* Hero */}
-        <section className="hero">
-          <div className="hero-tag">
-            <span className="hero-tag-icon"><IconCpu /></span>
-            Powered by Random Forest AI
-          </div>
-          <h1>Smart Hardware<br />Bottleneck Analyzer</h1>
-          <p>
-            Select your CPU, GPU, resolution and settings — and let Project Aura's
-            trained AI instantly predict your gaming FPS and identify performance bottlenecks.
-          </p>
-          <div className="hero-stats">
-            <div className="stat-item">
-              <div className="stat-value">3.64</div>
-              <div className="stat-label">FPS Error Margin</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">100</div>
-              <div className="stat-label">Forest Trees</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">4K</div>
-              <div className="stat-label">Max Resolution</div>
-            </div>
-          </div>
-        </section>
+        {/* ── LEFT SIDEBAR ─────────────────────────────────────── */}
+        {/* NOTE: Upgrade CPU/GPU/RAM buttons are NOT here — they live in the main
+            results panel below. This sidebar only has explanation shortcuts + help. */}
+        <aside className="left-sidebar">
+          <div className="sidebar-section-title">Quick Actions</div>
 
-        {/* Analyzer */}
-        <section className="analyzer-card" id="analyzer">
-          <div className="card-title">
-            <span className="card-title-icon"><IconBolt /></span>
-            Hardware Configuration
-          </div>
+          {/* Need Help button — reveals store cards and Q&A underneath */}
+          <button
+            id="sidebar-need-help"
+            className={`sidebar-action-btn need-help-btn ${showHelp ? 'active' : ''}`}
+            onClick={() => setShowHelp(prev => !prev)}
+            title="Show Sri Lankan PC stores and helpful Q&A"
+          >
+            <span className="sidebar-btn-icon"><IconQuestion /></span>
+            Need Help?
+          </button>
 
-          {loadingData && (
-            <div style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>
-              <span className="btn-icon" style={{ display: 'inline-block', marginRight: '5px', animation: 'pulse-btn 1.8s infinite' }}>⏳</span>
-              Loading hardware database (CPUs & GPUs)...
-            </div>
-          )}
-
-          <div className="section-label">Your Components</div>
-
-          <div className="form-group">
-            <label>Processor (CPU)</label>
-            {/* Dynamically populated from MongoDB via the /api/cpus API endpoint */}
-            <input
-              type="text" list="cpu-options"
-              placeholder="Type to search CPUs…"
-              value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)}
-            />
-            <datalist id="cpu-options">
-              {cpuList.map((c, i) => <option key={i} value={c.cpuName} />)}
-            </datalist>
-          </div>
-
-          <div className="form-group">
-            <label>Graphics Card (GPU)</label>
-            {/* Dynamically populated from MongoDB via the /api/gpus API endpoint */}
-            <input
-              type="text" list="gpu-options"
-              placeholder="Type to search GPUs…"
-              value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)}
-            />
-            <datalist id="gpu-options">
-              {gpuList.map((g, i) => <option key={i} value={g.Device} />)}
-            </datalist>
-          </div>
-
-          <div className="section-label">Game Settings</div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Resolution</label>
-              <select value={resolution} onChange={e => setResolution(e.target.value)}>
-                <option value="1920x1080">1080p (FHD)</option>
-                <option value="2560x1440">1440p (QHD)</option>
-                <option value="3840x2160">4K (UHD)</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Graphics Quality</label>
-              <select value={settings} onChange={e => setSettings(e.target.value)}>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Ultra">Ultra</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>System RAM</label>
-            <select value={ram} onChange={e => setRam(e.target.value)}>
-              <option value="4">4 GB</option>
-              <option value="8">8 GB</option>
-              <option value="16">16 GB</option>
-              <option value="32">32 GB</option>
-              <option value="64">64 GB</option>
-            </select>
-          </div>
-
-          <div className="action-buttons-row" style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-            <button
-              className={`action-btn${isThinking ? ' loading' : ''}`}
-              onClick={handleConsultAura}
-              disabled={isThinking}
-              style={{ flex: '1', minWidth: '200px' }}
-            >
-              <span className="btn-icon"><IconScan /></span>
-              {isThinking ? 'Aura is Analyzing…' : 'Run Analysis'}
-            </button>
-          </div>
-          {error && (
-            <div className="error-banner" style={{ marginTop: '1rem' }}>
-              <span className="error-icon"><IconWarning /></span>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* If we have a successful prediction, show the Results Wrapper */}
-          {prediction && bottleneckData && (
-            <div className="results-wrapper">
-              
-              {/* Back Button to Reset the UI */}
-              <button 
-                onClick={handleResetAnalysis}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-sub)',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: 'var(--radius)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  marginBottom: '1rem',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-sub)'; }}
-              >
-                <span style={{ width: '18px', height: '18px' }}><IconArrowLeft /></span>
-                Back to Selection
-              </button>
-              <div className={`results-card ${bottleneckData.cardClass}`}>
-                <div className="fps-display">
-                  <div className="fps-label">Predicted Performance</div>
-                  <div className="fps-value">
-                    {prediction}<span className="fps-unit">FPS</span>
-                  </div>
-                  {/* Displays the AI confidence level calculated after running the prediction */}
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    AI Accuracy is: {confidence}%
-                  </div>
+          {showHelp && (
+            <div className="left-sidebar-help-content" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="right-panel-card">
+                <div className="right-panel-heading">
+                  <span className="right-panel-icon"><IconStore /></span>
+                  Sri Lankan PC Stores
                 </div>
-                <div className="bottleneck-header">
-                  <span className="bottleneck-label">Bottleneck Severity</span>
-                  <span className="bottleneck-pct">{bottleneckData.severity}%</span>
-                </div>
-                <div className="bar-track">
-                  <div className="bar-fill" style={{ width: `${bottleneckData.severity}%`, background: bottleneckData.color }} />
-                </div>
-                <div className="bottleneck-msg-wrap">
-                  {bottleneckData.cardClass === 'has-bottleneck-ok' && (
-                    <span className="msg-icon msg-ok"><IconCheck /></span>
-                  )}
-                  {bottleneckData.cardClass === 'has-bottleneck-warning' && (
-                    <span className="msg-icon msg-warn"><IconWarning /></span>
-                  )}
-                  {bottleneckData.cardClass === 'has-bottleneck-severe' && (
-                    <span className="msg-icon msg-err"><IconWarning /></span>
-                  )}
-                  <p className="bottleneck-message">{bottleneckData.message}</p>
+                <div className="store-cards-list">
+                  {SRI_LK_STORES.map((store, index) => (
+                    <div key={index} className="store-card">
+                      <div className="store-card-name">{store.name}</div>
+                      <p className="store-card-desc" style={{ fontSize: '0.8rem' }}>{store.description}</p>
+                      <a
+                        href={store.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="store-card-link"
+                      >
+                        Visit Website
+                        <span className="store-link-icon"><IconExternalLink /></span>
+                      </a>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {recommendation && (
-                <div className="recommendation-card">
-                  <div className="rec-header">
-                    <span className="rec-icon"><IconCheck /></span>
-                    {recommendation.title}
-                  </div>
-                  <div className="rec-hardware">
-                    {recommendation.hardware}
-                  </div>
-                  <p className="rec-desc">
-                    Upgrading to this component will significantly reduce your system bottleneck and increase overall gaming performance.
-                  </p>
+              <div className="right-panel-card">
+                <div className="right-panel-heading">
+                  <span className="right-panel-icon"><IconQuestion /></span>
+                  Helpful Q&amp;A
                 </div>
-              )}
+                <div className="qa-list">
+                  {qaItems.map((item, index) => (
+                    <div key={index} className="qa-item">
+                      <button
+                        className={`qa-question ${openQA === index ? 'open' : ''}`}
+                        onClick={() => setOpenQA(openQA === index ? null : index)}
+                        style={{ fontSize: '0.85rem' }}
+                      >
+                        <span>{item.q}</span>
+                        <span className={`qa-chevron ${openQA === index ? 'rotated' : ''}`}>
+                          <IconChevronDown />
+                        </span>
+                      </button>
+                      {openQA === index && (
+                        <div className="qa-answer" style={{ fontSize: '0.8rem' }}>
+                          <p>{item.a}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
-        </section>
+        </aside>
 
-        {/* About */}
-        <section className="about-section" id="about">
-          <div className="about-header">
-            <div className="about-avatar">SS</div>
-            <div>
-              <div className="about-name">{CONTACT.name}</div>
-              <div className="about-role">{CONTACT.role}</div>
+        {/* ── CENTER — Existing App Content (completely unchanged) ── */}
+        <main>
+
+          {/* Hero — unchanged */}
+          <section className="hero">
+            <div className="hero-tag">
+              <span className="hero-tag-icon"><IconCpu /></span>
+              Powered by Random Forest AI
             </div>
-          </div>
-          <div className="about-bio">
+            <h1>Smart Hardware<br />Bottleneck Analyzer</h1>
             <p>
-              I'm Shamal — a passionate full-stack developer with a focus on building AI-powered tools
-              that solve real-world problems. I enjoy turning raw data into intelligent applications.
+              Select your CPU, GPU, resolution and settings — and let Project Aura's
+              trained AI instantly predict your gaming FPS and identify performance bottlenecks.
             </p>
-            <p>
-              Project Aura is one of my flagship projects — combining machine learning, a Node.js backend,
-              MongoDB Atlas, and React to deliver smart PC hardware insights in seconds.
-            </p>
-          </div>
-          <div className="about-skills">
-            {['React', 'Node.js', 'Python', 'Flask', 'MongoDB', 'scikit-learn', 'Machine Learning', 'REST APIs'].map(s => (
-              <span key={s} className="skill-tag">{s}</span>
-            ))}
-          </div>
-        </section>
+            <div className="hero-stats">
+              <div className="stat-item">
+                <div className="stat-value">3.64</div>
+                <div className="stat-label">FPS Error Margin</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">100</div>
+                <div className="stat-label">Forest Trees</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">4K</div>
+                <div className="stat-label">Max Resolution</div>
+              </div>
+            </div>
+          </section>
 
-      </main>
+          {/* Analyzer Card — unchanged */}
+          <section className="analyzer-card" id="analyzer">
+            <div className="card-title">
+              <span className="card-title-icon"><IconBolt /></span>
+              Hardware Configuration
+            </div>
 
-      {/* Footer */}
+            {loadingData && (
+              <div style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>
+                <span className="btn-icon" style={{ display: 'inline-block', marginRight: '5px', animation: 'pulse-btn 1.8s infinite' }}>⏳</span>
+                Loading hardware database (CPUs & GPUs)...
+              </div>
+            )}
+
+            <div className="section-label">Your Components</div>
+
+            <div className="form-group">
+              <label>Processor (CPU)</label>
+              {/* Dynamically populated from MongoDB via the /api/cpus API endpoint */}
+              <input
+                type="text" list="cpu-options"
+                placeholder="Type to search CPUs…"
+                value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)}
+              />
+              <datalist id="cpu-options">
+                {cpuList.map((c, i) => <option key={i} value={c.cpuName} />)}
+              </datalist>
+            </div>
+
+            <div className="form-group">
+              <label>Graphics Card (GPU)</label>
+              {/* Dynamically populated from MongoDB via the /api/gpus API endpoint */}
+              <input
+                type="text" list="gpu-options"
+                placeholder="Type to search GPUs…"
+                value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)}
+              />
+              <datalist id="gpu-options">
+                {gpuList.map((g, i) => <option key={i} value={g.Device} />)}
+              </datalist>
+            </div>
+
+            <div className="section-label">Game Settings</div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Resolution</label>
+                <select value={resolution} onChange={e => setResolution(e.target.value)}>
+                  <option value="1920x1080">1080p (FHD)</option>
+                  <option value="2560x1440">1440p (QHD)</option>
+                  <option value="3840x2160">4K (UHD)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Graphics Quality</label>
+                <select value={settings} onChange={e => setSettings(e.target.value)}>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Ultra">Ultra</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>System RAM</label>
+              <select value={ram} onChange={e => setRam(e.target.value)}>
+                <option value="4">4 GB</option>
+                <option value="8">8 GB</option>
+                <option value="16">16 GB</option>
+                <option value="32">32 GB</option>
+                <option value="64">64 GB</option>
+              </select>
+            </div>
+
+            <div className="action-buttons-row" style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+              <button
+                className={`action-btn${isThinking ? ' loading' : ''}`}
+                onClick={handleConsultAura}
+                disabled={isThinking}
+                style={{ flex: '1', minWidth: '200px' }}
+              >
+                <span className="btn-icon"><IconScan /></span>
+                {isThinking ? 'Aura is Analyzing…' : 'Run Analysis'}
+              </button>
+            </div>
+            {error && (
+              <div className="error-banner" style={{ marginTop: '1rem' }}>
+                <span className="error-icon"><IconWarning /></span>
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* If we have a successful prediction, show the Results Wrapper */}
+            {prediction && bottleneckData && (
+              <div className="results-wrapper">
+
+                {/* Back Button to Reset the UI — unchanged */}
+                <button
+                  onClick={handleResetAnalysis}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-sub)',
+                    padding: '0.6rem 1.2rem',
+                    borderRadius: 'var(--radius)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    marginBottom: '1rem',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseOver={(e) => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-sub)'; }}
+                >
+                  <span style={{ width: '18px', height: '18px' }}><IconArrowLeft /></span>
+                  Back to Selection
+                </button>
+
+                {/* Existing results card — unchanged */}
+                <div className={`results-card ${bottleneckData.cardClass}`}>
+                  <div className="fps-display">
+                    <div className="fps-label">Predicted Performance</div>
+                    <div className="fps-value">
+                      {prediction}<span className="fps-unit">FPS</span>
+                    </div>
+                    {/* Displays the AI confidence level calculated after running the prediction */}
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      AI Accuracy is: {confidence}%
+                    </div>
+                  </div>
+                  <div className="bottleneck-header">
+                    <span className="bottleneck-label">Bottleneck Severity</span>
+                    <span className="bottleneck-pct">{bottleneckData.severity}%</span>
+                  </div>
+                  <div className="bar-track">
+                    <div className="bar-fill" style={{ width: `${bottleneckData.severity}%`, background: bottleneckData.color }} />
+                  </div>
+                  <div className="bottleneck-msg-wrap">
+                    {bottleneckData.cardClass === 'has-bottleneck-ok' && (
+                      <span className="msg-icon msg-ok"><IconCheck /></span>
+                    )}
+                    {bottleneckData.cardClass === 'has-bottleneck-warning' && (
+                      <span className="msg-icon msg-warn"><IconWarning /></span>
+                    )}
+                    {bottleneckData.cardClass === 'has-bottleneck-severe' && (
+                      <span className="msg-icon msg-err"><IconWarning /></span>
+                    )}
+                    <p className="bottleneck-message">{bottleneckData.message}</p>
+                  </div>
+                </div>
+
+                {/* Existing recommendation card — unchanged */}
+                {recommendation && (
+                  <div className="recommendation-card">
+                    <div className="rec-header">
+                      <span className="rec-icon"><IconCheck /></span>
+                      {recommendation.title}
+                    </div>
+                    <div className="rec-hardware">
+                      {recommendation.hardware}
+                    </div>
+                    <p className="rec-desc">
+                      Upgrading to this component will significantly reduce your system bottleneck and increase overall gaming performance.
+                    </p>
+                  </div>
+                )}
+
+                {/* ============================================================
+                    NEW FEATURE 01 — Smart Component Recommendation Panel
+                    This section only shows when bottleneck severity is 70% or higher.
+                    The user can click CPU, GPU, or RAM to get a tailored upgrade plan.
+                    ============================================================ */}
+                {bottleneckData.severity >= 70 && (
+                  <div className="smart-rec-panel">
+
+                    {/* Panel title */}
+                    <div className="smart-rec-title">
+                      <span className="smart-rec-title-icon"><IconArrowRight /></span>
+                      Upgrade Recommendation
+                    </div>
+
+                    {/* Step 2: Ask the user which component to upgrade */}
+                    <p className="smart-rec-question">Which component would you like to upgrade?</p>
+
+                    {/* Three selectable component cards */}
+                    <div className="smart-rec-choices">
+                      <button
+                        id="smart-rec-cpu-btn"
+                        className={`smart-rec-choice-btn ${selectedUpgradeComponent === 'CPU' ? 'selected' : ''}`}
+                        onClick={() => generateSmartRecommendation('CPU')}
+                      >
+                        <span className="choice-icon"><IconCpu /></span>
+                        CPU
+                      </button>
+                      <button
+                        id="smart-rec-gpu-btn"
+                        className={`smart-rec-choice-btn ${selectedUpgradeComponent === 'GPU' ? 'selected' : ''}`}
+                        onClick={() => generateSmartRecommendation('GPU')}
+                      >
+                        <span className="choice-icon"><IconGpu /></span>
+                        GPU
+                      </button>
+                      <button
+                        id="smart-rec-ram-btn"
+                        className={`smart-rec-choice-btn ${selectedUpgradeComponent === 'RAM' ? 'selected' : ''}`}
+                        onClick={() => generateSmartRecommendation('RAM')}
+                      >
+                        <span className="choice-icon"><IconRam /></span>
+                        RAM
+                      </button>
+                    </div>
+
+                    {/* Step 3 & 4: Show results after a component is selected */}
+                    {smartRec && (
+                      <div className="smart-rec-result">
+
+                        {/* Recommended component name */}
+                        <div className="smart-rec-row">
+                          <span className="smart-rec-label">Recommended</span>
+                          <span className="smart-rec-value highlight">{smartRec.recommended}</span>
+                        </div>
+
+                        {/* Estimated performance improvement */}
+                        <div className="smart-rec-row">
+                          <span className="smart-rec-label">Est. Improvement</span>
+                          <span className="smart-rec-value green">{smartRec.improvement}</span>
+                        </div>
+
+                        {/* Compatibility note */}
+                        <div className="smart-rec-row">
+                          <span className="smart-rec-label">Compatibility</span>
+                          <span className="smart-rec-value">{smartRec.compatibility}</span>
+                        </div>
+
+                        {/* Upgrade priority badge */}
+                        <div className="smart-rec-row">
+                          <span className="smart-rec-label">Priority</span>
+                          <span className="smart-rec-value">{smartRec.priority}</span>
+                        </div>
+
+                        {/* Step 4: Bottleneck tip message */}
+                        <div className="smart-rec-tip">
+                          <span className="tip-icon"><IconInfo /></span>
+                          <p>{smartRec.tip}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ============================================================
+                    NEW FEATURE 02 — Technical / Non-Technical Explanation
+                    This section shows when any results are available.
+                    Two toggle buttons let the user pick their preferred style.
+                    ============================================================ */}
+                <div className="explanation-panel">
+                  <div className="explanation-title">
+                    <span className="explanation-title-icon"><IconInfo /></span>
+                    Performance Explanation
+                  </div>
+
+                  {/* Toggle buttons for explanation style */}
+                  <div className="explanation-toggle">
+                    <button
+                      id="explanation-technical-btn"
+                      className={`exp-toggle-btn ${explanationType === 'technical' ? 'active' : ''}`}
+                      onClick={() => setExplanationType('technical')}
+                    >
+                      Technical Reason
+                    </button>
+                    <button
+                      id="explanation-nontechnical-btn"
+                      className={`exp-toggle-btn ${explanationType === 'nontechnical' ? 'active' : ''}`}
+                      onClick={() => setExplanationType('nontechnical')}
+                    >
+                      Non-Technical Reason
+                    </button>
+                  </div>
+
+                  {/* Show the explanation text when a style is selected */}
+                  {explanationType && (
+                    <div className="explanation-text">
+                      <p>{getExplanation(bottleneckData, explanationType)}</p>
+                    </div>
+                  )}
+
+                  {/* Prompt user to select a style if none chosen yet */}
+                  {!explanationType && (
+                    <p className="explanation-prompt">
+                      Select an explanation style above to understand why this bottleneck is happening.
+                    </p>
+                  )}
+                </div>
+
+              </div>
+            )}
+          </section>
+
+          {/* About Section — unchanged */}
+          <section className="about-section" id="about">
+            <div className="about-header">
+              <div className="about-avatar">SS</div>
+              <div>
+                <div className="about-name">{CONTACT.name}</div>
+                <div className="about-role">{CONTACT.role}</div>
+              </div>
+            </div>
+            <div className="about-bio">
+              <p>
+                I'm Shamal — a passionate full-stack developer with a focus on building AI-powered tools
+                that solve real-world problems. I enjoy turning raw data into intelligent applications.
+              </p>
+              <p>
+                Project Aura is one of my flagship projects — combining machine learning, a Node.js backend,
+                MongoDB Atlas, and React to deliver smart PC hardware insights in seconds.
+              </p>
+            </div>
+            <div className="about-skills">
+              {['React', 'Node.js', 'Python', 'Flask', 'MongoDB', 'scikit-learn', 'Machine Learning', 'REST APIs'].map(s => (
+                <span key={s} className="skill-tag">{s}</span>
+              ))}
+            </div>
+          </section>
+
+        </main>
+
+        {/* ── RIGHT SIDEBAR ────────────────────────────────────── */}
+        <aside className="right-sidebar">
+
+          {/* ── Status summary panel (always visible when results exist) ── */}
+          {bottleneckData ? (
+            <div className="right-panel-card">
+              <div className="right-panel-heading">
+                <span className="right-panel-icon"><IconScan /></span>
+                Analysis Summary
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">FPS</span>
+                <span className="summary-value primary">{prediction}</span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">Severity</span>
+                <span className="summary-value" style={{ color: bottleneckData.color }}>
+                  {bottleneckData.severity}%
+                </span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">Type</span>
+                <span className="summary-value">
+                  {bottleneckData.type ? bottleneckData.type.toUpperCase() + ' Bottleneck' : 'Balanced'}
+                </span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">AI Accuracy</span>
+                <span className="summary-value primary">{confidence}%</span>
+              </div>
+            </div>
+          ) : (
+            /* Placeholder card when no analysis is run yet */
+            <div className="right-panel-card placeholder-card">
+              <div className="right-panel-heading">
+                <span className="right-panel-icon"><IconScan /></span>
+                Analysis Summary
+              </div>
+              <p className="placeholder-text">Run an analysis to see your summary here.</p>
+            </div>
+          )}
+
+          {/* ── Bottleneck Tips panel (always visible) ── */}
+          <div className="right-panel-card">
+            <div className="right-panel-heading">
+              <span className="right-panel-icon"><IconBolt /></span>
+              Bottleneck Tips
+            </div>
+            <ul className="tips-list">
+              <li>A bottleneck above 70% means one component is significantly limiting performance.</li>
+              <li>CPU bottlenecks are common when pairing old processors with new GPUs.</li>
+              <li>GPU bottlenecks are common at high resolutions (1440p / 4K).</li>
+              <li>16 GB RAM is the recommended minimum for modern gaming.</li>
+              <li>Always check component compatibility before purchasing an upgrade.</li>
+            </ul>
+          </div>
+
+          {/* ── Smart Recommendation Summary (shows when user selected a component) ── */}
+          {smartRec && (
+            <div className="right-panel-card rec-summary-card">
+              <div className="right-panel-heading">
+                <span className="right-panel-icon"><IconArrowRight /></span>
+                Upgrade Suggestion
+              </div>
+              <div className="rec-summary-component">
+                Upgrading: <strong>{selectedUpgradeComponent}</strong>
+              </div>
+              <div className="rec-summary-item">
+                <span className="rec-summary-label">Recommended</span>
+                <span className="rec-summary-value">{smartRec.recommended}</span>
+              </div>
+              <div className="rec-summary-item">
+                <span className="rec-summary-label">Improvement</span>
+                <span className="rec-summary-value green">{smartRec.improvement}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Need Help cards moved to Left Sidebar under Need Help button */}
+
+        </aside>
+
+      </div>{/* end .dashboard-shell */}
+
+      {/* Footer — unchanged */}
       <footer className="site-footer" id="contact">
         <div className="footer-top">
 
