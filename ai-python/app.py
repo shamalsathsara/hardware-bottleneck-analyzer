@@ -13,11 +13,19 @@ app = Flask(__name__)
 
 print("Starting Aura AI....")
 
-# 1. Load the AI Brain (the mathematical model) from disk
-model = joblib.load('project_aura.joblib') 
-
-# 2. Load the exact column structure the AI expects to see
-model_columns = joblib.load('ai_columns.joblib') 
+# FIX BUG 11: Load model files inside try/except.
+# Before this fix, a missing .joblib file crashed the whole server at startup
+# with a cryptic FileNotFoundError, giving the user no helpful guidance.
+try:
+    # 1. Load the AI Brain (the mathematical model) from disk
+    model = joblib.load('project_aura.joblib')
+    # 2. Load the exact column structure the AI expects to see
+    model_columns = joblib.load('ai_columns.joblib')
+    print("✅ AI model loaded successfully!")
+except FileNotFoundError as e:
+    print(f"\n❌ Model file not found: {e}")
+    print("   Please run train.py first to generate the model files.")
+    exit(1)
 
 # --------------------------------------------------------------------------
 # PREDICTION API ENDPOINT

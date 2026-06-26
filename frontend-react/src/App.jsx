@@ -291,32 +291,117 @@ function App() {
     })();
   }, []);
 
-  // Calculate hardware imbalances
+  // Calculate hardware imbalances — tier-based engine with calibrated severity curve.
+  // Maps both CPU (by cpuMark) and GPU (by CUDA count) to performance tiers 1–10,
+  // then drives severity from the tier gap using a custom lookup table.
+  //
+  // KEY CALIBRATION RULES:
+  //   • ±1 tier gap = essentially balanced (green, 10%) — very common in real builds
+  //   • ±2 tier gap = mild bottleneck (yellow, 25%)
+  //   • ±3 tier gap = moderate (yellow, 45%)
+  //   • ±4 tier gap = significant (yellow-red, 60%)
+  //   • ±5+ tiers  = severe (red, 75–80%)
   const analyzeBottleneck = (cpu, gpu) => {
-    const cores    = parseInt(cpu.cores) || 6;
-    const gpuPower = parseInt(gpu.CUDA)  || 50000;
+    const cpuMark = parseInt(cpu.cpuMark) || 3000;
+    const gpuCUDA = parseInt(gpu.CUDA)    || 0;
 
-    // Base balanced state
-    let severity = 10, message = '', color = '#10b981', cardClass = 'has-bottleneck-ok', type = null;
+    // ── CPU Performance Tier (by PassMark cpuMark score) ──────────────────
+    // Tier 1 = Core2 Duo era │ Tier 10 = flagship workstation
+    const cpuTier = cpuMark < 1000  ? 1
+                  : cpuMark < 2500  ? 2
+                  : cpuMark < 5000  ? 3
+                  : cpuMark < 8000  ? 4
+                  : cpuMark < 12000 ? 5
+                  : cpuMark < 16000 ? 6
+                  : cpuMark < 20000 ? 7
+                  : cpuMark < 25000 ? 8
+                  : cpuMark < 30000 ? 9 : 10;
 
-    if (cores <= 4 && gpuPower > 80000) {
-      // CPU bottleneck condition
-      severity  = 85;
-      message   = 'CPU Bottleneck: Your processor is way too weak for this graphics card. It is severely holding your FPS back. Upgrade to a modern 6- or 8-core CPU.';
-      color     = '#ef4444'; // Red alert color
-      cardClass = 'has-bottleneck-severe';
-      type      = 'cpu';
-    } else if (cores >= 8 && gpuPower < 30000) {
-      // GPU bottleneck condition
-      severity  = 70;
-      message   = 'GPU Bottleneck: Your graphics card is holding back your high-end processor. Consider upgrading to a GPU with a higher compute score.';
-      color     = '#f59e0b'; // Yellow warning color
-      cardClass = 'has-bottleneck-warning';
-      type      = 'gpu';
+    // ── GPU Performance Tier (G3Dmark × 10 scale — calibrated from actual database values) ──
+    // CRITICAL: the 'CUDA' field in the DB is NOT real CUDA core count.
+    // gpu_data1.csv has no CUDA column, so seed.js sets CUDA = G3Dmark × 10.
+    // That means mid-range gaming GPUs have values in the 70,000–130,000 range:
+    //   GTX 1050 Ti  ≈ 68,000  | GTX 1050  ≈ 65,000
+    //   GTX 1650     = 78,070  | RTX 2050  = 80,070
+    //   GTX 1060 5GB = 87,040
+    //   GTX 1660     = 116,950 | GTX 1660 Ti = 117,940
+    //   GTX 1660 Super = 127,320 | RTX 3050 = 127,180
+    //   GTX 1080     = 152,650 | RTX 2060 Super = 165,140
+    //   RTX 3060 Ti  ≈ 202,060
+    //   RTX 3070     = 220,930 | RTX 3080 = 248,530
+    //   RTX 3090     = 263,950 | RTX 3090 Ti = 290,940
+    //   RTX 4090     ≈ 360,000+
+    // The old tier table topped out at 15,000, so EVERY GPU was mapped to Tier 10
+    // and every CPU (Tier 1–9) showed a massive CPU bottleneck. This is the fix.
+    const gpuTier = gpuCUDA < 15000  ? 1   // Very old (GT 710, GT 1030)
+                  : gpuCUDA < 45000  ? 2   // Old (GTX 750 Ti, GTX 950)
+                  : gpuCUDA < 75000  ? 3   // Budget (GTX 1050, GTX 1050 Ti, GTX 1060 3GB)
+                  : gpuCUDA < 100000 ? 4   // Budget-mid (GTX 1650=78k, RTX 2050=80k, GTX 1060 5GB=87k)
+                  : gpuCUDA < 135000 ? 5   // Mid (GTX 1660=117k, GTX 1660 Super=127k, RTX 3050=127k)
+                  : gpuCUDA < 175000 ? 6   // Upper-mid (GTX 1080=153k, RTX 2060 Super=165k)
+                  : gpuCUDA < 210000 ? 7   // High (RTX 3060 Ti=202k, RTX 2080≈196k)
+                  : gpuCUDA < 260000 ? 8   // Very high (RTX 3070=221k, RTX 3080=249k)
+                  : gpuCUDA < 300000 ? 9   // Flagship (RTX 3090=264k, RTX 3090 Ti=291k)
+                  : 10;                    // Ultra (RTX 4090=360k+)
+
+    // positive diff → CPU stronger (GPU is bottleneck)
+    // negative diff → GPU stronger (CPU is bottleneck)
+    const diff    = cpuTier - gpuTier;
+    const absDiff = Math.abs(diff);
+
+    // Calibrated severity lookup — gentler curve so common builds don't over-alarm.
+    // Index = tier gap (0-6+). Values chosen to reflect real-world impact.
+    const SEVERITY_TABLE = [5, 10, 25, 45, 60, 75, 80];
+    const severity = SEVERITY_TABLE[Math.min(absDiff, 6)];
+
+    let message, color, cardClass, type;
+
+    if (absDiff === 0) {
+      // ── Perfectly Balanced ──
+      type      = null;
+      color     = '#10b981';
+      cardClass = 'has-bottleneck-ok';
+      message   = 'Balanced Build: Your CPU and GPU work perfectly together — solid gaming setup.';
+
+    } else if (absDiff === 1) {
+      // ── 1-tier gap — essentially balanced, still green ──
+      // Very common in real builds (e.g. i5 + GTX 1660 Super). Not a real problem.
+      type      = diff > 0 ? 'gpu' : 'cpu';
+      color     = '#10b981';
+      cardClass = 'has-bottleneck-ok';
+      message   = diff > 0
+        ? 'Slightly GPU-limited: Your CPU is marginally ahead. Performance is still solid — a GPU upgrade would help at 1440p/4K.'
+        : 'Slightly CPU-limited: Your GPU is marginally ahead. Performance is still solid — a CPU upgrade would help in CPU-heavy titles.';
+
+    } else if (diff > 0) {
+      // ── GPU is the clear bottleneck (2+ tiers behind CPU) ──
+      type = 'gpu';
+      if (absDiff >= 5) {
+        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
+        message = 'Severe GPU Bottleneck: Your graphics card is severely holding back your processor. A GPU upgrade will give the biggest performance jump.';
+      } else if (absDiff >= 3) {
+        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
+        message = 'GPU Bottleneck: Your graphics card is noticeably holding back your processor. Consider upgrading to a GPU with a higher compute score.';
+      } else {
+        color = '#f59e0b'; cardClass = 'has-bottleneck-warning';
+        message = 'Mild GPU Bottleneck: Your CPU is a couple tiers ahead of your GPU. A GPU upgrade would give a clear FPS boost, especially at higher resolutions.';
+      }
+
     } else {
-      severity = 5; // Baseline variance
-      message  = 'Balanced Build: Your CPU and GPU work perfectly together — solid gaming setup.';
+      // ── CPU is the clear bottleneck (2+ tiers behind GPU) ──
+      type = 'cpu';
+      if (absDiff >= 5) {
+        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
+        message = 'Severe CPU Bottleneck: Your processor is way too weak for this graphics card. It is severely holding your FPS back. Upgrade to a modern 6- or 8-core CPU.';
+      } else if (absDiff >= 3) {
+        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
+        message = 'CPU Bottleneck: Your CPU is significantly limiting your GPU\'s potential. Upgrading your processor will give a noticeable FPS improvement.';
+      } else {
+        color = '#f59e0b'; cardClass = 'has-bottleneck-warning';
+        message = 'Mild CPU Bottleneck: Your GPU is a couple tiers ahead of your CPU. A CPU upgrade would help unlock more performance in CPU-heavy games.';
+      }
     }
+
     return { severity, message, color, cardClass, type };
   };
 
@@ -421,14 +506,23 @@ function App() {
 
     // Fallback estimates for missing metrics
     const cores = parseInt(fullCpu.cores) || 6;
-    const threads = cores * 2, cpuTDP = cores * 15;
+    const threads = cores * 2;
+    // FIX BUG 7: cores * 15 gave 480W for 32-core CPUs (impossible). Capped at 125W.
+    const cpuTDP = Math.min(cores * 10, 125);
     const cuda = parseInt(fullGpu.CUDA) || 5000;
 
-    // Interpolate missing GPU specs via CUDA grouping
-    let vram = 8, gpuTdp = 150, bandwidth = 256;
-    if      (cuda > 20000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }
-    else if (cuda > 10000) { vram = 16; gpuTdp = 250; bandwidth = 608;  }
-    else if (cuda > 5000)  { vram = 12; gpuTdp = 200; bandwidth = 448;  }
+    // Interpolate GPU specs from CUDA value.
+    // CRITICAL FIX: the DB stores CUDA = G3Dmark × 10 (not actual CUDA core count).
+    // Old thresholds (5000 / 10000 / 20000) are for CUDA core counts.
+    // Every gaming GPU (GTX 1650 = 78,070) was above 20,000, so they ALL received
+    // flagship specs (24 GB VRAM, 350 W TDP, 1008 GB/s bandwidth).
+    // Thresholds are now calibrated to the actual G3Dmark × 10 scale in the DB.
+    let vram = 4, gpuTdp = 75, bandwidth = 128;  // default: GTX 1050 and below
+    if      (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }  // RTX 3090+  (G3D 25k+)
+    else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760;  }  // RTX 3080   (G3D 17.5k-25k)
+    else if (cuda > 100000) { vram = 12; gpuTdp = 200; bandwidth = 448;  }  // RTX 3060 Ti (G3D 10k-17.5k)
+    else if (cuda > 75000)  { vram = 8;  gpuTdp = 130; bandwidth = 256;  }  // GTX 1650-1660 (G3D 7.5k-10k)
+    else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }  // GTX 1050-1060 (G3D 4.5k-7.5k)
 
     // Serialize payload for ML inference
     const payload = {
@@ -447,7 +541,11 @@ function App() {
       if (cpuScore < 3000) {
         finalFps = (cpuScore / 100) + 5;
       } else {
-        finalFps = finalFps - finalFps * (analysis.severity / 100) * 0.70;
+        // FIX BUG 6: penalty now only applies when there IS a real bottleneck (severity > 10).
+        // Before this fix, even a perfectly balanced build was penalized by 3.5%.
+        if (analysis.severity > 10) {
+          finalFps = finalFps - finalFps * (analysis.severity / 100) * 0.70;
+        }
       }
       if (finalFps < 5)   finalFps = 5;
       if (finalFps > 900) finalFps = 900;
@@ -492,8 +590,10 @@ function App() {
   // GPU can be suggested, and vice versa.
   
   const generateSmartRecommendation = (component) => {
-    setSelectedUpgradeComponent(component);
+    // FIX BUG 3: guard must come FIRST — state was being updated before the null check,
+    // which caused a re-render with inconsistent state (component selected, smartRec unchanged).
     if (!bottleneckData) return;
+    setSelectedUpgradeComponent(component);
 
     // Look up the full data objects for the currently selected CPU and GPU
     const currentCpuData = cpuList.find(c => c.cpuName === selectedCpu);
@@ -531,12 +631,15 @@ function App() {
 
       // Also find the best GPU that MATCHES the current CPU
       // (useful if user has no budget for CPU and wants to downgrade GPU instead)
+      // FIX BUG 9: was missing the cpuMark < 28000 tier (i9 / Ryzen 9 range).
+      // Previously jumped straight from 18k → unlimited, inconsistent with GPU upgrade path.
       let maxGpuForCurrentCpu;
       if      (currentCpuMark < 1000)  maxGpuForCurrentCpu = 640;
       else if (currentCpuMark < 2500)  maxGpuForCurrentCpu = 1280;
       else if (currentCpuMark < 5000)  maxGpuForCurrentCpu = 3584;
       else if (currentCpuMark < 10000) maxGpuForCurrentCpu = 5888;
       else if (currentCpuMark < 18000) maxGpuForCurrentCpu = 10496;
+      else if (currentCpuMark < 28000) maxGpuForCurrentCpu = 16384;  // i9 / Ryzen 9 → RTX 4090 class
       else                             maxGpuForCurrentCpu = 999999;
 
       const matchedGpus = gpuList
@@ -1086,8 +1189,8 @@ function App() {
                 <div className={`results-card ${bottleneckData.cardClass}`}>
                   <div className="fps-display">
                     <div className="fps-label">Predicted Performance</div>
-                    <div className="fps-value">
-                      {prediction}<span className="fps-unit">FPS</span>
+                    <div className="fps-value" style={{ color: bottleneckData.color }}>
+                      {prediction}<span className="fps-unit" style={{ color: bottleneckData.color }}>FPS</span>
                     </div>
                     {/* Displays the AI confidence level calculated after running the prediction */}
                     <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -1096,7 +1199,7 @@ function App() {
                   </div>
                   <div className="bottleneck-header">
                     <span className="bottleneck-label">Bottleneck Severity</span>
-                    <span className="bottleneck-pct">{bottleneckData.severity}%</span>
+                    <span className="bottleneck-pct" style={{ color: bottleneckData.color }}>{bottleneckData.severity}%</span>
                   </div>
                   <div className="bar-track">
                     <div className="bar-fill" style={{ width: `${bottleneckData.severity}%`, background: bottleneckData.color }} />
@@ -1133,10 +1236,10 @@ function App() {
 
                 {/* ============================================================
                     NEW FEATURE 01 — Smart Component Recommendation Panel
-                    This section only shows when bottleneck severity is 70% or higher.
-                    The user can click CPU, GPU, or RAM to get a tailored upgrade plan.
+                    Threshold lowered from 70% to 30% so that moderate bottlenecks
+                    (2+ tier gap) also show upgrade suggestions.
                     ============================================================ */}
-                {bottleneckData.severity >= 70 && (
+                {bottleneckData.severity >= 30 && (
                   <div className="smart-rec-panel">
 
                     {/* Panel title */}
