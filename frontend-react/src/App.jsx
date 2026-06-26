@@ -15,12 +15,7 @@ const CONTACT = {
   linkedin: 'https://linkedin.com/in/shamalsathsara',
 };
 
-/* ============================================================
-   NEW FEATURE 04 — Sri Lankan PC Store Data
-   This is a static list of trusted Sri Lankan PC stores.
-   Each store has a name, website link, and a short description.
-   This data is used to display the "Need Help?" store cards.
-   ============================================================ */
+/* Static data for local PC stores used in the Need Help section */
 const SRI_LK_STORES = [
   {
     name: 'Nanotek',
@@ -49,7 +44,7 @@ const SRI_LK_STORES = [
   },
 ];
 
-/* SVG Icon Library — Existing Icons (unchanged) */
+/* SVG Icon Library */
 const IconCpu = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8"/>
@@ -140,9 +135,7 @@ const IconWhatsapp = () => (
   </svg>
 );
 
-/* ============================================================
-   NEW ICONS for the new features
-   ============================================================ */
+/* Additional UI Icons */
 
 /* Icon used for store cards and sidebar headings */
 const IconStore = () => (
@@ -214,7 +207,7 @@ const IconGpu = () => (
 
 /* Main App */
 function App() {
-  // ── EXISTING STATE (unchanged) ──────────────────────────────
+  // ── Session State ──
   // Restore session from localStorage to persist login
   const [currentUser, setCurrentUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('aura_user')) || null; }
@@ -252,26 +245,19 @@ function App() {
   const [error, setError]               = useState(null);
   const [loadingData, setLoadingData]   = useState(true);
 
-  // ── NEW STATE — Feature 01: Smart Component Recommendation Panel ──
-  // Tracks which component the user wants to upgrade (CPU, GPU, or RAM)
+  // ── Smart Recommendation State ──
+  // Tracks which component the user wants to upgrade
   const [selectedUpgradeComponent, setSelectedUpgradeComponent] = useState(null);
-  // Holds the generated smart recommendation object for the chosen component
+  // Holds the generated suggestion
   const [smartRec, setSmartRec] = useState(null);
 
-  // ── NEW STATE — Feature 02: Explanation Type Toggle ──
+  // ── Explanation State ──
   // Tracks whether to show 'technical' or 'nontechnical' explanation
   const [explanationType, setExplanationType] = useState(null);
 
-  // ── NEW STATE — Feature 04 & 05: Need Help Panel ──
-  // Controls whether the store cards and Q&A section are visible
+  // ── Help Panel & Q&A State ──
   const [showHelp, setShowHelp] = useState(false);
-
-  // ── NEW STATE — Feature 05: Q&A Accordion ──
-  // Tracks which Q&A item is currently expanded (by index number)
   const [openQA, setOpenQA] = useState(null);
-
-
-  // ── EXISTING LOGIC (unchanged) ─────────────────────────────
 
   // Parallel fetch for hardware datasets on mount
   useEffect(() => {
@@ -291,22 +277,14 @@ function App() {
     })();
   }, []);
 
-  // Calculate hardware imbalances — tier-based engine with calibrated severity curve.
-  // Maps both CPU (by cpuMark) and GPU (by CUDA count) to performance tiers 1–10,
-  // then drives severity from the tier gap using a custom lookup table.
-  //
-  // KEY CALIBRATION RULES:
-  //   • ±1 tier gap = essentially balanced (green, 10%) — very common in real builds
-  //   • ±2 tier gap = mild bottleneck (yellow, 25%)
-  //   • ±3 tier gap = moderate (yellow, 45%)
-  //   • ±4 tier gap = significant (yellow-red, 60%)
-  //   • ±5+ tiers  = severe (red, 75–80%)
+  // Checks whether the CPU and GPU are a good match.
+  // Both are ranked on a 1–10 performance scale and the tier gap
+  // determines how severe the bottleneck is.
   const analyzeBottleneck = (cpu, gpu) => {
     const cpuMark = parseInt(cpu.cpuMark) || 3000;
     const gpuCUDA = parseInt(gpu.CUDA)    || 0;
 
-    // ── CPU Performance Tier (by PassMark cpuMark score) ──────────────────
-    // Tier 1 = Core2 Duo era │ Tier 10 = flagship workstation
+    // Rank the CPU from 1 (very old) to 10 (flagship) using its PassMark score
     const cpuTier = cpuMark < 1000  ? 1
                   : cpuMark < 2500  ? 2
                   : cpuMark < 5000  ? 3
@@ -317,55 +295,40 @@ function App() {
                   : cpuMark < 25000 ? 8
                   : cpuMark < 30000 ? 9 : 10;
 
-    // ── GPU Performance Tier (G3Dmark × 10 scale — calibrated from actual database values) ──
-    // CRITICAL: the 'CUDA' field in the DB is NOT real CUDA core count.
-    // gpu_data1.csv has no CUDA column, so seed.js sets CUDA = G3Dmark × 10.
-    // That means mid-range gaming GPUs have values in the 70,000–130,000 range:
-    //   GTX 1050 Ti  ≈ 68,000  | GTX 1050  ≈ 65,000
-    //   GTX 1650     = 78,070  | RTX 2050  = 80,070
-    //   GTX 1060 5GB = 87,040
-    //   GTX 1660     = 116,950 | GTX 1660 Ti = 117,940
-    //   GTX 1660 Super = 127,320 | RTX 3050 = 127,180
-    //   GTX 1080     = 152,650 | RTX 2060 Super = 165,140
-    //   RTX 3060 Ti  ≈ 202,060
-    //   RTX 3070     = 220,930 | RTX 3080 = 248,530
-    //   RTX 3090     = 263,950 | RTX 3090 Ti = 290,940
-    //   RTX 4090     ≈ 360,000+
-    // The old tier table topped out at 15,000, so EVERY GPU was mapped to Tier 10
-    // and every CPU (Tier 1–9) showed a massive CPU bottleneck. This is the fix.
-    const gpuTier = gpuCUDA < 15000  ? 1   // Very old (GT 710, GT 1030)
-                  : gpuCUDA < 45000  ? 2   // Old (GTX 750 Ti, GTX 950)
-                  : gpuCUDA < 75000  ? 3   // Budget (GTX 1050, GTX 1050 Ti, GTX 1060 3GB)
-                  : gpuCUDA < 100000 ? 4   // Budget-mid (GTX 1650=78k, RTX 2050=80k, GTX 1060 5GB=87k)
-                  : gpuCUDA < 135000 ? 5   // Mid (GTX 1660=117k, GTX 1660 Super=127k, RTX 3050=127k)
-                  : gpuCUDA < 175000 ? 6   // Upper-mid (GTX 1080=153k, RTX 2060 Super=165k)
-                  : gpuCUDA < 210000 ? 7   // High (RTX 3060 Ti=202k, RTX 2080≈196k)
-                  : gpuCUDA < 260000 ? 8   // Very high (RTX 3070=221k, RTX 3080=249k)
-                  : gpuCUDA < 300000 ? 9   // Flagship (RTX 3090=264k, RTX 3090 Ti=291k)
-                  : 10;                    // Ultra (RTX 4090=360k+)
+    // Rank the GPU from 1 (very old) to 10 (flagship).
+    // The database stores a benchmark score (G3Dmark × 10) in the CUDA column,
+    // so mid-range gaming GPUs like GTX 1650 have values around 78,000.
+    const gpuTier = gpuCUDA < 15000  ? 1   // Very old  (GT 710, GT 1030)
+                  : gpuCUDA < 45000  ? 2   // Old       (GTX 750 Ti, GTX 950)
+                  : gpuCUDA < 75000  ? 3   // Budget    (GTX 1050, GTX 1050 Ti)
+                  : gpuCUDA < 100000 ? 4   // Mid-low   (GTX 1650, RTX 2050)
+                  : gpuCUDA < 135000 ? 5   // Mid       (GTX 1660 Super, RTX 3050)
+                  : gpuCUDA < 175000 ? 6   // Mid-high  (GTX 1080, RTX 2060 Super)
+                  : gpuCUDA < 210000 ? 7   // High      (RTX 3060 Ti, RTX 2080)
+                  : gpuCUDA < 260000 ? 8   // Very high (RTX 3070, RTX 3080)
+                  : gpuCUDA < 300000 ? 9   // Flagship  (RTX 3090, RTX 3090 Ti)
+                  : 10;                    // Ultra     (RTX 4090+)
 
     // positive diff → CPU stronger (GPU is bottleneck)
     // negative diff → GPU stronger (CPU is bottleneck)
     const diff    = cpuTier - gpuTier;
     const absDiff = Math.abs(diff);
 
-    // Calibrated severity lookup — gentler curve so common builds don't over-alarm.
-    // Index = tier gap (0-6+). Values chosen to reflect real-world impact.
+    // Maps the tier gap to a severity percentage — bigger gap means more severe bottleneck
     const SEVERITY_TABLE = [5, 10, 25, 45, 60, 75, 80];
     const severity = SEVERITY_TABLE[Math.min(absDiff, 6)];
 
     let message, color, cardClass, type;
 
     if (absDiff === 0) {
-      // ── Perfectly Balanced ──
+      // Perfectly balanced — great gaming build
       type      = null;
       color     = '#10b981';
       cardClass = 'has-bottleneck-ok';
       message   = 'Balanced Build: Your CPU and GPU work perfectly together — solid gaming setup.';
 
     } else if (absDiff === 1) {
-      // ── 1-tier gap — essentially balanced, still green ──
-      // Very common in real builds (e.g. i5 + GTX 1660 Super). Not a real problem.
+      // Just 1 tier apart — still a solid build, shown in green
       type      = diff > 0 ? 'gpu' : 'cpu';
       color     = '#10b981';
       cardClass = 'has-bottleneck-ok';
@@ -374,7 +337,7 @@ function App() {
         : 'Slightly CPU-limited: Your GPU is marginally ahead. Performance is still solid — a CPU upgrade would help in CPU-heavy titles.';
 
     } else if (diff > 0) {
-      // ── GPU is the clear bottleneck (2+ tiers behind CPU) ──
+      // GPU is the bottleneck — 2 or more tiers behind the CPU
       type = 'gpu';
       if (absDiff >= 5) {
         color = '#ef4444'; cardClass = 'has-bottleneck-severe';
@@ -388,7 +351,7 @@ function App() {
       }
 
     } else {
-      // ── CPU is the clear bottleneck (2+ tiers behind GPU) ──
+      // CPU is the bottleneck — 2 or more tiers behind the GPU
       type = 'cpu';
       if (absDiff >= 5) {
         color = '#ef4444'; cardClass = 'has-bottleneck-severe';
@@ -405,23 +368,21 @@ function App() {
     return { severity, message, color, cardClass, type };
   };
 
-  // Suggest component upgrades based on bottleneck type
-  // Called automatically after analysis runs (shows the original recommendation card)
+  // Returns a quick hardware suggestion shown in the result card after analysis
   const getRecommendation = (type, currentCpu, currentGpu) => {
 
     if (type === 'cpu') {
-      // ── CPU IS THE BOTTLENECK → suggest a better CPU ──
       const currentCpuMark = parseInt(currentCpu.cpuMark) || 3000;
       const currentGpuCUDA = parseInt(currentGpu.CUDA)    || 5000;
 
-      // What CPU mark does this GPU need to be fully utilized without bottleneck?
+      // Find the ideal CPU tier that matches this GPU's performance level
       let targetCpuMark;
-      if      (currentGpuCUDA < 1000)  targetCpuMark = 3000;
-      else if (currentGpuCUDA < 2000)  targetCpuMark = 5000;
-      else if (currentGpuCUDA < 4000)  targetCpuMark = 8000;
-      else if (currentGpuCUDA < 8000)  targetCpuMark = 12000;
-      else if (currentGpuCUDA < 12000) targetCpuMark = 17000;
-      else                             targetCpuMark = 22000;
+      if      (currentGpuCUDA < 45000)  targetCpuMark = 3000;   // old GPU → i3 level
+      else if (currentGpuCUDA < 80000)  targetCpuMark = 5000;   // GTX 1050 → i3/i5 level
+      else if (currentGpuCUDA < 110000) targetCpuMark = 8000;   // GTX 1650 → i5 level
+      else if (currentGpuCUDA < 155000) targetCpuMark = 12000;  // GTX 1660 Super → i5/i7
+      else if (currentGpuCUDA < 215000) targetCpuMark = 17000;  // RTX 3060 Ti → i7 level
+      else                              targetCpuMark = 22000;   // RTX 3080+ → i9/Ryzen 9
 
       // Find CPUs: better than current + closest to what this GPU actually needs
       let candidates = cpuList
@@ -435,31 +396,23 @@ function App() {
       if (candidates.length > 0) return { title: 'Recommended CPU', hardware: candidates[0].cpuName };
 
     } else if (type === 'gpu') {
-      // ── GPU IS THE BOTTLENECK → suggest a better GPU, capped by CPU capability ──
       const currentCpuMark = parseInt(currentCpu.cpuMark) || 3000;
       const currentCUDA    = parseInt(currentGpu.CUDA)    || 0;
 
-      // Realistic GPU CUDA ceiling for each CPU performance tier.
-      // Calibrated to real-world CPU-GPU pairing benchmarks:
-      //   cpuMark < 1000  → Core2 Duo, early Pentiums  → GTX 750 Ti max (~640 CUDA)
-      //   cpuMark < 2500  → i3 2nd-4th gen             → GTX 1060 max (~1280 CUDA)
-      //   cpuMark < 5000  → i5 4th-6th gen             → GTX 1080 Ti max (~3584 CUDA)
-      //   cpuMark < 10000 → i5 8th-10th gen            → RTX 2080 max (~2944 CUDA)
-      //   cpuMark < 18000 → i7, Ryzen 7               → RTX 3080 max (~8704 CUDA)
-      //   cpuMark < 28000 → i9, Ryzen 9               → RTX 4090 range (~16384 CUDA)
+      // Max GPU score this CPU can feed without creating a CPU bottleneck
       let maxGpuCUDA;
-      if      (currentCpuMark < 1000)  maxGpuCUDA = 640;    // Very old → GTX 750 Ti class
-      else if (currentCpuMark < 2500)  maxGpuCUDA = 1280;   // Old CPU → GTX 1060 class
-      else if (currentCpuMark < 5000)  maxGpuCUDA = 3584;   // Low-mid → GTX 1080 Ti class
-      else if (currentCpuMark < 10000) maxGpuCUDA = 5888;   // Mid → RTX 3070 class
-      else if (currentCpuMark < 18000) maxGpuCUDA = 10496;  // Good → RTX 3090 class
-      else if (currentCpuMark < 28000) maxGpuCUDA = 16384;  // High-end → RTX 4090 class
-      else                             maxGpuCUDA = 999999;  // Top-tier → no limit
+      if      (currentCpuMark < 1000)  maxGpuCUDA = 35000;   // very old → GTX 750 Ti class
+      else if (currentCpuMark < 2500)  maxGpuCUDA = 75000;   // old i3 → GTX 1060 class
+      else if (currentCpuMark < 5000)  maxGpuCUDA = 140000;  // mid CPU → GTX 1080 Ti class
+      else if (currentCpuMark < 10000) maxGpuCUDA = 220000;  // i5 → RTX 3070 class
+      else if (currentCpuMark < 18000) maxGpuCUDA = 264000;  // i7/Ryzen 7 → RTX 3090 class
+      else if (currentCpuMark < 28000) maxGpuCUDA = 360000;  // i9/Ryzen 9 → RTX 4090 class
+      else                             maxGpuCUDA = 999999;   // top tier → no limit
 
       const idealCUDA = Math.min(currentCUDA * 2, maxGpuCUDA);
-      const minCUDA   = Math.max(256, currentCUDA * 1.2); // at least 20% better than current
+      const minCUDA   = Math.max(10000, currentCUDA * 1.2);  // at least 20% better than current
 
-      // Find GPUs: better than current AND within CPU-compatible ceiling
+      // Find GPUs that are a genuine upgrade and within what the CPU can handle
       let candidates = gpuList
         .filter(g => {
           const cuda = parseInt(g.CUDA) || 0;
@@ -471,9 +424,8 @@ function App() {
           return diffA - diffB;
         });
 
-      // Fallback: current GPU already at or beyond the CPU ceiling
+      // If no upgrade fits, return the best GPU the current CPU can at least properly use
       if (candidates.length === 0) {
-        // Return the best GPU the CPU can still handle, even if not an upgrade
         candidates = gpuList
           .filter(g => (parseInt(g.CUDA) || 0) <= maxGpuCUDA && (parseInt(g.CUDA) || 0) > 0)
           .sort((a, b) => (parseInt(b.CUDA) || 0) - (parseInt(a.CUDA) || 0));
@@ -504,25 +456,20 @@ function App() {
 
     setIsThinking(true); setPrediction(null); setBottleneck(null); setConfidence(null); setRecommendation(null);
 
-    // Fallback estimates for missing metrics
+    // Get hardware specs, using safe defaults when a database field is missing
     const cores = parseInt(fullCpu.cores) || 6;
     const threads = cores * 2;
-    // FIX BUG 7: cores * 15 gave 480W for 32-core CPUs (impossible). Capped at 125W.
-    const cpuTDP = Math.min(cores * 10, 125);
+    const cpuTDP = Math.min(cores * 10, 125);  // capped at 125W to stay realistic
     const cuda = parseInt(fullGpu.CUDA) || 5000;
 
-    // Interpolate GPU specs from CUDA value.
-    // CRITICAL FIX: the DB stores CUDA = G3Dmark × 10 (not actual CUDA core count).
-    // Old thresholds (5000 / 10000 / 20000) are for CUDA core counts.
-    // Every gaming GPU (GTX 1650 = 78,070) was above 20,000, so they ALL received
-    // flagship specs (24 GB VRAM, 350 W TDP, 1008 GB/s bandwidth).
-    // Thresholds are now calibrated to the actual G3Dmark × 10 scale in the DB.
-    let vram = 4, gpuTdp = 75, bandwidth = 128;  // default: GTX 1050 and below
-    if      (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }  // RTX 3090+  (G3D 25k+)
-    else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760;  }  // RTX 3080   (G3D 17.5k-25k)
-    else if (cuda > 100000) { vram = 12; gpuTdp = 200; bandwidth = 448;  }  // RTX 3060 Ti (G3D 10k-17.5k)
-    else if (cuda > 75000)  { vram = 8;  gpuTdp = 130; bandwidth = 256;  }  // GTX 1650-1660 (G3D 7.5k-10k)
-    else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }  // GTX 1050-1060 (G3D 4.5k-7.5k)
+    // Estimate GPU specs (VRAM, TDP, bandwidth) based on its benchmark score.
+    // These values are sent to the AI model as input features for the FPS prediction.
+    let vram = 4, gpuTdp = 75, bandwidth = 128;  // baseline: budget GPU
+    if      (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }  // RTX 3090+ class
+    else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760;  }  // RTX 3080 class
+    else if (cuda > 100000) { vram = 12; gpuTdp = 200; bandwidth = 448;  }  // RTX 3060 Ti class
+    else if (cuda > 75000)  { vram = 8;  gpuTdp = 130; bandwidth = 256;  }  // GTX 1650–1660 class
+    else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }  // GTX 1050–1060 class
 
     // Serialize payload for ML inference
     const payload = {
@@ -541,8 +488,7 @@ function App() {
       if (cpuScore < 3000) {
         finalFps = (cpuScore / 100) + 5;
       } else {
-        // FIX BUG 6: penalty now only applies when there IS a real bottleneck (severity > 10).
-        // Before this fix, even a perfectly balanced build was penalized by 3.5%.
+        // Only reduce FPS when there's a real bottleneck — balanced builds keep the full score
         if (analysis.severity > 10) {
           finalFps = finalFps - finalFps * (analysis.severity / 100) * 0.70;
         }
@@ -550,10 +496,10 @@ function App() {
       if (finalFps < 5)   finalFps = 5;
       if (finalFps > 900) finalFps = 900;
 
-      // Compute dynamic confidence interval
-      const baseConf = 99.2; // Base confidence level (99.2%)
-      const penalty = (analysis.severity / 100) * 8.5; // Penalty increases with bottleneck severity
-      setConfidence((baseConf - penalty).toFixed(1)); // Subtract penalty and round to 1 decimal place
+      // AI confidence drops slightly when the bottleneck is heavy
+      const baseConf = 99.2;
+      const penalty  = (analysis.severity / 100) * 8.5;
+      setConfidence((baseConf - penalty).toFixed(1));
 
       setPrediction(finalFps.toFixed(1));
       setBottleneck(analysis);
@@ -565,16 +511,13 @@ function App() {
   };
 
 
-  // RESET / BACK BUTTON FUNCTION
-  // This function clears all the currently saved analysis results.
-  // By setting them to "null", the React frontend instantly hides the
-  // results card and returns the user back to the empty hardware selection form.
+  // Clears the current analysis and sends the user back to the selection screen
   const handleResetAnalysis = () => {
     setPrediction(null);
-    setBottleneck(null);        // also reset bottleneckData (was bottleneckData before)
+    setBottleneck(null);
     setRecommendation(null);
     setError(null);
-    // Also reset the new feature states so they don't persist on next run
+    // Clear the smart recommendation panel state too
     setSelectedUpgradeComponent(null);
     setSmartRec(null);
     setExplanationType(null);
@@ -584,15 +527,10 @@ function App() {
 
 
   
-  // NEW FEATURE 01 — Smart Component Recommendation Helper
-  // Called when the user clicks CPU, GPU, or RAM in the results panel.
-  // All recommendations are CPU-GPU aware — a weak CPU limits which
-  // GPU can be suggested, and vice versa.
-  
+  // Shows a tailored upgrade suggestion when the user clicks CPU, GPU, or RAM.
+  // Recommendations always consider both components — a weak CPU limits which GPU can be suggested.
   const generateSmartRecommendation = (component) => {
-    // FIX BUG 3: guard must come FIRST — state was being updated before the null check,
-    // which caused a re-render with inconsistent state (component selected, smartRec unchanged).
-    if (!bottleneckData) return;
+    if (!bottleneckData) return;  // no analysis data yet
     setSelectedUpgradeComponent(component);
 
     // Look up the full data objects for the currently selected CPU and GPU
@@ -606,21 +544,17 @@ function App() {
 
     let result = {};
 
-    //  CPU UPGRADE 
     if (component === 'CPU') {
-      // Goal: find a CPU that is (a) better than current AND
-      //       (b) matched to the GPU's tier so neither bottlenecks the other.
-
-      // What CPU mark does the current GPU actually need?
+      // Find a CPU that is better than current and well-matched to the GPU's performance
       let targetCpuMark;
-      if      (currentGpuCUDA < 1000)  targetCpuMark = 3000;
-      else if (currentGpuCUDA < 2000)  targetCpuMark = 5000;
-      else if (currentGpuCUDA < 4000)  targetCpuMark = 8000;
-      else if (currentGpuCUDA < 8000)  targetCpuMark = 12000;
-      else if (currentGpuCUDA < 12000) targetCpuMark = 17000;
-      else                             targetCpuMark = 22000;
+      if      (currentGpuCUDA < 45000)  targetCpuMark = 3000;   // old GPU → i3 level
+      else if (currentGpuCUDA < 80000)  targetCpuMark = 5000;   // GTX 1050 → i3/i5 level
+      else if (currentGpuCUDA < 110000) targetCpuMark = 8000;   // GTX 1650 → i5 level
+      else if (currentGpuCUDA < 155000) targetCpuMark = 12000;  // GTX 1660 Super → i5/i7
+      else if (currentGpuCUDA < 215000) targetCpuMark = 17000;  // RTX 3060 Ti → i7 level
+      else                              targetCpuMark = 22000;   // RTX 3080+ → i9/Ryzen 9
 
-      // Only suggest CPUs that are genuinely better than current
+      // Sort by closest to what the GPU actually needs
       let betterCpus = cpuList
         .filter(c => (parseInt(c.cpuMark) || 0) > currentCpuMark)
         .sort((a, b) => {
@@ -629,18 +563,15 @@ function App() {
           return diffA - diffB;
         });
 
-      // Also find the best GPU that MATCHES the current CPU
-      // (useful if user has no budget for CPU and wants to downgrade GPU instead)
-      // FIX BUG 9: was missing the cpuMark < 28000 tier (i9 / Ryzen 9 range).
-      // Previously jumped straight from 18k → unlimited, inconsistent with GPU upgrade path.
+      // Also find the best GPU the current CPU can actually use (useful if upgrading the CPU isn't an option)
       let maxGpuForCurrentCpu;
-      if      (currentCpuMark < 1000)  maxGpuForCurrentCpu = 640;
-      else if (currentCpuMark < 2500)  maxGpuForCurrentCpu = 1280;
-      else if (currentCpuMark < 5000)  maxGpuForCurrentCpu = 3584;
-      else if (currentCpuMark < 10000) maxGpuForCurrentCpu = 5888;
-      else if (currentCpuMark < 18000) maxGpuForCurrentCpu = 10496;
-      else if (currentCpuMark < 28000) maxGpuForCurrentCpu = 16384;  // i9 / Ryzen 9 → RTX 4090 class
-      else                             maxGpuForCurrentCpu = 999999;
+      if      (currentCpuMark < 1000)  maxGpuForCurrentCpu = 35000;   // very old → GTX 750 Ti max
+      else if (currentCpuMark < 2500)  maxGpuForCurrentCpu = 75000;   // old i3 → GTX 1060 max
+      else if (currentCpuMark < 5000)  maxGpuForCurrentCpu = 140000;  // mid CPU → GTX 1080 Ti max
+      else if (currentCpuMark < 10000) maxGpuForCurrentCpu = 220000;  // i5 → RTX 3070 max
+      else if (currentCpuMark < 18000) maxGpuForCurrentCpu = 264000;  // i7/Ryzen 7 → RTX 3090 max
+      else if (currentCpuMark < 28000) maxGpuForCurrentCpu = 360000;  // i9/Ryzen 9 → RTX 4090 max
+      else                             maxGpuForCurrentCpu = 999999;   // top tier → no limit
 
       const matchedGpus = gpuList
         .filter(g => (parseInt(g.CUDA) || 0) <= maxGpuForCurrentCpu && (parseInt(g.CUDA) || 0) > 0)
@@ -668,27 +599,22 @@ function App() {
           : 'Your CPU is performing well. An upgrade is optional unless you plan to get a much more powerful GPU.',
       };
 
-    //  GPU UPGRADE 
     } else if (component === 'GPU') {
-      // CRITICAL RULE: Suggested GPU must stay within what the CPU can utilize.
-      // Example: Core2 Duo (cpuMark ~600) → max ~640 CUDA. Suggesting RTX 3060 is wrong.
-
-      // Realistic GPU CUDA ceiling per CPU tier (calibrated to real benchmarks)
+      // Find a GPU that is better than current but won't overpower the CPU
       let maxGpuCUDA;
-      if      (currentCpuMark < 1000)  maxGpuCUDA = 640;    // Very old (Core2, Atom) → GTX 750 Ti class
-      else if (currentCpuMark < 2500)  maxGpuCUDA = 1280;   // Old (i3 2nd gen) → GTX 1060 class
-      else if (currentCpuMark < 5000)  maxGpuCUDA = 3584;   // Low-mid (i5 4th-6th gen) → GTX 1080 Ti class
-      else if (currentCpuMark < 10000) maxGpuCUDA = 5888;   // Mid (i5 8th-10th gen) → RTX 3070 class
-      else if (currentCpuMark < 18000) maxGpuCUDA = 10496;  // Good (i7, Ryzen 7) → RTX 3090 class
-      else if (currentCpuMark < 28000) maxGpuCUDA = 16384;  // High-end (i9, Ryzen 9) → RTX 4090 class
-      else                             maxGpuCUDA = 999999;  // Top-tier → no limit
+      if      (currentCpuMark < 1000)  maxGpuCUDA = 35000;   // very old CPU → GTX 750 Ti class
+      else if (currentCpuMark < 2500)  maxGpuCUDA = 75000;   // old i3 → GTX 1060 class
+      else if (currentCpuMark < 5000)  maxGpuCUDA = 140000;  // mid CPU → GTX 1080 Ti class
+      else if (currentCpuMark < 10000) maxGpuCUDA = 220000;  // i5 → RTX 3070 class
+      else if (currentCpuMark < 18000) maxGpuCUDA = 264000;  // i7/Ryzen 7 → RTX 3090 class
+      else if (currentCpuMark < 28000) maxGpuCUDA = 360000;  // i9/Ryzen 9 → RTX 4090 class
+      else                             maxGpuCUDA = 999999;   // top tier → no limit
 
-      // Ideal target: 2× current GPU CUDA, capped by CPU ceiling
+      // Target roughly 2× the current GPU's score, capped by what the CPU can handle
       const idealCUDA = Math.min(currentGpuCUDA * 2, maxGpuCUDA);
-      // Minimum: at least 20% better than current (lowered from 30% to find more options)
-      const minCUDA   = Math.max(256, currentGpuCUDA * 1.2);
+      const minCUDA   = Math.max(10000, currentGpuCUDA * 1.2);  // at least 20% better
 
-      // Find GPUs: better than current AND within the CPU-compatible ceiling
+      // Find GPUs that are a genuine upgrade and within the CPU's performance ceiling
       let betterGpus = gpuList
         .filter(g => {
           const cuda = parseInt(g.CUDA) || 0;
@@ -701,7 +627,7 @@ function App() {
           return diffA - diffB;
         });
 
-      // ── CASE A: A valid GPU upgrade exists within the CPU ceiling ──
+      // A valid GPU upgrade is available within the CPU's capability
       if (betterGpus.length > 0) {
         const cpuNote = maxGpuCUDA < 999999
           ? `Suggestions are capped at your CPU's capability (~${maxGpuCUDA} CUDA). A stronger GPU would just bottleneck your CPU.`
@@ -721,16 +647,10 @@ function App() {
             : `Upgrading your GPU improves FPS at higher resolutions. This suggestion stays within your CPU's ability to feed the GPU.`,
         };
 
-      // ── CASE B: GPU already at or beyond the CPU ceiling ──
-      // The user CANNOT upgrade GPU without first upgrading CPU.
-      // BUT — if they have no money, suggest a SMALLER GPU that actually MATCHES
-      // their current CPU, eliminating the bottleneck and possibly saving them money.
+      // GPU is already beyond what the CPU can handle — suggest two paths
       } else {
 
-        // ── Option A (No budget): Find a GPU that MATCHES the current CPU ──
-        // This is the BEST GPU the CPU can properly utilize.
-        // It might be SMALLER than the user's current GPU — that's intentional.
-        // Switching to it removes the mismatch and stops the CPU from being bottlenecked.
+        // Option A: find the best GPU the current CPU can actually use (may be a step down)
         const matchedGpus = gpuList
           .filter(g => (parseInt(g.CUDA) || 0) <= maxGpuCUDA && (parseInt(g.CUDA) || 0) > 0)
           .sort((a, b) => (parseInt(b.CUDA) || 0) - (parseInt(a.CUDA) || 0)); // strongest within CPU limit
@@ -738,15 +658,14 @@ function App() {
         const matchedGpu = matchedGpus[0]; // e.g. GTX 750 Ti for a Core2 Duo
         const isActualDowngrade = matchedGpu && (parseInt(matchedGpu.CUDA) || 0) < currentGpuCUDA;
 
-        // ── Option B (With budget): Find a CPU that unlocks the current GPU ──
-        // Target CPU mark = the mark needed to properly feed the user's current GPU tier
+        // Option B: find a CPU upgrade that would let the current GPU work properly
         const neededCpuMark = (() => {
-          if      (currentGpuCUDA <= 640)   return 1000;
-          else if (currentGpuCUDA <= 1280)  return 2500;
-          else if (currentGpuCUDA <= 3584)  return 5000;
-          else if (currentGpuCUDA <= 5888)  return 10000;
-          else if (currentGpuCUDA <= 10496) return 18000;
-          else                              return 28000;
+          if      (currentGpuCUDA <= 45000)  return 1000;   // old GPU → basic CPU needed
+          else if (currentGpuCUDA <= 80000)  return 2500;   // GTX 1050 range
+          else if (currentGpuCUDA <= 140000) return 5000;   // GTX 1650 range
+          else if (currentGpuCUDA <= 220000) return 10000;  // GTX 1660 Super → RTX 3070 range
+          else if (currentGpuCUDA <= 264000) return 18000;  // RTX 3090 range
+          else                               return 28000;  // RTX 4090+ range
         })();
 
         const cpuCandidates = cpuList
@@ -774,21 +693,16 @@ function App() {
 
           // Show the CPU ceiling clearly
           compatibility: `Your CPU (cpuMark ≈ ${currentCpuMark}) can feed GPUs up to ~${maxGpuCUDA} CUDA. Your current GPU (${currentGpuCUDA} CUDA) exceeds this — causing CPU bottleneck.`,
-
-          // Signal this needs a decision
           priority: '🟡 Two Paths Available — Choose based on your budget',
-
-          // The tip explains BOTH options clearly so the user can choose
           tip: `💡 Option A — No upgrade budget:\n  → Switch to ${matchedGpu ? matchedGpu.Device : 'a smaller GPU'}.\n  → This removes the CPU bottleneck entirely.\n  → Your CPU can fully utilize it — better real-world performance.\n  → Selling your current GPU may help offset cost.\n\n💡 Option B — With upgrade budget:\n  → Upgrade CPU to ${suggestedCpu}.\n  → This unlocks your current GPU's full performance.\n  → Return here after CPU upgrade for a GPU recommendation.`,
         };
       }
 
-    // ── RAM UPGRADE ────────────────────────────────────────────
     } else if (component === 'RAM') {
       // RAM recommendation: context-aware based on current amount and system tier
       const recommendedRam = currentRamGB < 16 ? 16 : currentRamGB < 32 ? 32 : 64;
 
-      // Also consider whether the CPU is even capable of utilizing more RAM efficiently
+      // Recommend the right RAM speed based on the CPU's performance tier
       const ramSpeedSuggestion = currentCpuMark > 10000
         ? 'DDR5 (if motherboard supports it) or DDR4 3600MHz CL16 for best results.'
         : 'DDR4 3200MHz is sufficient for this CPU tier.';
@@ -812,19 +726,11 @@ function App() {
   };
 
 
-  // ============================================================
-  // NEW FEATURE 02 — Explanation Generator
-  // This function returns the explanation text based on:
-  //   - The current bottleneck data (type: cpu / gpu / null)
-  //   - The style selected by the user (technical / nontechnical)
-  //
-  // It is a pure function — it reads state but doesn't modify it.
-  // ============================================================
+  // Returns an explanation of the bottleneck — either simplified or technical
+  // depending on what the user selects.
   const getExplanation = (data, style) => {
-    // No bottleneck data available yet
     if (!data) return '';
 
-    // ── CPU Bottleneck Explanations ──
     if (data.type === 'cpu') {
       if (style === 'technical') {
         return `The processor is operating at or near 100% utilization while the GPU still has available compute headroom. This CPU bottleneck scenario occurs because the processor cannot generate render commands fast enough to keep the GPU fully saturated. The result is reduced GPU utilization and lower overall FPS than the graphics card is capable of delivering.`;
@@ -931,10 +837,11 @@ function App() {
 
   return (
     <>
-      {/* Navigation — unchanged */}
+      {/* Navigation */}
       <nav className="site-nav">
         <div className="nav-logo">
-          <div className="nav-logo-dot" />
+          <div className="nav-logo-glow" />
+          <div className="nav-logo-border" />
           Project Aura
         </div>
         <div className="nav-links">
@@ -949,20 +856,9 @@ function App() {
         </div>
       </nav>
 
-      {/* ============================================================
-          NEW FEATURE 03 — Three-Column Layout Shell
-          This wraps the existing main content in a responsive 3-column
-          dashboard layout:
-            Left column  → Quick action sidebar buttons
-            Center column → Existing app (completely unchanged)
-            Right column → Results, tips, stores, Q&A panels
-          On tablets and mobile, the sidebars stack or hide appropriately.
-          ============================================================ */}
       <div className="dashboard-shell">
 
-        {/* ── LEFT SIDEBAR ─────────────────────────────────────── */}
-        {/* NOTE: Upgrade CPU/GPU/RAM buttons are NOT here — they live in the main
-            results panel below. This sidebar only has explanation shortcuts + help. */}
+        {/* ── LEFT SIDEBAR ── */}
         <aside className="left-sidebar">
           <div className="sidebar-section-title">Quick Actions</div>
 
@@ -1034,10 +930,10 @@ function App() {
           )}
         </aside>
 
-        {/* ── CENTER — Existing App Content (completely unchanged) ── */}
+        {/* ── CENTER CONTENT ── */}
         <main>
 
-          {/* Hero — unchanged */}
+          {/* Hero Section */}
           <section className="hero">
             <div className="hero-tag">
               <span className="hero-tag-icon"><IconCpu /></span>
@@ -1064,7 +960,7 @@ function App() {
             </div>
           </section>
 
-          {/* Analyzer Card — unchanged */}
+          {/* Hardware Selection Analyzer */}
           <section className="analyzer-card" id="analyzer">
             <div className="card-title">
               <span className="card-title-icon"><IconBolt /></span>
@@ -1161,7 +1057,7 @@ function App() {
             {prediction && bottleneckData && (
               <div className="results-wrapper">
 
-                {/* Back Button to Reset the UI — unchanged */}
+                {/* Back Button */}
                 <button
                   onClick={handleResetAnalysis}
                   style={{
@@ -1218,7 +1114,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* Existing recommendation card — unchanged */}
+                {/* Hardware Upgrade Recommendation */}
                 {recommendation && (
                   <div className="recommendation-card">
                     <div className="rec-header">
@@ -1234,11 +1130,7 @@ function App() {
                   </div>
                 )}
 
-                {/* ============================================================
-                    NEW FEATURE 01 — Smart Component Recommendation Panel
-                    Threshold lowered from 70% to 30% so that moderate bottlenecks
-                    (2+ tier gap) also show upgrade suggestions.
-                    ============================================================ */}
+                {/* Smart Component Recommendation Panel */}
                 {bottleneckData.severity >= 30 && (
                   <div className="smart-rec-panel">
 
@@ -1317,11 +1209,7 @@ function App() {
                   </div>
                 )}
 
-                {/* ============================================================
-                    NEW FEATURE 02 — Technical / Non-Technical Explanation
-                    This section shows when any results are available.
-                    Two toggle buttons let the user pick their preferred style.
-                    ============================================================ */}
+                {/* Explanation Panel (Technical/Non-Technical) */}
                 <div className="explanation-panel">
                   <div className="explanation-title">
                     <span className="explanation-title-icon"><IconInfo /></span>
@@ -1365,7 +1253,7 @@ function App() {
             )}
           </section>
 
-          {/* About Section — unchanged */}
+          {/* About Section */}
           <section className="about-section" id="about">
             <div className="about-header">
               <div className="about-avatar">SS</div>
@@ -1477,7 +1365,7 @@ function App() {
 
       </div>{/* end .dashboard-shell */}
 
-      {/* Footer — unchanged */}
+      {/* Footer */}
       <footer className="site-footer" id="contact">
         <div className="footer-top">
 

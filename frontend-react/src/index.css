@@ -97,9 +97,9 @@ body::after {
 }
 
 .nav-logo {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
   font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: -0.02em;
@@ -109,19 +109,69 @@ body::after {
   background-clip: text;
 }
 
-.nav-logo-dot {
-  width: 8px; height: 8px;
-  background: #38bdf8;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #38bdf8;
-  animation: blink 2s ease-in-out infinite;
+/* ── Premium Animated Border ── */
+.nav-logo-border, .nav-logo-glow {
+  position: absolute;
   -webkit-background-clip: unset;
-  -webkit-text-fill-color: unset;
+  -webkit-text-fill-color: initial;
   background-clip: unset;
+  pointer-events: none;
 }
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+/* Sharp traveling border */
+.nav-logo-border {
+  inset: -6px -14px;
+  border-radius: 14px;
+  padding: 2px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 1;
+}
+
+.nav-logo-border::before {
+  content: "";
+  position: absolute;
+  top: -150%; left: -150%;
+  width: 400%; height: 400%;
+  background: conic-gradient(
+    transparent 70%, 
+    #3b82f6 85%, 
+    #60a5fa 95%, 
+    #38bdf8 100%
+  );
+  animation: logo-border-spin 3s linear infinite;
+}
+
+/* Soft outer glow */
+.nav-logo-glow {
+  inset: -12px -20px;
+  border-radius: 20px;
+  padding: 8px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 0;
+  opacity: 0.65;
+}
+
+.nav-logo-glow::before {
+  content: "";
+  position: absolute;
+  top: -150%; left: -150%;
+  width: 400%; height: 400%;
+  background: conic-gradient(
+    transparent 70%, 
+    #3b82f6 85%, 
+    #60a5fa 95%, 
+    #38bdf8 100%
+  );
+  filter: blur(6px);
+  animation: logo-border-spin 3s linear infinite;
+}
+
+@keyframes logo-border-spin {
+  100% { transform: rotate(360deg); }
 }
 
 .nav-links {
