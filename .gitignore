@@ -17,3 +17,6 @@ env/
 # Mac/System
 .DS_Store
 Thumbs.db
+
+# Test Cases
+Test_Cases_Project_Aura.html
