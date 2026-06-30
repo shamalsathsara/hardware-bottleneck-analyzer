@@ -9,9 +9,19 @@ const bcrypt   = require('bcryptjs');         // Used to encrypt/hash passwords 
 const jwt      = require('jsonwebtoken');     // Used to generate login tokens
 const rateLimit = require('express-rate-limit'); // Security tool to prevent brute-force login attacks
 const User     = require('../models/User');   // Our MongoDB User database model
+const nodemailer = require('nodemailer');       // Used to send real emails
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET; // The master key used to sign tokens (from .env)
+
+// Setup Nodemailer transporter using Gmail
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // Helper function: Generates a JWT token valid for 7 days
 function signToken(user) {
@@ -141,12 +151,30 @@ router.post('/forgot-password', async (req, res) => {
     user.resetCodeExpires = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    // Step 1d: "Send" the email. Since we don't have a real email server hooked up, 
-    // we are just printing it to the backend terminal so you can test it!
-    console.log('\n=============================================');
-    console.log(`🔐 PASSWORD RESET CODE FOR ${user.email}`);
-    console.log(`CODE: ${code}`);
-    console.log('=============================================\n');
+    // Step 1d: Send the email using Nodemailer.
+    try {
+      await transporter.sendMail({
+        from: `"Project Aura" <${process.env.EMAIL_USER}>`,
+        to: user.email,
+        subject: 'Password Reset Code - Project Aura',
+        text: `Your password reset code is: ${code}\n\nThis code will expire in 15 minutes.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+            <h2 style="color: #333;">Password Reset Request</h2>
+            <p style="color: #555; font-size: 16px;">We received a request to reset the password for your Project Aura account.</p>
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+              <span style="font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #000;">${code}</span>
+            </div>
+            <p style="color: #555; font-size: 14px;">This code will expire in 15 minutes.</p>
+            <p style="color: #999; font-size: 12px; margin-top: 30px;">If you didn't request this, you can safely ignore this email.</p>
+          </div>
+        `
+      });
+      console.log(`[EMAIL SENT] Password reset code sent to ${user.email}`);
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      // We still return the generic success message below to prevent email enumeration
+    }
 
     res.json({ message: 'If an account with that email exists, a reset code has been sent.' });
   } catch (err) {
