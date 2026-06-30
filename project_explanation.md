@@ -325,3 +325,21 @@ Five new user-facing features were added to Project Aura. These features are **p
 | Three-Column Layout | Always visible | Whole page layout | Always |
 | Need Help? Stores | Click "Need Help?" | Left sidebar | After clicking button |
 | Auto Q&A | Click "Need Help?" | Left sidebar | After clicking button |
+| Live Sri Lankan Pricing & PDF | View Live Pricing button | Center (New view page) | After analysis results are loaded |
+
+---
+
+### Feature 06 — Live Sri Lankan Pricing & A4 PDF Quotation System
+
+**Where it appears:** 
+* A new button **"View Live Pricing Quotation"** is visible on the performance results card after running an analysis.
+* Clicking this button navigates the user to a clean, dedicated sub-page inside the app.
+
+**How it works:**
+1. **Dynamic Hardware Extraction**: The React frontend passes the user's selected CPU model, GPU model, and system memory (RAM) capacity to the Node.js backend.
+2. **AI Price Query**: The backend hits the `/api/pricing/estimate` endpoint, invoking the Google Gemini AI model (`gemini-2.5-flash`). The AI acts as a pricing expert and processes the prompt to return estimated average market prices in Sri Lankan Rupees (LKR) formatted as a raw JSON string.
+3. **No-Crash Price Rendering**: The frontend parses this JSON, utilizing fallback protection (e.g. `prices.cpuPriceLkr || 0`) to prevent any application crashes in case of network lags or incomplete AI responses.
+4. **Interactive Disclaimer**: The UI displays a prominent warning informing the user that these are AI-estimated average market prices that may vary between actual physical stores.
+5. **Printer-Friendly A4 PDF Generator**: When the user clicks **"Download A4 PDF"**, the client-side libraries `jsPDF` and `jsPDF-AutoTable` draw a clean, black-and-white grid table matching standard A4 dimensions. 
+6. **Smart Spacing Logic**: Instead of hardcoding text coordinates (which causes overlapping text when rows change height), the script fetches `doc.lastAutoTable.finalY` (the exact coordinate where the table finished rendering) and uses it as a relative anchor to draw the total price and disclaimer fields neatly below the table.
+

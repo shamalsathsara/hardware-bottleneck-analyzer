@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import AuthPage from './AuthPage';
+import MyRigs from './MyRigs';
+import Quotation from './Quotation';
 
 /*  Contact Info*/
 const CONTACT = {
@@ -258,6 +260,14 @@ function App() {
   // ── Help Panel & Q&A State ──
   const [showHelp, setShowHelp] = useState(false);
   const [openQA, setOpenQA] = useState(null);
+
+  // ── Navigation State ──
+  // Toggle between the main analyzer view and the user's saved rigs view
+  const [currentView, setCurrentView] = useState('analyzer');
+
+  // ── Modal State ──
+  const [showSaveRigModal, setShowSaveRigModal] = useState(false);
+  const [rigNameInput, setRigNameInput] = useState('');
 
   // Parallel fetch for hardware datasets on mount
   useEffect(() => {
@@ -538,7 +548,7 @@ function App() {
     const currentGpuData = gpuList.find(g => g.Device  === selectedGpu);
 
     const currentCpuMark  = parseInt(currentCpuData?.cpuMark) || 3000;
-    const currentCpuCores = parseInt(currentCpuData?.cores)   || 4;
+    const currentCpuCores = parseInt(currentCpuData?.cores)   || 4; // eslint-disable-line no-unused-vars
     const currentGpuCUDA  = parseInt(currentGpuData?.CUDA)    || 5000;
     const currentRamGB    = parseInt(ram) || 16;
 
@@ -845,9 +855,10 @@ function App() {
           Project Aura
         </div>
         <div className="nav-links">
-          <a href="#analyzer">Analyzer</a>
-          <a href="#about">About</a>
-          <a href="#contact">Contact</a>
+          <a href="#analyzer" onClick={(e) => { e.preventDefault(); setCurrentView('analyzer'); }}>Analyzer</a>
+          <a href="#my-rigs" onClick={(e) => { e.preventDefault(); setCurrentView('my-rigs'); }}>My Rigs</a>
+          <a href="#about" onClick={(e) => { if(currentView !== 'analyzer') { e.preventDefault(); setCurrentView('analyzer'); setTimeout(() => window.location.hash = 'about', 100); } }}>About</a>
+          <a href="#contact" onClick={(e) => { if(currentView !== 'analyzer') { e.preventDefault(); setCurrentView('analyzer'); setTimeout(() => window.location.hash = 'contact', 100); } }}>Contact</a>
           <span className="nav-badge">AI Powered</span>
           <div className="nav-user-info">
             <span className="nav-username">{currentUser.username}</span>
@@ -856,6 +867,29 @@ function App() {
         </div>
       </nav>
 
+      {/* Conditionally render views */}
+      {currentView === 'quotation' ? (
+        <Quotation 
+            cpu={selectedCpu}
+            gpu={selectedGpu}
+            ram={ram}
+            onBack={() => setCurrentView('analyzer')}
+        />
+      ) : currentView === 'my-rigs' ? (
+        <MyRigs 
+          currentUser={currentUser} 
+          onBack={() => setCurrentView('analyzer')} 
+          onLoadRig={(rig) => {
+            // Fill the analyzer inputs with the saved rig's details
+            setSelectedCpu(rig.cpu);
+            setSelectedGpu(rig.gpu);
+            setRam(rig.ram);
+            setResolution(rig.resolution);
+            // Switch back to the analyzer view automatically
+            setCurrentView('analyzer');
+          }}
+        />
+      ) : (
       <div className="dashboard-shell">
 
         {/* ── LEFT SIDEBAR ── */}
@@ -1045,6 +1079,21 @@ function App() {
                 <span className="btn-icon"><IconScan /></span>
                 {isThinking ? 'Aura is Analyzing…' : 'Run Analysis'}
               </button>
+              
+              {/* Save this PC Button */}
+              <button
+                className="save-pc-btn"
+                onClick={() => {
+                  if (!selectedCpu || !selectedGpu) {
+                    setError('Please select a CPU and GPU before saving.');
+                    return;
+                  }
+                  setRigNameInput('');
+                  setShowSaveRigModal(true);
+                }}
+              >
+                 Save this PC
+              </button>
             </div>
             {error && (
               <div className="error-banner" style={{ marginTop: '1rem' }}>
@@ -1081,7 +1130,7 @@ function App() {
                   Back to Selection
                 </button>
 
-                {/* Existing results card — unchanged */}
+                {/* Existing results card */}
                 <div className={`results-card ${bottleneckData.cardClass}`}>
                   <div className="fps-display">
                     <div className="fps-label">Predicted Performance</div>
@@ -1111,6 +1160,16 @@ function App() {
                       <span className="msg-icon msg-err"><IconWarning /></span>
                     )}
                     <p className="bottleneck-message">{bottleneckData.message}</p>
+                  </div>
+
+                  <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <button 
+                      onClick={() => setCurrentView('quotation')}
+                      className="save-pc-btn"
+                      style={{ background: 'rgba(56,189,248,0.1)' }}
+                    >
+                      <span className="btn-icon"><IconScan /></span> View Live Pricing Quotation
+                    </button>
                   </div>
                 </div>
 
@@ -1363,7 +1422,8 @@ function App() {
 
         </aside>
 
-      </div>{/* end .dashboard-shell */}
+      </div>
+      )}
 
       {/* Footer */}
       <footer className="site-footer" id="contact">
@@ -1437,6 +1497,68 @@ function App() {
           <p>Built with React · Node.js · Python · MongoDB</p>
         </div>
       </footer>
+
+      {/* ── SAVE RIG MODAL ── */}
+      {showSaveRigModal && (
+        <div className="modal-overlay" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+          backdropFilter: 'blur(5px)'
+        }}>
+          <div className="modal-content" style={{
+            background: 'var(--surface)', padding: '2rem', borderRadius: 'var(--radius)',
+            border: '1px solid var(--border)', width: '90%', maxWidth: '400px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-main)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '1.2rem' }}>💾</span> Save this PC
+            </h3>
+            <p style={{ color: 'var(--text-sub)', marginBottom: '1rem', fontSize: '0.95rem' }}>Give this PC a name (e.g. "My Gaming Rig"):</p>
+            <input 
+              type="text" 
+              value={rigNameInput}
+              onChange={(e) => setRigNameInput(e.target.value)}
+              placeholder="My Awesome PC"
+              style={{
+                width: '100%', padding: '0.8rem', borderRadius: 'var(--radius)',
+                border: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)', boxSizing: 'border-box',
+                color: 'var(--text-main)', marginBottom: '1.5rem', outline: 'none', fontSize: '1rem'
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button 
+                onClick={() => setShowSaveRigModal(false)}
+                style={{ background: 'transparent', color: 'var(--text-main)', border: '1px solid var(--border)', padding: '0.6rem 1.2rem', borderRadius: 'var(--radius)', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  if (!rigNameInput.trim()) return;
+                  try {
+                    const token = localStorage.getItem('aura_token');
+                    await axios.post(`${import.meta.env.VITE_API_URL}/api/user/rigs`, 
+                      { name: rigNameInput.trim(), cpu: selectedCpu, gpu: selectedGpu, ram, resolution },
+                      { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    setShowSaveRigModal(false);
+                    alert('PC Saved successfully! You can view it in the "My Rigs" tab.');
+                  // eslint-disable-next-line no-unused-vars
+                  } catch (_err) {
+                    setError('Failed to save PC. Please try again.');
+                    setShowSaveRigModal(false);
+                  }
+                }}
+                disabled={!rigNameInput.trim()}
+                style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '0.6rem 1.2rem', borderRadius: 'var(--radius)', cursor: rigNameInput.trim() ? 'pointer' : 'not-allowed', fontWeight: 'bold', opacity: rigNameInput.trim() ? 1 : 0.5 }}
+              >
+                Save PC
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 }

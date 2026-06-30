@@ -23,6 +23,23 @@ const userSchema = new mongoose.Schema(
     // We also save the exact time the code should expire (15 minutes from creation).
     // If they try to use the code after this time, the system will reject it.
     resetCodeExpires: { type: Date },
+
+    // --------------------------------------------------------------------------
+    // SAVED HARDWARE PROFILES ("MY RIGS")
+    // --------------------------------------------------------------------------
+    // This allows the user to save different PC setups so they don't have to 
+    // re-enter them manually every time they visit the site.
+    savedRigs: [
+      {
+        name:       { type: String, required: true }, // e.g., "My Gaming PC" or "Living Room Build"
+        cpu:        { type: String, required: true },
+        gpu:        { type: String, required: true },
+        ram:        { type: String, required: true },
+        resolution: { type: String, required: true },
+        // We save the exact date they added this rig to their profile
+        createdAt:  { type: Date, default: Date.now }
+      }
+    ]
   },
   // Automatically adds "createdAt" and "updatedAt" timestamps to every user
   { timestamps: true }

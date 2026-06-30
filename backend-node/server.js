@@ -11,6 +11,8 @@ const axios    = require('axios')    // HTTP client to send data to the Python A
 require('dotenv').config();          // Loads secret variables from the .env file
 
 const authRouter = require('./routes/auth'); // Import our login/register routes
+const userRouter = require('./routes/user'); // Import our user profile/rigs routes
+const pricingRouter = require('./routes/pricing'); // Import dynamic Gemini pricing
 
 const app  = express();
 const PORT = process.env.PORT || 4000; // Run on port 4000 unless specified otherwise
@@ -23,6 +25,12 @@ app.use(express.json()); // Tells the server to understand incoming JSON data (l
 
 // Auth routes (handles /api/auth/login and /api/auth/register)
 app.use('/api/auth', authRouter);
+
+// User profile routes (handles /api/user/rigs)
+app.use('/api/user', userRouter);
+
+// Pricing routes
+app.use('/api/pricing', pricingRouter);
 
 // --------------------------------------------------------------------------
 // DATABASE CONFIGURATION

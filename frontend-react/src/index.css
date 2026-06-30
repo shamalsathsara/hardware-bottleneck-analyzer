@@ -441,6 +441,33 @@ input[type="text"]::placeholder {
   50%       { box-shadow: 0 4px 44px rgba(56,189,248,0.5); }
 }
 
+/* Save this PC Button */
+.save-pc-btn {
+  flex: none;
+  background: linear-gradient(135deg, rgba(56,189,248,0.1) 0%, rgba(56,189,248,0) 100%);
+  border: 1px solid rgba(56,189,248,0.5);
+  color: var(--primary);
+  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.5rem 1.2rem;
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.save-pc-btn:hover {
+  background: linear-gradient(135deg, rgba(56,189,248,0.2) 0%, rgba(56,189,248,0.05) 100%);
+  border-color: var(--primary);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.15);
+  transform: translateY(-1px);
+}
+
 /*  Error Banner*/
 .error-banner {
   display: flex; align-items: flex-start; gap: 0.6rem;
