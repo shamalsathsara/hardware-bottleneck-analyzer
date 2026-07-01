@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// --------------------------------------------------------------------------
-// ICONS
-// --------------------------------------------------------------------------
+// Component SVG Icons
 const IconTrash = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="3 6 5 6 21 6" />
@@ -25,9 +23,7 @@ const IconUser = () => (
   </svg>
 );
 
-// --------------------------------------------------------------------------
-// MY RIGS COMPONENT
-// --------------------------------------------------------------------------
+// Main MyRigs Component
 export default function MyRigs({ currentUser, onLoadRig, onBack }) {
   const [rigs, setRigs] = useState([]);
   const [loading, setLoading] = useState(true);

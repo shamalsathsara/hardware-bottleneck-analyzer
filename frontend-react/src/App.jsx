@@ -211,7 +211,7 @@ const IconGpu = () => (
 
 /* Main App */
 function App() {
-  // ── Session State ──
+  // Session State
   // Restore session from localStorage to persist login
   const [currentUser, setCurrentUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('aura_user')) || null; }
@@ -249,25 +249,25 @@ function App() {
   const [error, setError]               = useState(null);
   const [loadingData, setLoadingData]   = useState(true);
 
-  // ── Smart Recommendation State ──
+  // Smart Recommendation State
   // Tracks which component the user wants to upgrade
   const [selectedUpgradeComponent, setSelectedUpgradeComponent] = useState(null);
   // Holds the generated suggestion
   const [smartRec, setSmartRec] = useState(null);
 
-  // ── Explanation State ──
+  // Explanation State
   // Tracks whether to show 'technical' or 'nontechnical' explanation
   const [explanationType, setExplanationType] = useState(null);
 
-  // ── Help Panel & Q&A State ──
+  // Help Panel & Q&A State
   const [showHelp, setShowHelp] = useState(false);
   const [openQA, setOpenQA] = useState(null);
 
-  // ── Navigation State ──
+  // Navigation State
   // Toggle between the main analyzer view and the user's saved rigs view
   const [currentView, setCurrentView] = useState('analyzer');
 
-  // ── Modal State ──
+  // Modal State
   const [showSaveRigModal, setShowSaveRigModal] = useState(false);
   const [rigNameInput, setRigNameInput] = useState('');
 
@@ -751,7 +751,7 @@ function App() {
       }
     }
 
-    // ── GPU Bottleneck Explanations ──
+    // GPU Bottleneck Explanations
     if (data.type === 'gpu') {
       if (style === 'technical') {
         return `The GPU is operating at maximum utilization (close to 100% render load) while the CPU still has available processing headroom. This GPU bottleneck occurs because the graphics card cannot render frames fast enough to match the processor's output rate. The result is the CPU waiting on the GPU, which limits overall FPS.`;
@@ -760,7 +760,7 @@ function App() {
       }
     }
 
-    // ── Balanced Build Explanations ──
+    // Balanced Build Explanations
     if (style === 'technical') {
       return `The CPU and GPU are operating with a balanced utilization ratio. Neither component is a significant limiting factor for the other, which means the system can sustain consistent frame delivery. Performance is optimized across both processing units.`;
     } else {
@@ -769,13 +769,11 @@ function App() {
   };
 
 
-  // ============================================================
   // NEW FEATURE 05 — Q&A Generator
   // This function returns 3 helpful Q&A items based on the
   // current bottleneck result. The questions and answers
   // change dynamically depending on whether it's a CPU,
   // GPU, or balanced build.
-  // ============================================================
   const generateQA = (data) => {
     // Default Q&A for when no analysis has been run yet
     if (!data) {
@@ -843,7 +841,7 @@ function App() {
   // Auth boundary guard — show login page if not logged in (unchanged)
   if (!currentUser) return <AuthPage onLogin={handleLogin} />;
 
-  // ── Compute the dynamic Q&A for the right sidebar ──
+  // Compute the dynamic Q&A for the right sidebar
   // This runs every render, so it always reflects the latest bottleneck result
   const qaItems = generateQA(bottleneckData);
 

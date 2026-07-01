@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SVG ICONS
-// ─────────────────────────────────────────────────────────────────────────────
+// Component SVG Icons
 
 const IconCpu = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -120,9 +118,7 @@ const IconRefresh = () => (
   </svg>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CORE BOTTLENECK LOGIC  (mirrors App.jsx analyzeBottleneck exactly)
-// ─────────────────────────────────────────────────────────────────────────────
+// Core Bottleneck Logic (mirrors App.jsx analyzeBottleneck)
 
 function analyzeBottleneck(cpu, gpu) {
   const cpuMark = parseInt(cpu.cpuMark) || 3000;
@@ -174,16 +170,12 @@ function analyzeBottleneck(cpu, gpu) {
   return { severity, message, color, cardClass, type };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// EMPTY RIG STATE FACTORY
-// ─────────────────────────────────────────────────────────────────────────────
+// Empty Rig State Factory
 const emptyRig = () => ({
   cpu: '', gpu: '', ram: '16', resolution: '1920x1080', settings: 'High',
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SINGLE RIG CONFIG PANEL
-// ─────────────────────────────────────────────────────────────────────────────
+// Single Rig Config Panel
 function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, panelId }) {
   return (
     <div className={`cmp-panel cmp-panel--${panelId}`} style={{ '--accent': accent }}>
@@ -269,9 +261,7 @@ function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, panelId }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RESULT CARD — displayed once comparison runs
-// ─────────────────────────────────────────────────────────────────────────────
+// Result Card - displayed once comparison runs
 function ResultCard({ label, accent, result, isWinner, isTied }) {
   const { fps, bottleneck, confidence, rigName } = result;
   const bottleneckColor = bottleneck.color;
@@ -329,9 +319,7 @@ function ResultCard({ label, accent, result, isWinner, isTied }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
+// Main Component
 export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) {
 
   // Rig A pre-filled from Analyzer if provided
@@ -378,7 +366,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once on mount — props will already be populated from parent
 
-  // ── Run Analysis for one rig ──
+  // Run Analysis for one rig
   const analyzeRig = async (rig) => {
     const fullCpu = localCpuList.find(c => c.cpuName === rig.cpu);
     const fullGpu = localGpuList.find(g => g.Device  === rig.gpu);
@@ -456,14 +444,14 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
 
   const handleReset = () => { setResults(null); setError(null); };
 
-  // ── Determine winner ──
+  // Determine winner
   const fpsA  = results ? parseFloat(results.a.fps) : 0;
   const fpsB  = results ? parseFloat(results.b.fps) : 0;
   const aWins = results && fpsA > fpsB;
   const bWins = results && fpsB > fpsA;
   const tied  = results && fpsA === fpsB;
 
-  // ── Verdict text ──
+  // Verdict text
   const buildVerdict = () => {
     if (!results) return '';
     if (tied) return 'Both rigs produce identical performance at these settings. Consider changing resolution or quality to see a difference.';
@@ -491,7 +479,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
   return (
     <div className="cmp-page">
 
-      {/* ── HEADER ── */}
+      {/* Header */}
       <div className="cmp-page-header">
         <button className="cmp-back-btn" onClick={onBack}>
           <IconArrowLeft />
@@ -506,7 +494,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
         </div>
       </div>
 
-      {/* ── CONFIG PANELS ── */}
+      {/* Config Panels */}
       {!results && (
         <>
           <div className="cmp-config-grid">
@@ -566,7 +554,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
         </>
       )}
 
-      {/* ── RESULTS ── */}
+      {/* Results */}
       {results && (
         <div className="cmp-results-section">
 
@@ -595,7 +583,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
             />
           </div>
 
-          {/* ── SPEC COMPARISON TABLE ── */}
+          {/* Spec Comparison Table */}
           <div className="cmp-table-card">
             <div className="cmp-table-title">
               <span className="cmp-table-title-icon"><IconBarChart /></span>
@@ -661,7 +649,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
             </div>
           </div>
 
-          {/* ── VERDICT ── */}
+          {/* Verdict */}
           <div className={`cmp-verdict-card ${tied ? 'cmp-verdict-card--tied' : aWins ? 'cmp-verdict-card--a' : 'cmp-verdict-card--b'}`}>
             <div className="cmp-verdict-icon-wrap">
               <span className="cmp-verdict-svg-icon">
