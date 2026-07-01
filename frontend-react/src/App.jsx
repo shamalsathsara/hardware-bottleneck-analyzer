@@ -3,6 +3,8 @@ import axios from 'axios';
 import AuthPage from './AuthPage';
 import MyRigs from './MyRigs';
 import Quotation from './Quotation';
+import RigComparison from './RigComparison';
+
 
 /*  Contact Info*/
 const CONTACT = {
@@ -859,6 +861,14 @@ function App() {
           <a href="#my-rigs" onClick={(e) => { e.preventDefault(); setCurrentView('my-rigs'); }}>My Rigs</a>
           <a href="#about" onClick={(e) => { if(currentView !== 'analyzer') { e.preventDefault(); setCurrentView('analyzer'); setTimeout(() => window.location.hash = 'about', 100); } }}>About</a>
           <a href="#contact" onClick={(e) => { if(currentView !== 'analyzer') { e.preventDefault(); setCurrentView('analyzer'); setTimeout(() => window.location.hash = 'contact', 100); } }}>Contact</a>
+          <button
+            id="nav-compare-btn"
+            className="nav-compare-btn"
+            onClick={() => setCurrentView('compare')}
+            title="Compare two PC builds side by side"
+          >
+            Compare
+          </button>
           <span className="nav-badge">AI Powered</span>
           <div className="nav-user-info">
             <span className="nav-username">{currentUser.username}</span>
@@ -888,6 +898,13 @@ function App() {
             // Switch back to the analyzer view automatically
             setCurrentView('analyzer');
           }}
+        />
+      ) : currentView === 'compare' ? (
+        <RigComparison
+          cpuList={cpuList}
+          gpuList={gpuList}
+          onBack={() => setCurrentView('analyzer')}
+          initialRig={selectedCpu && selectedGpu ? { cpu: selectedCpu, gpu: selectedGpu, ram, resolution, settings } : null}
         />
       ) : (
       <div className="dashboard-shell">
@@ -1078,6 +1095,16 @@ function App() {
               >
                 <span className="btn-icon"><IconScan /></span>
                 {isThinking ? 'Aura is Analyzing…' : 'Run Analysis'}
+              </button>
+
+              {/* Compare Button */}
+              <button
+                id="compare-rigs-btn"
+                className="compare-action-btn"
+                onClick={() => setCurrentView('compare')}
+                title="Compare two PC builds side by side"
+              >
+                Compare Rigs
               </button>
               
               {/* Save this PC Button */}
