@@ -85,9 +85,10 @@ app.post('/api/predict', async (req, res) => {
     try{
         console.log("Received Hardware Data from Frontend...")
         
-        // Call the Python AI running on port 5000. 
+        // Call the Python AI. 
         // We add a 10-second timeout so it doesn't hang forever if Python crashes.
-        const auraResponse =  await axios.post('http://127.0.0.1:5000/predict', req.body, { timeout: 10000 });
+        const pythonAiUrl = process.env.AURA_AI_URL || 'http://127.0.0.1:5000';
+        const auraResponse =  await axios.post(`${pythonAiUrl}/predict`, req.body, { timeout: 10000 });
 
         // Send the AI's predicted FPS back to the React frontend
         res.json(auraResponse.data);

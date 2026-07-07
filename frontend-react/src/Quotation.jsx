@@ -26,7 +26,7 @@ const Quotation = ({ cpu, gpu, ram, onBack }) => {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const response = await axios.post('http://localhost:4000/api/pricing/estimate', { cpu, gpu, ram });
+        const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/pricing/estimate`, { cpu, gpu, ram });
         setPrices(response.data);
       } catch (err) {
         console.error(err);
