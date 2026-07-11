@@ -366,19 +366,22 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once on mount — props will already be populated from parent
 
-  // Run Analysis for one rig
+  // Run Analysis for one rig: This function formats the data and asks the AI for a prediction
   const analyzeRig = async (rig) => {
+    // 1. Find the full specs for the selected CPU and GPU from the local database
     const fullCpu = localCpuList.find(c => c.cpuName === rig.cpu);
     const fullGpu = localGpuList.find(g => g.Device  === rig.gpu);
 
     if (!fullCpu) throw new Error(`CPU not found: "${rig.cpu}". Please choose from the autocomplete suggestions.`);
     if (!fullGpu) throw new Error(`GPU not found: "${rig.gpu}". Please choose from the autocomplete suggestions.`);
 
+    // 2. Safely parse the raw numerical data, defaulting to average values if missing
     const cores     = parseInt(fullCpu.cores) || 6;
     const threads   = cores * 2;
     const cpuTDP    = Math.min(cores * 10, 125);
     const cuda      = parseInt(fullGpu.CUDA) || 5000;
 
+    // 3. Estimate missing GPU specs based on how many CUDA cores it has
     let vram = 4, gpuTdp = 75, bandwidth = 128;
     if      (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }
     else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760;  }
@@ -386,6 +389,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
     else if (cuda > 75000)  { vram = 8;  gpuTdp = 130; bandwidth = 256;  }
     else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }
 
+    // 4. Build the exact JSON object the Python AI backend expects
     const payload = {
       'CPU':               fullCpu.cpuName,
       'CPU Cores':         cores,
@@ -401,6 +405,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
       'Graphics Settings': rig.settings,
     };
 
+    // 5. Send it to the Flask AI server
     const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/predict`, payload);
     const analysis  = analyzeBottleneck(fullCpu, fullGpu);
     const cpuScore  = parseInt(fullCpu.cpuMark) || 8000;
@@ -426,16 +431,20 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
     return { fps: finalFps.toFixed(1), confidence: conf, bottleneck: analysis, rigName };
   };
 
+  // This runs when the user clicks "Run Comparison"
   const handleCompare = async () => {
     setError(null);
+    // Make sure the user didn't leave any fields blank
     if (!rigA.cpu || !rigA.gpu) { setError('Please fill in both CPU and GPU for Rig A.'); return; }
     if (!rigB.cpu || !rigB.gpu) { setError('Please fill in both CPU and GPU for Rig B.'); return; }
 
     setLoading(true);
     setResults(null);
     try {
+      // Promise.all runs BOTH AI predictions at the exact same time (in parallel)
+      // This makes the comparison twice as fast!
       const [resA, resB] = await Promise.all([analyzeRig(rigA), analyzeRig(rigB)]);
-      setResults({ a: resA, b: resB });
+      setResults({ a: resA, b: resB }); // Save the finished calculations to state
     } catch (err) {
       setError(err.message || 'Analysis failed. Make sure both AI and Node.js servers are running.');
     }
@@ -444,27 +453,32 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
 
   const handleReset = () => { setResults(null); setError(null); };
 
-  // Determine winner
+  // Determine winner by simply comparing the final FPS numbers
   const fpsA  = results ? parseFloat(results.a.fps) : 0;
   const fpsB  = results ? parseFloat(results.b.fps) : 0;
   const aWins = results && fpsA > fpsB;
   const bWins = results && fpsB > fpsA;
   const tied  = results && fpsA === fpsB;
 
-  // Verdict text
+  // Verdict text: Generates a smart explanation of WHY one rig beat the other
   const buildVerdict = () => {
     if (!results) return '';
     if (tied) return 'Both rigs produce identical performance at these settings. Consider changing resolution or quality to see a difference.';
 
+    // Figure out who won and lost
     const winner    = aWins ? 'Rig A' : 'Rig B';
     const loserSide = aWins ? 'Rig B' : 'Rig A';
+    
+    // Calculate math for the UI description (e.g., "Rig A wins by 15 FPS (20% faster)")
     const fpsDiff   = Math.abs(fpsA - fpsB).toFixed(1);
     const pct       = ((Math.abs(fpsA - fpsB) / Math.min(fpsA, fpsB)) * 100).toFixed(0);
-    const wBk       = aWins ? results.a.bottleneck : results.b.bottleneck;
-    const lBk       = aWins ? results.b.bottleneck : results.a.bottleneck;
+    
+    const wBk       = aWins ? results.a.bottleneck : results.b.bottleneck; // Winner's bottleneck
+    const lBk       = aWins ? results.b.bottleneck : results.a.bottleneck; // Loser's bottleneck
 
     let text = `${winner} wins by ${fpsDiff} FPS (${pct}% faster). `;
 
+    // Smart explanations based on the bottleneck data
     if (wBk.type === null && lBk.type !== null) {
       text += `${winner} has a perfectly balanced build, while ${loserSide} suffers a ${lBk.type.toUpperCase()} bottleneck — this is the primary reason for the performance gap.`;
     } else if (wBk.severity < lBk.severity) {
@@ -558,7 +572,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
       {results && (
         <div className="cmp-results-section">
 
-          {/* Result cards */}
+          {/* Result cards - Visual Summary Cards for Rig A and Rig B */}
           <div className="cmp-results-grid">
             <ResultCard
               label="Rig A"
@@ -583,7 +597,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
             />
           </div>
 
-          {/* Spec Comparison Table */}
+          {/* Spec Comparison Table - Renders the side-by-side hardware table */}
           <div className="cmp-table-card">
             <div className="cmp-table-title">
               <span className="cmp-table-title-icon"><IconBarChart /></span>

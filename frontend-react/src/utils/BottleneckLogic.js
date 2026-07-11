@@ -31,7 +31,7 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
     const absDiff = Math.abs(diff);
   
     // Maps the tier gap to a severity percentage — bigger gap means more severe bottleneck
-    const SEVERITY_TABLE = [5, 10, 25, 45, 60, 75, 80];
+    const SEVERITY_TABLE = [0, 5, 15, 30, 50, 70, 85];
     const severity = SEVERITY_TABLE[Math.min(absDiff, 6)];
   
     let message, color, cardClass, type;
@@ -54,7 +54,7 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
         color = '#ef4444'; cardClass = 'has-bottleneck-severe';
         message = 'Severe GPU Bottleneck: Your graphics card is severely holding back your processor. A GPU upgrade will give the biggest performance jump.';
       } else if (absDiff >= 3) {
-        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
+        color = '#f59e0b'; cardClass = 'has-bottleneck-warning';
         message = 'GPU Bottleneck: Your graphics card is noticeably holding back your processor. Consider upgrading to a GPU with a higher compute score.';
       } else {
         color = '#f59e0b'; cardClass = 'has-bottleneck-warning';
@@ -66,7 +66,7 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
         color = '#ef4444'; cardClass = 'has-bottleneck-severe';
         message = 'Severe CPU Bottleneck: Your processor is way too weak for this graphics card. It is severely holding your FPS back. Upgrade to a modern 6- or 8-core CPU.';
       } else if (absDiff >= 3) {
-        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
+        color = '#f59e0b'; cardClass = 'has-bottleneck-warning';
         message = 'CPU Bottleneck: Your CPU is significantly limiting your GPU\'s potential. Upgrading your processor will give a noticeable FPS improvement.';
       } else {
         color = '#f59e0b'; cardClass = 'has-bottleneck-warning';

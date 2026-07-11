@@ -42,24 +42,24 @@ const Quotation = ({ cpu, gpu, ram, onBack }) => {
   const generatePDF = () => {
     if (!prices) return;
 
-    // A standard A4 document without dark colors
+    // 1. Create a blank virtual A4 document canvas in the browser's memory
     const doc = new jsPDF();
     
-    // Header
+    // 2. Draw the Header Text using specific X and Y coordinates (14 units from left, 22 units down)
     doc.setFontSize(22);
     doc.text('Project Aura - Quotation', 14, 22);
     
     doc.setFontSize(12);
-    doc.setTextColor(100);
+    doc.setTextColor(100); // Gray text for the date
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 32);
     
-    // Total Price calculations
+    // 3. Calculate the total estimated price using the live Gemini AI data
     const cpuP = prices.cpuPriceLkr || 0;
     const gpuP = prices.gpuPriceLkr || 0;
     const ramP = prices.ramPriceLkr || 0;
     const total = cpuP + gpuP + ramP;
 
-    // Hardware Details Table
+    // 4. Build the data arrays for the AutoTable plugin
     const tableColumn = ["Component", "Model", "Estimated Price (LKR)"];
     const tableRows = [
       ["Processor (CPU)", cpu, `Rs. ${cpuP.toLocaleString()}`],
@@ -67,28 +67,32 @@ const Quotation = ({ cpu, gpu, ram, onBack }) => {
       ["System Memory (RAM)", `${ram} GB`, `Rs. ${ramP.toLocaleString()}`],
     ];
 
+    // 5. Use the autoTable plugin to automatically draw the grid, borders, and colored header
     autoTable(doc, {
-      startY: 40,
+      startY: 40, // Start drawing the table 40 units from the top
       head: [tableColumn],
       body: tableRows,
       theme: 'grid',
-      headStyles: { fillColor: [56, 189, 248], textColor: [255, 255, 255] },
+      headStyles: { fillColor: [56, 189, 248], textColor: [255, 255, 255] }, // Sky Blue header
       styles: { fontSize: 11, cellPadding: 5 }
     });
 
-    // Total Price setup first for fallbacks
+    // 6. Dynamically find the Y-coordinate where the table finished drawing
+    // This ensures the Total text doesn't overlap the table if the table gets taller
     const finalY = doc.lastAutoTable?.finalY || 100;
 
-    // Total Price Text
+    // 7. Draw the Final Total text perfectly below the dynamic table
     doc.setFontSize(14);
-    doc.setTextColor(0);
+    doc.setTextColor(0); // Black text
     doc.text(`Estimated Total: Rs. ${total.toLocaleString()}`, 14, finalY + 15);
     
+    // 8. Draw the disclaimer text below the total
     doc.setFontSize(10);
-    doc.setTextColor(150);
+    doc.setTextColor(150); // Light gray
     doc.text('Disclaimer: This is a predicted price estimated by AI. This can be different from', 14, finalY + 25);
     doc.text('actual shop prices. This is only an average market price.', 14, finalY + 30);
 
+    // 9. Compile the canvas into a real .pdf file and trigger the browser download
     doc.save('Aura_Quotation.pdf');
   };
 
