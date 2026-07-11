@@ -4,6 +4,9 @@ import AuthPage from './AuthPage';
 import MyRigs from './MyRigs';
 import Quotation from './Quotation';
 import RigComparison from './RigComparison';
+import ErrorBoundary from './ErrorBoundary';
+import HardwareSearch from './HardwareSearch';
+import { analyzeBottleneck, getExplanation, generateQA } from './utils/BottleneckLogic';
 
 
 /*  Contact Info*/
@@ -230,6 +233,9 @@ function App() {
   // Hardware collections
   const [cpuList, setCpuList]           = useState([]);
   const [gpuList, setGpuList]           = useState([]);
+  
+  // Dynamic hardware stats for tier calculation
+  const [maxStats, setMaxStats]         = useState({ maxCpuMark: 100000, maxGpuCuda: 500000 });
 
   // Form state
   const [selectedCpu, setSelectedCpu]   = useState('');
@@ -271,18 +277,23 @@ function App() {
   const [showSaveRigModal, setShowSaveRigModal] = useState(false);
   const [rigNameInput, setRigNameInput] = useState('');
 
-  // Parallel fetch for hardware datasets on mount
+  // Fetch hardware datasets and dynamic stats on mount
   useEffect(() => {
     (async () => {
       try {
-        const [c, g] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/api/cpus`),
-          axios.get(`${import.meta.env.VITE_API_URL}/api/gpus`),
+        // We fetch a lightweight list for the recommendation engine and stats for tier calculation
+        // The UI search is now handled dynamically by HardwareSearch (fixes Issue 3.1)
+        const [c, g, stats] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/cpus/all-lightweight`),
+          axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/gpus/all-lightweight`),
+          axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/hardware/stats`)
         ]);
         setCpuList(c.data);
         setGpuList(g.data);
-      } catch {
-        setError('Could not connect to the backend. Make sure the Node.js server is running on port 4000.');
+        setMaxStats(stats.data);
+      } catch (err) {
+        console.error("Fetch error", err);
+        setError('Could not connect to the backend. Make sure the Node.js server is running.');
       } finally {
         setLoadingData(false);
       }
@@ -292,93 +303,7 @@ function App() {
   // Checks whether the CPU and GPU are a good match.
   // Both are ranked on a 1–10 performance scale and the tier gap
   // determines how severe the bottleneck is.
-  const analyzeBottleneck = (cpu, gpu) => {
-    const cpuMark = parseInt(cpu.cpuMark) || 3000;
-    const gpuCUDA = parseInt(gpu.CUDA)    || 0;
-
-    // Rank the CPU from 1 (very old) to 10 (flagship) using its PassMark score
-    const cpuTier = cpuMark < 1000  ? 1
-                  : cpuMark < 2500  ? 2
-                  : cpuMark < 5000  ? 3
-                  : cpuMark < 8000  ? 4
-                  : cpuMark < 12000 ? 5
-                  : cpuMark < 16000 ? 6
-                  : cpuMark < 20000 ? 7
-                  : cpuMark < 25000 ? 8
-                  : cpuMark < 30000 ? 9 : 10;
-
-    // Rank the GPU from 1 (very old) to 10 (flagship).
-    // The database stores a benchmark score (G3Dmark × 10) in the CUDA column,
-    // so mid-range gaming GPUs like GTX 1650 have values around 78,000.
-    const gpuTier = gpuCUDA < 15000  ? 1   // Very old  (GT 710, GT 1030)
-                  : gpuCUDA < 45000  ? 2   // Old       (GTX 750 Ti, GTX 950)
-                  : gpuCUDA < 75000  ? 3   // Budget    (GTX 1050, GTX 1050 Ti)
-                  : gpuCUDA < 100000 ? 4   // Mid-low   (GTX 1650, RTX 2050)
-                  : gpuCUDA < 135000 ? 5   // Mid       (GTX 1660 Super, RTX 3050)
-                  : gpuCUDA < 175000 ? 6   // Mid-high  (GTX 1080, RTX 2060 Super)
-                  : gpuCUDA < 210000 ? 7   // High      (RTX 3060 Ti, RTX 2080)
-                  : gpuCUDA < 260000 ? 8   // Very high (RTX 3070, RTX 3080)
-                  : gpuCUDA < 300000 ? 9   // Flagship  (RTX 3090, RTX 3090 Ti)
-                  : 10;                    // Ultra     (RTX 4090+)
-
-    // positive diff → CPU stronger (GPU is bottleneck)
-    // negative diff → GPU stronger (CPU is bottleneck)
-    const diff    = cpuTier - gpuTier;
-    const absDiff = Math.abs(diff);
-
-    // Maps the tier gap to a severity percentage — bigger gap means more severe bottleneck
-    const SEVERITY_TABLE = [5, 10, 25, 45, 60, 75, 80];
-    const severity = SEVERITY_TABLE[Math.min(absDiff, 6)];
-
-    let message, color, cardClass, type;
-
-    if (absDiff === 0) {
-      // Perfectly balanced — great gaming build
-      type      = null;
-      color     = '#10b981';
-      cardClass = 'has-bottleneck-ok';
-      message   = 'Balanced Build: Your CPU and GPU work perfectly together — solid gaming setup.';
-
-    } else if (absDiff === 1) {
-      // Just 1 tier apart — still a solid build, shown in green
-      type      = diff > 0 ? 'gpu' : 'cpu';
-      color     = '#10b981';
-      cardClass = 'has-bottleneck-ok';
-      message   = diff > 0
-        ? 'Slightly GPU-limited: Your CPU is marginally ahead. Performance is still solid — a GPU upgrade would help at 1440p/4K.'
-        : 'Slightly CPU-limited: Your GPU is marginally ahead. Performance is still solid — a CPU upgrade would help in CPU-heavy titles.';
-
-    } else if (diff > 0) {
-      // GPU is the bottleneck — 2 or more tiers behind the CPU
-      type = 'gpu';
-      if (absDiff >= 5) {
-        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
-        message = 'Severe GPU Bottleneck: Your graphics card is severely holding back your processor. A GPU upgrade will give the biggest performance jump.';
-      } else if (absDiff >= 3) {
-        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
-        message = 'GPU Bottleneck: Your graphics card is noticeably holding back your processor. Consider upgrading to a GPU with a higher compute score.';
-      } else {
-        color = '#f59e0b'; cardClass = 'has-bottleneck-warning';
-        message = 'Mild GPU Bottleneck: Your CPU is a couple tiers ahead of your GPU. A GPU upgrade would give a clear FPS boost, especially at higher resolutions.';
-      }
-
-    } else {
-      // CPU is the bottleneck — 2 or more tiers behind the GPU
-      type = 'cpu';
-      if (absDiff >= 5) {
-        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
-        message = 'Severe CPU Bottleneck: Your processor is way too weak for this graphics card. It is severely holding your FPS back. Upgrade to a modern 6- or 8-core CPU.';
-      } else if (absDiff >= 3) {
-        color = '#ef4444'; cardClass = 'has-bottleneck-severe';
-        message = 'CPU Bottleneck: Your CPU is significantly limiting your GPU\'s potential. Upgrading your processor will give a noticeable FPS improvement.';
-      } else {
-        color = '#f59e0b'; cardClass = 'has-bottleneck-warning';
-        message = 'Mild CPU Bottleneck: Your GPU is a couple tiers ahead of your CPU. A CPU upgrade would help unlock more performance in CPU-heavy games.';
-      }
-    }
-
-    return { severity, message, color, cardClass, type };
-  };
+  // analyzeBottleneck logic was moved to utils/BottleneckLogic.js (Fixes Issue 5.1 Monolithic Component partially)
 
   // Returns a quick hardware suggestion shown in the result card after analysis
   const getRecommendation = (type, currentCpu, currentGpu) => {
@@ -474,14 +399,12 @@ function App() {
     const cpuTDP = Math.min(cores * 10, 125);  // capped at 125W to stay realistic
     const cuda = parseInt(fullGpu.CUDA) || 5000;
 
-    // Estimate GPU specs (VRAM, TDP, bandwidth) based on its benchmark score.
-    // These values are sent to the AI model as input features for the FPS prediction.
-    let vram = 4, gpuTdp = 75, bandwidth = 128;  // baseline: budget GPU
-    if      (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }  // RTX 3090+ class
-    else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760;  }  // RTX 3080 class
-    else if (cuda > 100000) { vram = 12; gpuTdp = 200; bandwidth = 448;  }  // RTX 3060 Ti class
-    else if (cuda > 75000)  { vram = 8;  gpuTdp = 130; bandwidth = 256;  }  // GTX 1650–1660 class
-    else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }  // GTX 1050–1060 class
+    // Estimate GPU specs dynamically based on relative power instead of hardcoded buckets
+    // This fixes Issue 2.3: Falsified AI Input Features
+    const relativePower = Math.min(cuda / maxStats.maxGpuCuda, 1.0);
+    const vram = Math.max(4, Math.round(relativePower * 24)); // scale from 4GB to 24GB
+    const gpuTdp = Math.max(75, Math.round(relativePower * 400)); // scale from 75W to 400W
+    const bandwidth = Math.max(128, Math.round(relativePower * 1008)); // scale up to 1008 GB/s
 
     // Serialize payload for ML inference
     const payload = {
@@ -492,8 +415,8 @@ function App() {
     };
 
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/predict`, payload);
-      const analysis = analyzeBottleneck(fullCpu, fullGpu);
+      const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/predict`, payload);
+      const analysis = analyzeBottleneck(fullCpu, fullGpu, maxStats);
       const cpuScore = parseInt(fullCpu.cpuMark) || 8000;
       let finalFps = data.predicted_fps;
 
@@ -846,7 +769,7 @@ function App() {
   const qaItems = generateQA(bottleneckData);
 
   return (
-    <>
+    <ErrorBoundary>
       {/* Navigation */}
       <nav className="site-nav">
         <div className="nav-logo">
@@ -1027,28 +950,22 @@ function App() {
 
             <div className="form-group">
               <label>Processor (CPU)</label>
-              {/* Dynamically populated from MongoDB via the /api/cpus API endpoint */}
-              <input
-                type="text" list="cpu-options"
-                placeholder="Type to search CPUs…"
-                value={selectedCpu} onChange={e => setSelectedCpu(e.target.value)}
+              <HardwareSearch 
+                type="cpu" 
+                placeholder="Type to search CPUs..." 
+                value={selectedCpu}
+                onSelect={(item) => setSelectedCpu(item.cpuName)} 
               />
-              <datalist id="cpu-options">
-                {cpuList.map((c, i) => <option key={i} value={c.cpuName} />)}
-              </datalist>
             </div>
 
             <div className="form-group">
               <label>Graphics Card (GPU)</label>
-              {/* Dynamically populated from MongoDB via the /api/gpus API endpoint */}
-              <input
-                type="text" list="gpu-options"
-                placeholder="Type to search GPUs…"
-                value={selectedGpu} onChange={e => setSelectedGpu(e.target.value)}
+              <HardwareSearch 
+                type="gpu" 
+                placeholder="Type to search GPUs..." 
+                value={selectedGpu}
+                onSelect={(item) => setSelectedGpu(item.Device)} 
               />
-              <datalist id="gpu-options">
-                {gpuList.map((g, i) => <option key={i} value={g.Device} />)}
-              </datalist>
             </div>
 
             <div className="section-label">Game Settings</div>
@@ -1584,7 +1501,7 @@ function App() {
         </div>
       )}
 
-    </>
+    </ErrorBoundary>
   );
 }
 
