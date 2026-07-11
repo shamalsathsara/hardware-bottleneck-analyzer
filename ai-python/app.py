@@ -21,9 +21,9 @@ try:
     model = joblib.load('project_aura.joblib')
     # 2. Load the exact column structure the AI expects to see
     model_columns = joblib.load('ai_columns.joblib')
-    print("✅ AI model loaded successfully!")
+    print("AI model loaded successfully! [OK]")
 except FileNotFoundError as e:
-    print(f"\n❌ Model file not found: {e}")
+    print(f"\nModel file not found: {e} [ERROR]")
     print("   Please run train.py first to generate the model files.")
     exit(1)
 
@@ -35,6 +35,11 @@ def predict():
     try:
         # Step 1: Get the hardware specs JSON sent from our Node.js backend
         data = request.json
+        
+        # Security/Stability Check: Make sure the payload is a non-empty dictionary
+        # If a hacker sends a list, string, or empty dict, Pandas may crash.
+        if not isinstance(data, dict) or not data:
+            return jsonify({'error': 'Invalid payload format. Expected a non-empty JSON object.'}), 400
 
         # Step 2: Convert the JSON into a Pandas DataFrame (like a spreadsheet row)
         df = pd.DataFrame([data])
@@ -59,5 +64,5 @@ def predict():
     
 # Start the server on port 5000 (debug=False for security)
 if __name__ == '__main__': 
-    print("✅ Project Aura is online and listening on port 5000!")
+    print("Project Aura is online and listening on port 5000! [OK]")
     app.run(port=5000, debug=False)

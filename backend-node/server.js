@@ -43,39 +43,92 @@ const gpuSchema = new mongoose.Schema({}, { strict: false });
 const CPU = mongoose.model('CPU', cpuSchema);
 const GPU = mongoose.model('GPU', gpuSchema);
 
-// Connect to MongoDB Atlas (the cloud database)
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ Successfully connected to MongoDB Atlas!'))
-    .catch((err) => {
-        // If the database fails to connect, crash the server immediately so we know there's a problem.
-        console.error('❌ MongoDB Connection Error:', err);
-        process.exit(1);
-    });
+// Connect to MongoDB Atlas with Retry Logic
+// This prevents the server from permanently crashing if the database has a momentary hiccup.
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('✅ Successfully connected to MongoDB Atlas!');
+    } catch (err) {
+        console.error('❌ MongoDB Connection Error. Retrying in 5 seconds...', err.message);
+        setTimeout(connectDB, 5000);
+    }
+};
+connectDB();
 
 // --------------------------------------------------------------------------
 // API ENDPOINTS
 // --------------------------------------------------------------------------
 
-// 1. GET /api/cpus -> Sends the full list of CPUs to the React frontend
-app.get('/api/cpus', async(req, res) => {
+// 1. GET /api/cpus/search -> Searches CPUs by name (limits to 20 to save bandwidth)
+app.get('/api/cpus/search', async(req, res) => {
     try{
-        console.log("Fetching CPUs from Database...");
-        // Sort alphabetically by the CPU name before sending it back
-        const cpus = await CPU.find().sort({ cpuName: 1 }); 
+        const searchQuery = req.query.q || '';
+        console.log(`Searching CPUs for: "${searchQuery}"`);
+        
+        // Use a case-insensitive regular expression to find matches
+        const cpus = await CPU.find({ cpuName: { $regex: searchQuery, $options: 'i' } })
+                              .select('cpuName cpuMark cores') // Only send what frontend needs
+                              .sort({ cpuName: 1 })
+                              .limit(20)
+                              .lean(); // .lean() makes the query faster by returning plain JSON
         res.json(cpus);
     }catch (error){
         res.status(500).json({ error:"❌ Failed to fetch CPUs"});
     }
 });
 
-// 2. GET /api/gpus -> Sends the full list of GPUs to the React frontend
-app.get('/api/gpus', async (req, res) => {
+// 2. GET /api/gpus/search -> Searches GPUs by name (limits to 20 to save bandwidth)
+app.get('/api/gpus/search', async (req, res) => {
     try{
-        console.log('Fetching GPUs from Database...');
-        const gpus = await GPU.find().sort({ Device: 1 });
+        const searchQuery = req.query.q || '';
+        console.log(`Searching GPUs for: "${searchQuery}"`);
+        
+        const gpus = await GPU.find({ Device: { $regex: searchQuery, $options: 'i' } })
+                              .select('Device Manufacturer CUDA') // Only send what frontend needs
+                              .sort({ Device: 1 })
+                              .limit(20)
+                              .lean();
         res.json(gpus);
     }catch (error){
         res.status(500).json({ error: "❌ Failed to fetch GPUs" })
+    }
+});
+
+// 2.5 GET /api/hardware/stats -> Returns the maximum performance scores to allow dynamic tiering
+app.get('/api/hardware/stats', async (req, res) => {
+    try {
+        // Find the absolute highest CPU and GPU score in the database
+        // This allows our frontend to dynamically scale hardware tiers without hardcoding!
+        const topCpu = await CPU.findOne().sort({ cpuMark: -1 }).select('cpuMark').lean();
+        const topGpu = await GPU.findOne().sort({ CUDA: -1 }).select('CUDA').lean();
+
+        res.json({
+            maxCpuMark: topCpu ? topCpu.cpuMark : 100000,
+            maxGpuCuda: topGpu ? topGpu.CUDA : 500000
+        });
+    } catch (error) {
+        res.status(500).json({ error: "❌ Failed to fetch hardware stats" });
+    }
+});
+
+// 2.6 GET /api/cpus/all-lightweight -> Lightweight fetch for recommendation engine
+app.get('/api/cpus/all-lightweight', async(req, res) => {
+    try{
+        const cpus = await CPU.find().select('cpuName cpuMark cores').sort({ cpuName: 1 }).lean(); 
+        res.json(cpus);
+    }catch (error){
+        res.status(500).json({ error:"❌ Failed to fetch CPUs"});
+    }
+});
+
+// 2.7 GET /api/gpus/all-lightweight -> Lightweight fetch for recommendation engine
+app.get('/api/gpus/all-lightweight', async(req, res) => {
+    try{
+        const gpus = await GPU.find().select('Device CUDA').sort({ Device: 1 }).lean(); 
+        res.json(gpus);
+    }catch (error){
+        res.status(500).json({ error:"❌ Failed to fetch GPUs"});
     }
 });
 
@@ -102,8 +155,12 @@ app.post('/api/predict', async (req, res) => {
 // --------------------------------------------------------------------------
 // START SERVER
 // --------------------------------------------------------------------------
-app.listen(PORT, () => {
-    console.log('----------------------------------------------')
-    console.log(`✅ Node.js Backend is running on port ${PORT}`); 
-    console.log('----------------------------------------------')
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log('----------------------------------------------')
+        console.log(`✅ Node.js Backend is running on port ${PORT}`); 
+        console.log('----------------------------------------------')
+    });
+}
+
+module.exports = app;

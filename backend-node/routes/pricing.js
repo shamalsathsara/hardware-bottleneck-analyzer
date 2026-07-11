@@ -16,6 +16,14 @@ router.post('/estimate', async (req, res) => {
       return res.status(400).json({ error: 'CPU and GPU are required to estimate price.' });
     }
 
+    // Sanitize inputs to prevent LLM prompt injection
+    // Only allow alphanumeric characters, spaces, and basic punctuation
+    const sanitize = (str) => String(str).replace(/[^a-zA-Z0-9\s\.\-]/g, '').trim().substring(0, 100);
+    const safeCpu = sanitize(cpu);
+    const safeGpu = sanitize(gpu);
+    const safeRam = sanitize(ram);
+
+
     if (!process.env.GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY is missing in .env!');
       return res.status(500).json({ error: 'Server configuration error (missing Gemini API key).' });
@@ -24,7 +32,7 @@ router.post('/estimate', async (req, res) => {
     // Initialize the Gemini API client here so it always uses the latest .env
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    console.log(`Asking Gemini for prices -> CPU: ${cpu}, GPU: ${gpu}, RAM: ${ram}GB`);
+    console.log(`Asking Gemini for prices -> CPU: ${safeCpu}, GPU: ${safeGpu}, RAM: ${safeRam}GB`);
 
     // We use the gemini-2.5-flash model as it's very fast for simple JSON responses
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -32,9 +40,9 @@ router.post('/estimate', async (req, res) => {
     // We give Gemini a very strict prompt so it ONLY returns JSON data
     // This allows our React frontend to read the numbers easily without parsing paragraphs of text.
     const prompt = `You are a PC hardware pricing expert in Sri Lanka. Estimate the current average retail price in Sri Lankan Rupees (LKR) for the following components if they were bought today in Colombo:
-    CPU: ${cpu}
-    GPU: ${gpu}
-    RAM: ${ram} GB DDR4/DDR5
+    CPU: ${safeCpu}
+    GPU: ${safeGpu}
+    RAM: ${safeRam} GB DDR4/DDR5
     
     IMPORTANT: Return ONLY a valid JSON object with the following exact keys and integer values. Do not wrap it in markdown block quotes (no \`\`\`json). Just the raw JSON object.
     {
