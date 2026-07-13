@@ -1872,6 +1872,9 @@ input[type="text"]::placeholder {
 }
 
 .cmp-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   background: rgba(56,189,248,0.08);
   border: 1px solid var(--border);
   color: var(--text);

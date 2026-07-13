@@ -25,14 +25,26 @@ Instead of relying on static spreadsheets, Project Aura dynamically calculates p
 ## 4. System Architecture
 The platform is built on a modern, four-layer architecture ensuring scalability and security:
 
-1. **Frontend (React + Vite):** A highly responsive, dynamic user interface with glassmorphism design.
+1. **Frontend (React + Vite):** A highly responsive, dynamic user interface with modern glassmorphism design.
 2. **Backend (Node.js + Express):** The secure API gateway that manages data flow and user authentication.
 3. **Database (MongoDB Atlas):** A NoSQL cloud database storing thousands of hardware components and user profiles.
 4. **AI Engine (Python + Flask):** The machine learning microservice hosting the predictive model.
 
 ---
 
-## 5. The AI Prediction Engine (Machine Learning)
+## 5. Core Functions & User Workflows
+Project Aura provides a comprehensive set of features for PC enthusiasts:
+
+* **Dynamic Hardware Search:** Users can rapidly search through thousands of CPUs and GPUs using a custom autocomplete component (`HardwareSearch`).
+* **Performance Analysis:** Users select their resolution (e.g., 1080p, 4K), graphics quality, and RAM. The system then queries the AI and heuristics engines to predict FPS and identify bottlenecks.
+* **Explanation Toggle:** Offers both **Technical** and **Non-Technical** explanations of the bottleneck results, catering to both IT professionals and casual gamers.
+* **Dynamic Q&A Panel:** An intelligent help system that changes its answers based on the user's specific bottleneck type (CPU-limited, GPU-limited, or Balanced).
+* **Save & Load Rigs:** Authenticated users can save their PC configurations to the database and load them back into the analyzer at any time via the "My Rigs" dashboard.
+* **Sri Lankan PC Stores Hub:** A quick-access panel to view and visit popular local hardware retailers for purchasing parts.
+
+---
+
+## 6. The AI Prediction Engine (Machine Learning)
 The core of Project Aura's intelligence is a custom-trained Machine Learning model.
 
 * **Algorithm:** Random Forest Regressor (100 Decision Trees).
@@ -42,7 +54,7 @@ The core of Project Aura's intelligence is a custom-trained Machine Learning mod
 
 ---
 
-## 6. The Hardware Bottleneck Engine
+## 7. The Hardware Bottleneck Engine
 While the AI predicts raw performance, the React frontend runs a strict **Hardware Rules Engine** to identify the bottleneck severity.
 
 1. **Hardware Tiering:** CPUs are tiered (1-10) based on their PassMark scores. GPUs are tiered (1-10) based on their CUDA core counts.
@@ -51,26 +63,27 @@ While the AI predicts raw performance, the React frontend runs a strict **Hardwa
 
 ---
 
-## 7. Advanced Features
+## 8. Advanced Features
 Project Aura goes beyond simple analysis by offering professional-grade tools:
 
 ### A. Side-by-Side Rig Comparison
 * Allows users to place two custom PC builds head-to-head.
-* Performs parallel asynchronous API calls to analyze both rigs simultaneously.
+* Performs parallel asynchronous API calls (`Promise.all`) to analyze both rigs simultaneously, making the comparison twice as fast.
 * Generates a detailed comparative verdict, identifying the winning rig, the FPS difference percentage, and efficiency advantages based on bottleneck severities.
 
-### B. Live Pricing Estimation & PDF Quotation
+### B. Smart Component Recommendations
+* If a bottleneck exceeds a 30% threshold, the system triggers a recommendation algorithm.
+* Users can click on CPU, GPU, or RAM to get tailored upgrade paths. 
+* The engine analyzes the weaker component and automatically queries the database for a perfectly matched upgrade that stays within the performance ceiling of the other components, providing an estimated performance improvement percentage.
+
+### C. Live Pricing Estimation & PDF Quotation
 * **External API Integration:** Connects to the **Google Gemini 2.5 Flash AI API**.
 * **Dynamic Pricing:** Queries Gemini dynamically to estimate the current retail price of the selected CPU, GPU, and RAM in Sri Lankan Rupees (LKR).
 * **PDF Engine:** Utilizes `jsPDF` and `jsPDF-AutoTable` to compile the components and pricing into a professional, print-ready A4 PDF invoice.
 
-### C. Smart Component Recommendations
-* If a bottleneck exceeds a 70% threshold, the system triggers a recommendation algorithm.
-* It analyzes the weaker component and automatically queries the database for a perfectly matched upgrade, providing the user with an estimated performance improvement percentage.
-
 ---
 
-## 8. Security & Authentication
+## 9. Security & Authentication
 Security is a foundational element of Project Aura:
 
 * **Password Cryptography:** User passwords are encrypted using `bcryptjs` before database storage.
@@ -79,7 +92,7 @@ Security is a foundational element of Project Aura:
 
 ---
 
-## 9. Technologies & APIs Used
+## 10. Technologies & APIs Used
 A summary of the modern technology stack utilized in this project:
 
 * **Frontend:** React, Vite, Vanilla CSS, jsPDF
@@ -90,7 +103,7 @@ A summary of the modern technology stack utilized in this project:
 
 ---
 
-## 10. Conclusion
-Project Aura successfully bridges the gap between complex hardware compatibility and user-friendly software design. By leveraging Machine Learning for predictive analytics and strict heuristics for bottleneck detection, it provides an invaluable tool for PC builders, gamers, and hardware enthusiasts.
+## 11. Conclusion
+Project Aura successfully bridges the gap between complex hardware compatibility and user-friendly software design. By leveraging Machine Learning for predictive analytics, strict heuristics for bottleneck detection, and a suite of advanced features like side-by-side comparison and automated quotations, it provides an invaluable tool for PC builders, gamers, and hardware enthusiasts.
 
 **Thank you for your time.**
