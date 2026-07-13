@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------
 # FLASK AI PREDICTION SERVER
 # --------------------------------------------------------------------------
-# This small Python server loads our trained Random Forest AI model into memory.
-# It listens for hardware data from the Node.js backend, formats it into a
-# Pandas DataFrame, and asks the AI to predict the FPS.
+# Serves the trained Random Forest regression model via a REST API.
+# Receives hardware specifications from the backend, preprocesses the features
+# to match the model's expected training schema, and returns the predicted FPS.
 
 from flask import Flask, request, jsonify
 import joblib
@@ -13,13 +13,11 @@ app = Flask(__name__)
 
 print("Starting Aura AI....")
 
-# FIX BUG 11: Load model files inside try/except.
-# Before this fix, a missing .joblib file crashed the whole server at startup
-# with a cryptic FileNotFoundError, giving the user no helpful guidance.
+# Load model artifacts with error handling to provide actionable feedback 
+# if the model hasn't been trained yet (fixes startup crash on missing .joblib).
 try:
-    # 1. Load the AI Brain (the mathematical model) from disk
+    # Load the serialized model and its expected feature schema
     model = joblib.load('project_aura.joblib')
-    # 2. Load the exact column structure the AI expects to see
     model_columns = joblib.load('ai_columns.joblib')
     print("AI model loaded successfully! [OK]")
 except FileNotFoundError as e:
@@ -33,11 +31,10 @@ except FileNotFoundError as e:
 @app.route('/predict', methods=['POST']) 
 def predict():
     try:
-        # Step 1: Get the hardware specs JSON sent from our Node.js backend
+        # Extract hardware specifications from the incoming JSON payload
         data = request.json
         
-        # Security/Stability Check: Make sure the payload is a non-empty dictionary
-        # If a hacker sends a list, string, or empty dict, Pandas may crash.
+        # Validate payload structure to prevent Pandas DataFrame initialization errors
         if not isinstance(data, dict) or not data:
             return jsonify({'error': 'Invalid payload format. Expected a non-empty JSON object.'}), 400
 
@@ -60,18 +57,17 @@ def predict():
         data['GPU TDP (W)'] = data.get('GPU TDP (W)') or 200
         data['RAM (GB)'] = data.get('RAM (GB)') or 16
 
-        # Step 2: Convert the JSON into a Pandas DataFrame (like a spreadsheet row)
+        # Convert request payload to DataFrame
         df = pd.DataFrame([data])
 
-        # Step 3: Encoding — Convert text (like "Nvidia") into binary columns (0s and 1s)
-        # because the AI only understands math, not text!
+        # Apply one-hot encoding for categorical variables to match training data
         df = pd.get_dummies(df)
 
-        # Step 4: Align the columns. If the new data is missing any columns that 
-        # were present during training, this fills them with 0s so the AI doesn't crash.
+        # Reindex columns to match the trained model's exact schema.
+        # Missing features are padded with 0 to prevent prediction failures.
         df = df.reindex(columns=model_columns, fill_value=0) 
 
-        # Step 5: Ask the AI for the prediction!
+        # Generate base FPS prediction
         base_prediction = model.predict(df)[0]
         
         # EXTRAPOLATION & OUTLIER HANDLING
@@ -82,14 +78,14 @@ def predict():
         elif vram > 16:
             base_prediction *= 1.05
             
-        # Hard cap the FPS to prevent unrealistic engine numbers or negative drops
+        # Clamp FPS bounds to ensure realistic engine limits and prevent negative values
         final_prediction = max(10, min(base_prediction, 1200))
 
-        # Step 6: Send the answer (rounded to 2 decimal places) back to Node.js
+        # Return the prediction rounded to 2 decimal places
         return jsonify({'predicted_fps': round(final_prediction, 2)})
     
     except Exception as e: 
-        # If anything goes wrong, return the error message with a 500 status code
+        # Catch unexpected errors and return a standard 500 Internal Server Error
         return jsonify({'error': str(e)}), 500
     
 # Start the server on port 5000 (debug=False for security)
