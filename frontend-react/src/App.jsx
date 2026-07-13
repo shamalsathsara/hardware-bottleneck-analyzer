@@ -1030,6 +1030,11 @@ function App() {
                     setError('Please select a CPU and GPU before saving.');
                     return;
                   }
+                  // Guard: user must be logged in to save a rig
+                  if (!currentUser) {
+                    setError('Please log in to save your PC build.');
+                    return;
+                  }
                   setRigNameInput('');
                   setShowSaveRigModal(true);
                 }}
@@ -1478,16 +1483,27 @@ function App() {
                 onClick={async () => {
                   if (!rigNameInput.trim()) return;
                   try {
+                    // Get the JWT token saved at login time
                     const token = localStorage.getItem('aura_token');
+
+                    // Guard: if token is missing or literally the string "null", stop immediately
+                    if (!token || token === 'null' || token === 'undefined') {
+                      setError('You are not logged in. Please sign in and try again.');
+                      setShowSaveRigModal(false);
+                      return;
+                    }
+
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/user/rigs`, 
                       { name: rigNameInput.trim(), cpu: selectedCpu, gpu: selectedGpu, ram, resolution },
                       { headers: { Authorization: `Bearer ${token}` } }
                     );
                     setShowSaveRigModal(false);
                     alert('PC Saved successfully! You can view it in the "My Rigs" tab.');
-                  // eslint-disable-next-line no-unused-vars
-                  } catch (_err) {
-                    setError('Failed to save PC. Please try again.');
+                  } catch (err) {
+                    // Extract the real error message from the backend response
+                    const msg = err.response?.data?.error || err.message || 'Failed to save PC.';
+                    console.error('Save Rig error:', msg);
+                    setError(`Save failed: ${msg}`);
                     setShowSaveRigModal(false);
                   }
                 }}
