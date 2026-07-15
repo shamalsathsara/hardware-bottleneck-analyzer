@@ -22,6 +22,11 @@ const IconLock = () => (
     <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
   </svg>
 );
+const IconPhone = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </svg>
+);
 const IconEye = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -60,6 +65,7 @@ export default function AuthPage({ onLogin }) {
   const [mode, setMode]           = useState('login'); // 'login', 'register', 'forgot', 'verify', 'reset'
   const [username, setUsername]   = useState('');
   const [email, setEmail]         = useState('');
+  const [contact, setContact]     = useState('');
   const [password, setPassword]   = useState('');
   const [confirm, setConfirm]     = useState('');
   const [resetCode, setResetCode] = useState('');
@@ -80,6 +86,7 @@ export default function AuthPage({ onLogin }) {
     if (newMode !== 'verify' && newMode !== 'reset') {
       setUsername('');
       setEmail('');
+      setContact('');
       setResetCode('');
     }
     setPassword('');
@@ -147,7 +154,7 @@ export default function AuthPage({ onLogin }) {
 
         const body = mode === 'login'
           ? { email, password }
-          : { username, email, password };
+          : { username, email, password, contact };
 
         const { data } = await axios.post(endpoint, body);
 
@@ -260,6 +267,23 @@ export default function AuthPage({ onLogin }) {
                   onChange={e => setUsername(e.target.value)}
                   autoComplete="username"
                   required
+                />
+              </div>
+            </div>
+          )}
+
+          {mode === 'register' && (
+            <div className="auth-field">
+              <label htmlFor="auth-contact">Contact Number</label>
+              <div className="auth-input-wrap">
+                <span className="auth-input-icon"><IconPhone /></span>
+                <input
+                  id="auth-contact"
+                  type="text"
+                  placeholder="e.g. +1 234 567 8900"
+                  value={contact}
+                  onChange={e => setContact(e.target.value)}
+                  autoComplete="tel"
                 />
               </div>
             </div>

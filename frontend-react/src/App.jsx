@@ -240,6 +240,10 @@ function App() {
   // Form state
   const [selectedCpu, setSelectedCpu]   = useState('');
   const [selectedGpu, setSelectedGpu]   = useState('');
+  // Store the full selected hardware objects so handleConsultAura doesn't
+  // have to look them up in cpuList/gpuList (fixes "can't select" bug)
+  const [selectedCpuData, setSelectedCpuData] = useState(null);
+  const [selectedGpuData, setSelectedGpuData] = useState(null);
   const [resolution, setResolution]     = useState('1920x1080');
   const [settings, setSettings]         = useState('High');
   const [ram, setRam]                   = useState('16');
@@ -383,9 +387,10 @@ function App() {
       return;
     }
 
-    // Map selections to full dataset objects
-    const fullCpu = cpuList.find(c => c.cpuName === selectedCpu);
-    const fullGpu = gpuList.find(g => g.Device  === selectedGpu);
+    // Use the full objects stored at selection time.
+    // Fall back to searching cpuList/gpuList for backward-compat (e.g. loaded rigs).
+    const fullCpu = selectedCpuData || cpuList.find(c => c.cpuName === selectedCpu);
+    const fullGpu = selectedGpuData || gpuList.find(g => g.Device  === selectedGpu);
     if (!fullCpu || !fullGpu) {
       setError('Could not find matching specs. Please choose from the autocomplete suggestions.');
       return;
@@ -458,6 +463,11 @@ function App() {
     setExplanationType(null);
     setShowHelp(false);
     setOpenQA(null);
+    // Clear selected hardware objects too
+    setSelectedCpu('');
+    setSelectedGpu('');
+    setSelectedCpuData(null);
+    setSelectedGpuData(null);
   };
 
 
@@ -468,9 +478,9 @@ function App() {
     if (!bottleneckData) return;  // no analysis data yet
     setSelectedUpgradeComponent(component);
 
-    // Look up the full data objects for the currently selected CPU and GPU
-    const currentCpuData = cpuList.find(c => c.cpuName === selectedCpu);
-    const currentGpuData = gpuList.find(g => g.Device  === selectedGpu);
+    // Use the full objects stored at selection time (fall back to list search for loaded rigs)
+    const currentCpuData = selectedCpuData || cpuList.find(c => c.cpuName === selectedCpu);
+    const currentGpuData = selectedGpuData || gpuList.find(g => g.Device  === selectedGpu);
 
     const currentCpuMark  = parseInt(currentCpuData?.cpuMark) || 3000;
     const currentCpuCores = parseInt(currentCpuData?.cores)   || 4; // eslint-disable-line no-unused-vars
@@ -816,6 +826,9 @@ function App() {
             setSelectedGpu(rig.gpu);
             setRam(rig.ram);
             setResolution(rig.resolution);
+            // Clear full objects so handleConsultAura falls back to cpuList/gpuList search
+            setSelectedCpuData(null);
+            setSelectedGpuData(null);
             // Switch back to the analyzer view automatically
             setCurrentView('analyzer');
           }}
@@ -954,7 +967,10 @@ function App() {
                 type="cpu" 
                 placeholder="Type to search CPUs..." 
                 value={selectedCpu}
-                onSelect={(item) => setSelectedCpu(item.cpuName)} 
+                onSelect={(item) => {
+                  setSelectedCpu(item.cpuName);
+                  setSelectedCpuData(item); // store full object for analysis
+                }} 
               />
             </div>
 
@@ -964,7 +980,10 @@ function App() {
                 type="gpu" 
                 placeholder="Type to search GPUs..." 
                 value={selectedGpu}
-                onSelect={(item) => setSelectedGpu(item.Device)} 
+                onSelect={(item) => {
+                  setSelectedGpu(item.Device);
+                  setSelectedGpuData(item); // store full object for analysis
+                }} 
               />
             </div>
 

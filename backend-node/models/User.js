@@ -10,6 +10,9 @@ const userSchema = new mongoose.Schema(
     // The user's email (must be unique so no two people can have the same account)
     email:        { type: String, required: true, unique: true, lowercase: true, trim: true },
     
+    // The user's contact number
+    contact:      { type: String, trim: true },
+    
     // The encrypted version of their password (never store real passwords!)
     passwordHash: { type: String, required: true },
     
