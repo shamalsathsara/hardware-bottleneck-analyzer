@@ -183,6 +183,8 @@ npm run build
 | :--- | :--- | :--- |
 | `/` | Homepage & Feature Overview | Public |
 | `/bottleneck-calculator` | Bottleneck & FPS Analyzer | Public |
+| `/games` | PC Games Hardware Requirements Catalog | Public |
+| `/games/:slug` | Detailed Game System Requirements & Tech Profile | Public |
 | `/compare` | Side-by-Side PC Rig Comparison | Public |
 | `/my-rigs` | Saved PC Builds Profile | Authenticated |
 | `/about` | Mission & Architecture | Public |

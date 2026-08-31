@@ -35,6 +35,13 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
             Bottleneck Calculator
           </a>
           <a 
+            href="/games" 
+            className={`nav-link ${currentRoute.startsWith('/games') ? 'active' : ''}`}
+            onClick={(e) => handleNav('/games', e)}
+          >
+            Games
+          </a>
+          <a 
             href="/compare" 
             className={`nav-link ${currentRoute === '/compare' ? 'active' : ''}`}
             onClick={(e) => handleNav('/compare', e)}
@@ -142,6 +149,14 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
             role="menuitem"
           >
             Bottleneck Calculator
+          </a>
+          <a 
+            href="/games" 
+            className={`mobile-nav-item ${currentRoute.startsWith('/games') ? 'active' : ''}`}
+            onClick={(e) => handleNav('/games', e)}
+            role="menuitem"
+          >
+            Games Catalog
           </a>
           <a 
             href="/compare" 

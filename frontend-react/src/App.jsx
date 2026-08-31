@@ -9,6 +9,8 @@ import MethodologyPage from './pages/MethodologyPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import ContactPage from './pages/ContactPage';
+import GamesPage from './pages/GamesPage';
+import GameDetailPage from './pages/GameDetailPage';
 import AuthPage from './AuthPage';
 import MyRigs from './MyRigs';
 import Quotation from './Quotation';
@@ -331,6 +333,17 @@ function App() {
               gpuList={gpuList}
               onBack={() => navigate(ROUTES.BOTTLENECK_CALCULATOR)}
               initialRig={selectedCpu && selectedGpu ? { cpu: selectedCpu, gpu: selectedGpu, ram, resolution, settings } : null}
+            />
+          )}
+
+          {currentRoute === ROUTES.GAMES && (
+            <GamesPage onNavigate={navigate} />
+          )}
+
+          {currentRoute.startsWith('/games/') && (
+            <GameDetailPage 
+              slug={currentRoute.replace('/games/', '')}
+              onNavigate={navigate}
             />
           )}
 

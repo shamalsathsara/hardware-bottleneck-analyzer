@@ -23,6 +23,7 @@ graph TD
         Server[server.js]
         DBConfig[config/db.js]
         HardwareRoutes[routes/hardware.js]
+        GamesRoutes[routes/games.js]
         AuthRoutes[routes/auth.js]
         UserRoutes[routes/user.js]
         PricingRoutes[routes/pricing.js]
@@ -34,6 +35,7 @@ graph TD
     subgraph Database [MongoDB Atlas]
         CPUsCollection[(CPUs Collection)]
         GPUsCollection[(GPUs Collection)]
+        GamesCollection[(Games Collection)]
         UsersCollection[(Users Collection)]
         RigsCollection[(Saved Rigs Sub-documents)]
     end
@@ -53,6 +55,7 @@ graph TD
     
     Server --> DBConfig --> Database
     Server --> HardwareRoutes --> Database
+    Server --> GamesRoutes --> Database
     Server --> AuthRoutes --> Database
     Server --> UserRoutes --> Database
     Server --> PredictRoutes -->|HTTP POST /predict| FlaskServer

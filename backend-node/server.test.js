@@ -93,4 +93,45 @@ describe('Hardware Analyzer Backend API Tests', () => {
     });
   });
 
+  describe('Game Catalog & Search API Tests', () => {
+    it('GET /api/games/search?q=cyber should return matching games', async () => {
+      const res = await request(app).get('/api/games/search?q=cyber');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBeTruthy();
+      if (res.body.length > 0) {
+        expect(res.body[0]).toHaveProperty('name');
+        expect(res.body[0]).toHaveProperty('slug');
+      }
+    });
+
+    it('GET /api/games/search should handle regex special characters safely', async () => {
+      const res = await request(app).get('/api/games/search?q=Cyber*+?^$()[]');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBeTruthy();
+    });
+
+    it('GET /api/games/:slug should return 200 for valid game', async () => {
+      const res = await request(app).get('/api/games/cyberpunk-2077');
+      expect(res.status).toBe(200);
+      expect(res.body.slug).toBe('cyberpunk-2077');
+      expect(res.body).toHaveProperty('requirements');
+    });
+
+    it('GET /api/games/:slug should return 404 for non-existent game', async () => {
+      const res = await request(app).get('/api/games/non-existent-game-slug-12345');
+      expect(res.status).toBe(404);
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('GET /api/games should return paginated list with metadata', async () => {
+      const res = await request(app).get('/api/games?page=1&limit=6');
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('games');
+      expect(res.body).toHaveProperty('pagination');
+      expect(res.body.pagination.page).toBe(1);
+      expect(res.body.pagination.limit).toBe(6);
+      expect(typeof res.body.pagination.total).toBe('number');
+    });
+  });
+
 });

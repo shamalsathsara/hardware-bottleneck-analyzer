@@ -1,0 +1,542 @@
+[
+  {
+    "name": "Cyberpunk 2077",
+    "slug": "cyberpunk-2077",
+    "alternateNames": ["CP2077", "Cyberpunk"],
+    "developer": "CD Projekt Red",
+    "publisher": "CD Projekt",
+    "releaseDate": "2020-12-10",
+    "releaseYear": 2020,
+    "genres": ["RPG", "Open World", "Action", "Sci-Fi"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core i7-6700 / AMD Ryzen 5 1600", "notes": "64-bit processor required" },
+        "gpu": { "name": "NVIDIA GeForce GTX 1060 6GB / AMD Radeon RX 580 8GB", "vramGB": 6 },
+        "ramGB": 12,
+        "storageGB": 70,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 12"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i7-12700 / AMD Ryzen 7 7800X3D", "notes": "High performance target" },
+        "gpu": { "name": "NVIDIA GeForce RTX 2060 Super / AMD Radeon RX 5700 XT", "vramGB": 8 },
+        "ramGB": 16,
+        "storageGB": 70,
+        "storageType": "SSD",
+        "os": "Windows 10 / 11 64-bit",
+        "directX": "Version 12"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High", "Ultra", "Ray Tracing Overdrive"],
+      "cpuIntensity": "High",
+      "gpuIntensity": "High",
+      "vramIntensity": "High",
+      "ramIntensity": "Medium",
+      "rayTracingSupported": true,
+      "dlssSupported": true,
+      "fsrSupported": true,
+      "xessSupported": true
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "Official CD Projekt Red 2.0 Update Requirements",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Cyberpunk 2077 PC System Requirements & Performance Profile",
+      "description": "Check official minimum and recommended PC requirements for Cyberpunk 2077."
+    }
+  },
+  {
+    "name": "The Witcher 3: Wild Hunt",
+    "slug": "the-witcher-3-wild-hunt",
+    "alternateNames": ["Witcher 3", "TW3"],
+    "developer": "CD Projekt Red",
+    "publisher": "CD Projekt",
+    "releaseDate": "2015-05-18",
+    "releaseYear": 2015,
+    "genres": ["RPG", "Open World", "Fantasy", "Action"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core i5-2500K / AMD Phenom II X4 940", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 660 / AMD Radeon HD 7870", "vramGB": 2 },
+        "ramGB": 6,
+        "storageGB": 50,
+        "storageType": "HDD",
+        "os": "Windows 7 / 8 / 10 64-bit",
+        "directX": "Version 11"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i7-3770 / AMD FX-8350", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 1060 6GB / AMD Radeon RX 480 4GB", "vramGB": 6 },
+        "ramGB": 8,
+        "storageGB": 50,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 12"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High", "Ultra", "Ultra+"],
+      "cpuIntensity": "Medium",
+      "gpuIntensity": "Medium",
+      "vramIntensity": "Medium",
+      "ramIntensity": "Low",
+      "rayTracingSupported": true,
+      "dlssSupported": true,
+      "fsrSupported": true,
+      "xessSupported": false
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "CD Projekt Red Next-Gen Update",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "The Witcher 3: Wild Hunt PC Requirements & Performance",
+      "description": "Official PC hardware requirements and performance profile for The Witcher 3."
+    }
+  },
+  {
+    "name": "Grand Theft Auto V",
+    "slug": "grand-theft-auto-v",
+    "alternateNames": ["GTA V", "GTA 5", "GTAV"],
+    "developer": "Rockstar North",
+    "publisher": "Rockstar Games",
+    "releaseDate": "2015-04-14",
+    "releaseYear": 2015,
+    "genres": ["Action", "Open World", "Crime"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core 2 Quad CPU Q6600 / AMD Phenom 9850", "notes": null },
+        "gpu": { "name": "NVIDIA 9800 GT 1GB / AMD HD 4870 1GB", "vramGB": 1 },
+        "ramGB": 4,
+        "storageGB": 110,
+        "storageType": "HDD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 10"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i5 3470 / AMD X8 FX-8350", "notes": null },
+        "gpu": { "name": "NVIDIA GTX 660 2GB / AMD HD 7870 2GB", "vramGB": 2 },
+        "ramGB": 8,
+        "storageGB": 110,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 11"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Normal", "High", "Very High", "Ultra"],
+      "cpuIntensity": "Medium",
+      "gpuIntensity": "Low",
+      "vramIntensity": "Low",
+      "ramIntensity": "Low",
+      "rayTracingSupported": false,
+      "dlssSupported": false,
+      "fsrSupported": false,
+      "xessSupported": false
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "Rockstar Games Support Official Specs",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Grand Theft Auto V PC System Requirements",
+      "description": "Check if your PC can run GTA V with official minimum and recommended hardware specs."
+    }
+  },
+  {
+    "name": "Red Dead Redemption 2",
+    "slug": "red-dead-redemption-2",
+    "alternateNames": ["RDR2", "Red Dead 2"],
+    "developer": "Rockstar Studios",
+    "publisher": "Rockstar Games",
+    "releaseDate": "2019-11-05",
+    "releaseYear": 2019,
+    "genres": ["Action", "Open World", "Western", "Story Rich"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core i5-2500K / AMD FX-6300", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 770 2GB / AMD Radeon R9 280 3GB", "vramGB": 2 },
+        "ramGB": 8,
+        "storageGB": 150,
+        "storageType": "HDD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 12"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i7-4770K / AMD Ryzen 5 1500X", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 1060 6GB / AMD Radeon RX 480 4GB", "vramGB": 6 },
+        "ramGB": 12,
+        "storageGB": 150,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 12"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High", "Ultra"],
+      "cpuIntensity": "High",
+      "gpuIntensity": "High",
+      "vramIntensity": "High",
+      "ramIntensity": "Medium",
+      "rayTracingSupported": false,
+      "dlssSupported": true,
+      "fsrSupported": true,
+      "xessSupported": false
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "Rockstar Games Official Specifications",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Red Dead Redemption 2 PC System Requirements",
+      "description": "System requirements and performance profile for Red Dead Redemption 2 on PC."
+    }
+  },
+  {
+    "name": "Counter-Strike 2",
+    "slug": "counter-strike-2",
+    "alternateNames": ["CS2", "Counter Strike 2", "CS:GO 2"],
+    "developer": "Valve",
+    "publisher": "Valve",
+    "releaseDate": "2023-09-27",
+    "releaseYear": 2023,
+    "genres": ["FPS", "Competitive", "Multiplayer", "Shooter"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "4 hardware CPU threads - Intel Core i5 750 or higher", "notes": null },
+        "gpu": { "name": "Video card must be 1 GB or more with Shader Model 5.0", "vramGB": 1 },
+        "ramGB": 8,
+        "storageGB": 85,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 11"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i7-9700K / AMD Ryzen 7 5800X", "notes": "High refresh rate target" },
+        "gpu": { "name": "NVIDIA GeForce RTX 2060 / AMD Radeon RX 6600", "vramGB": 6 },
+        "ramGB": 16,
+        "storageGB": 85,
+        "storageType": "SSD",
+        "os": "Windows 10 / 11 64-bit",
+        "directX": "Version 11"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High", "Very High"],
+      "cpuIntensity": "High",
+      "gpuIntensity": "Medium",
+      "vramIntensity": "Low",
+      "ramIntensity": "Medium",
+      "rayTracingSupported": false,
+      "dlssSupported": false,
+      "fsrSupported": true,
+      "xessSupported": false
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "Steam Official Store Page",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Counter-Strike 2 PC System Requirements",
+      "description": "Official PC requirements for competitive 144Hz+ and 240Hz+ gaming in CS2."
+    }
+  },
+  {
+    "name": "Valorant",
+    "slug": "valorant",
+    "alternateNames": ["Val"],
+    "developer": "Riot Games",
+    "publisher": "Riot Games",
+    "releaseDate": "2020-06-02",
+    "releaseYear": 2020,
+    "genres": ["FPS", "Tactical Shooter", "Multiplayer", "Competitive"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core 2 Duo E8400 / AMD Athlon 200GE", "notes": "30 FPS minimum" },
+        "gpu": { "name": "Intel HD 4000 / AMD Radeon R5 200", "vramGB": 1 },
+        "ramGB": 4,
+        "storageGB": 35,
+        "storageType": "Any",
+        "os": "Windows 10 / 11 64-bit",
+        "directX": "Version 11"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel i3-4150 / AMD Ryzen 3 1200", "notes": "60 FPS recommended" },
+        "gpu": { "name": "NVIDIA GeForce GT 730 / AMD Radeon R7 240", "vramGB": 2 },
+        "ramGB": 8,
+        "storageGB": 35,
+        "storageType": "SSD",
+        "os": "Windows 10 / 11 64-bit",
+        "directX": "Version 11"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High"],
+      "cpuIntensity": "High",
+      "gpuIntensity": "Low",
+      "vramIntensity": "Low",
+      "ramIntensity": "Low",
+      "rayTracingSupported": false,
+      "dlssSupported": false,
+      "fsrSupported": false,
+      "xessSupported": false
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "Riot Games Official Specs",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Valorant PC System Requirements",
+      "description": "Hardware requirements for 30 FPS, 60 FPS, and 144 FPS+ gameplay in Valorant."
+    }
+  },
+  {
+    "name": "Elden Ring",
+    "slug": "elden-ring",
+    "alternateNames": ["ER", "Shadow of the Erdtree"],
+    "developer": "FromSoftware",
+    "publisher": "Bandai Namco Entertainment",
+    "releaseDate": "2022-02-25",
+    "releaseYear": 2022,
+    "genres": ["Action RPG", "Soulslike", "Open World", "Dark Fantasy"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core i5-8400 / AMD Ryzen 3 3300X", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 1060 3GB / AMD Radeon RX 580 4GB", "vramGB": 3 },
+        "ramGB": 12,
+        "storageGB": 60,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 12"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i7-8700K / AMD Ryzen 5 3600X", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 1070 8GB / AMD Radeon RX Vega 56 8GB", "vramGB": 8 },
+        "ramGB": 16,
+        "storageGB": 60,
+        "storageType": "SSD",
+        "os": "Windows 10 / 11 64-bit",
+        "directX": "Version 12"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High", "Maximum"],
+      "cpuIntensity": "Medium",
+      "gpuIntensity": "High",
+      "vramIntensity": "Medium",
+      "ramIntensity": "Medium",
+      "rayTracingSupported": true,
+      "dlssSupported": false,
+      "fsrSupported": false,
+      "xessSupported": false
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "FromSoftware Official Steam Specs",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Elden Ring PC System Requirements",
+      "description": "System requirements and hardware performance profile for Elden Ring on PC."
+    }
+  },
+  {
+    "name": "Baldur's Gate 3",
+    "slug": "baldurs-gate-3",
+    "alternateNames": ["BG3", "Baldurs Gate 3"],
+    "developer": "Larian Studios",
+    "publisher": "Larian Studios",
+    "releaseDate": "2023-08-03",
+    "releaseYear": 2023,
+    "genres": ["RPG", "Turn-Based", "Fantasy", "Story Rich"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core i5 4690 / AMD FX 8350", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 970 / AMD Radeon RX 480 4GB", "vramGB": 4 },
+        "ramGB": 8,
+        "storageGB": 150,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 11"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i7 8700K / AMD Ryzen 5 3600", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce RTX 2060 Super / AMD Radeon RX 5700 XT", "vramGB": 8 },
+        "ramGB": 16,
+        "storageGB": 150,
+        "storageType": "SSD",
+        "os": "Windows 10 / 11 64-bit",
+        "directX": "Version 11"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High", "Ultra"],
+      "cpuIntensity": "High",
+      "gpuIntensity": "Medium",
+      "vramIntensity": "Medium",
+      "ramIntensity": "High",
+      "rayTracingSupported": false,
+      "dlssSupported": true,
+      "fsrSupported": true,
+      "xessSupported": false
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "Larian Studios Official Store Specs",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Baldur's Gate 3 PC System Requirements",
+      "description": "System specifications and requirements for Baldur's Gate 3 on PC."
+    }
+  },
+  {
+    "name": "Black Myth: Wukong",
+    "slug": "black-myth-wukong",
+    "alternateNames": ["Wukong", "BMW"],
+    "developer": "Game Science",
+    "publisher": "Game Science",
+    "releaseDate": "2024-08-20",
+    "releaseYear": 2024,
+    "genres": ["Action RPG", "Mythology", "Soulslike"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core i5-6600 / AMD Ryzen 5 1600", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 1060 6GB / AMD Radeon RX 580 8GB", "vramGB": 6 },
+        "ramGB": 16,
+        "storageGB": 130,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 12"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i7-9700 / AMD Ryzen 5 5500", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce RTX 2060 / AMD Radeon RX 5700 XT", "vramGB": 6 },
+        "ramGB": 16,
+        "storageGB": 130,
+        "storageType": "SSD",
+        "os": "Windows 10 / 11 64-bit",
+        "directX": "Version 12"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High", "Very High", "Cinematic"],
+      "cpuIntensity": "Medium",
+      "gpuIntensity": "High",
+      "vramIntensity": "High",
+      "ramIntensity": "Medium",
+      "rayTracingSupported": true,
+      "dlssSupported": true,
+      "fsrSupported": true,
+      "xessSupported": true
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "Game Science Official Specs",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Black Myth: Wukong PC System Requirements",
+      "description": "Official PC requirements and graphics settings profile for Black Myth: Wukong."
+    }
+  },
+  {
+    "name": "Apex Legends",
+    "slug": "apex-legends",
+    "alternateNames": ["Apex"],
+    "developer": "Respawn Entertainment",
+    "publisher": "Electronic Arts",
+    "releaseDate": "2019-02-04",
+    "releaseYear": 2019,
+    "genres": ["Battle Royale", "FPS", "Hero Shooter", "Multiplayer"],
+    "platforms": ["PC"],
+    "thumbnailUrl": null,
+    "requirements": {
+      "minimum": {
+        "cpu": { "name": "Intel Core i3-6300 / AMD FX-4350", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GT 640 / AMD Radeon HD 7730", "vramGB": 1 },
+        "ramGB": 6,
+        "storageGB": 75,
+        "storageType": "HDD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 11"
+      },
+      "recommended": {
+        "cpu": { "name": "Intel Core i5-3570K / AMD Ryzen 5", "notes": null },
+        "gpu": { "name": "NVIDIA GeForce GTX 970 / AMD Radeon R9 290", "vramGB": 4 },
+        "ramGB": 8,
+        "storageGB": 75,
+        "storageType": "SSD",
+        "os": "Windows 10 64-bit",
+        "directX": "Version 11"
+      }
+    },
+    "performanceProfile": {
+      "supportedResolutions": ["1080p", "1440p", "4K"],
+      "graphicsPresets": ["Low", "Medium", "High", "Very High"],
+      "cpuIntensity": "Medium",
+      "gpuIntensity": "Medium",
+      "vramIntensity": "Medium",
+      "ramIntensity": "Low",
+      "rayTracingSupported": false,
+      "dlssSupported": false,
+      "fsrSupported": false,
+      "xessSupported": false
+    },
+    "dataQuality": "verified",
+    "dataSource": {
+      "requirementsSource": "EA Official System Requirements",
+      "requirementsVerified": true,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z"
+    },
+    "seo": {
+      "title": "Apex Legends PC System Requirements",
+      "description": "System requirements and hardware performance profile for Apex Legends on PC."
+    }
+  }
+]

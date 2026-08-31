@@ -11,6 +11,7 @@ const userRouter = require('./routes/user');
 const pricingRouter = require('./routes/pricing');
 const hardwareRouter = require('./routes/hardware');
 const predictRouter = require('./routes/predict');
+const gamesRouter = require('./routes/games');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -30,6 +31,7 @@ connectDB();
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/pricing', pricingRouter);
+app.use('/api/games', gamesRouter);
 app.use('/api', hardwareRouter);
 app.use('/api', predictRouter);
 
