@@ -39,3 +39,41 @@ def test_predict_empty_payload(client):
     assert response.status_code == 400
     data = response.get_json()
     assert 'error' in data
+
+def test_predict_string_numbers_and_custom_hardware(client):
+    """Test payload with string-formatted numbers and hardware outside training set"""
+    payload = {
+        "CPU": "AMD Ryzen 7 7800X3D",
+        "CPU Cores": "8",
+        "CPU Threads": "16",
+        "CPU TDP (W)": "120",
+        "GPU": "NVIDIA GeForce RTX 4080",
+        "GPU Series": "RTX 4000",
+        "GPU VRAM (GB)": "16",
+        "GPU Bandwidth (GB/s)": "716",
+        "GPU TDP (W)": "320",
+        "RAM (GB)": "32",
+        "Resolution": "2560x1440",
+        "Graphics Settings": "Ultra"
+    }
+    response = client.post('/predict', json=payload)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'predicted_fps' in data
+    assert 5 <= data['predicted_fps'] <= 1200
+
+def test_predict_extreme_values(client):
+    """Test extreme / boundary values don't crash prediction"""
+    payload = {
+        "CPU": "Unknown CPU",
+        "CPU Cores": 999,
+        "RAM (GB)": 1024,
+        "GPU VRAM (GB)": 64,
+        "Resolution": "3840x2160",
+        "Graphics Settings": "Ultra"
+    }
+    response = client.post('/predict', json=payload)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'predicted_fps' in data
+    assert 5 <= data['predicted_fps'] <= 1200

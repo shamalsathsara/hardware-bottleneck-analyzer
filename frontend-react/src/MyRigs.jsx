@@ -38,9 +38,10 @@ export default function MyRigs({ currentUser, onLoadRig, onBack }) {
     try {
       setLoading(true);
       const token = localStorage.getItem('aura_token');
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
       
       // We pass the login token to prove who we are to the backend
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/rigs`, {
+      const { data } = await axios.get(`${baseUrl}/api/user/rigs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -60,7 +61,8 @@ export default function MyRigs({ currentUser, onLoadRig, onBack }) {
 
     try {
       const token = localStorage.getItem('aura_token');
-      const { data } = await axios.delete(`${import.meta.env.VITE_API_URL}/api/user/rigs/${rigId}`, {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const { data } = await axios.delete(`${baseUrl}/api/user/rigs/${rigId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

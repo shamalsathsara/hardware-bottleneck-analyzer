@@ -23,11 +23,31 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Security: Rate limiters for auth endpoints
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 10, 
+  message: { error: 'Too many login attempts, please try again later.' }
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  message: { error: 'Too many accounts created from this IP, please try again later.' }
+});
+
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many password reset attempts, please try again later.' }
+});
+
 // Helper function: Generates a JWT token valid for 7 days
 function signToken(user) {
+  const secret = process.env.JWT_SECRET || 'aura_fallback_jwt_development_secret';
   return jwt.sign(
     { id: user._id, username: user.username, email: user.email },
-    JWT_SECRET,
+    secret,
     { expiresIn: '7d' }
   );
 }
@@ -36,7 +56,7 @@ function signToken(user) {
 // REGISTER A NEW USER
 // --------------------------------------------------------------------------
 /* POST /api/auth/register */
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -44,12 +64,21 @@ router.post('/register', async (req, res) => {
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'All fields are required.' });
     }
+    const cleanUsername = username.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (cleanUsername.length < 2 || cleanUsername.length > 50) {
+      return res.status(400).json({ error: 'Username must be between 2 and 50 characters.' });
+    }
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters.' });
     }
+    if (password.length > 128) {
+      return res.status(400).json({ error: 'Password cannot exceed 128 characters.' });
+    }
 
     // 2. Check if this email is already registered in our database
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: cleanEmail });
     if (existing) {
       return res.status(409).json({ error: 'An account with this email already exists.' });
     }
@@ -58,7 +87,7 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
     
     // 4. Save the new user to MongoDB
-    const user = await User.create({ username, email, passwordHash });
+    const user = await User.create({ username: cleanUsername, email: cleanEmail, passwordHash });
 
     // 5. Generate a login token and send it back to React so they auto-login
     const token = signToken(user);
@@ -76,14 +105,6 @@ router.post('/register', async (req, res) => {
 // --------------------------------------------------------------------------
 // LOG IN AN EXISTING USER
 // --------------------------------------------------------------------------
-
-// Security: Prevent hackers from guessing passwords rapidly (max 10 tries per 15 minutes)
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 10, 
-  message: { error: 'Too many login attempts, please try again later.' }
-});
-
 /* POST /api/auth/login */
 router.post('/login', loginLimiter, async (req, res) => {
   try {
@@ -93,9 +114,10 @@ router.post('/login', loginLimiter, async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
+    const cleanEmail = email.trim().toLowerCase();
 
     // 2. Find the user in the database
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
@@ -127,17 +149,18 @@ router.post('/login', loginLimiter, async (req, res) => {
    STEP 1: POST /api/auth/forgot-password 
    Goal: Generate a 6-digit code and "send" it to the user.
 */
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', resetLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required.' });
 
     // Step 1a: Check if this email actually exists in our database
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
     
     if (!user) {
-      // Security trick: Even if the email doesn't exist, we tell the hacker 
-      // "If it exists, we sent it." This prevents hackers from guessing which 
+      // Security trick: Even if the email doesn't exist, we tell the requester
+      // "If it exists, we sent it." This prevents users from guessing which 
       // emails are registered on our site.
       return res.json({ message: 'If an account with that email exists, a reset code has been sent.' });
     }
@@ -187,25 +210,24 @@ router.post('/forgot-password', async (req, res) => {
    STEP 2: POST /api/auth/verify-code 
    Goal: Check if the code the user typed in is correct and hasn't expired.
 */
-router.post('/verify-code', async (req, res) => {
+router.post('/verify-code', resetLimiter, async (req, res) => {
   try {
     const { email, code } = req.body;
     if (!email || !code) return res.status(400).json({ error: 'Email and code are required.' });
 
     // Step 2a: Look for a user who matches BOTH the email AND the 6-digit code.
-    // The `$gt: Date.now()` part ensures the code hasn't expired yet!
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = String(code).trim();
     const user = await User.findOne({ 
-      email: email.toLowerCase(),
-      resetCode: code,
-      resetCodeExpires: { $gt: Date.now() } // $gt means "Greater Than"
+      email: cleanEmail,
+      resetCode: cleanCode,
+      resetCodeExpires: { $gt: Date.now() }
     });
 
     if (!user) {
-      // If we didn't find them, either the code was wrong, or 15 minutes passed.
       return res.status(400).json({ error: 'Invalid or expired verification code.' });
     }
 
-    // If we made it here, the code is good! Tell the frontend to show the "New Password" screen.
     res.json({ message: 'Code verified successfully.' });
   } catch (err) {
     console.error('Verify code error:', err.message);
@@ -217,7 +239,7 @@ router.post('/verify-code', async (req, res) => {
    STEP 3: POST /api/auth/reset-password 
    Goal: Save the brand new password to the database and delete the temporary code.
 */
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', resetLimiter, async (req, res) => {
   try {
     const { email, code, newPassword } = req.body;
     if (!email || !code || !newPassword) {
@@ -226,12 +248,16 @@ router.post('/reset-password', async (req, res) => {
     if (newPassword.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters.' });
     }
+    if (newPassword.length > 128) {
+      return res.status(400).json({ error: 'Password cannot exceed 128 characters.' });
+    }
 
     // Step 3a: Do one final security check to make sure the code is still valid.
-    // This stops hackers from bypassing Step 2.
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = String(code).trim();
     const user = await User.findOne({ 
-      email: email.toLowerCase(),
-      resetCode: code,
+      email: cleanEmail,
+      resetCode: cleanCode,
       resetCodeExpires: { $gt: Date.now() }
     });
 
@@ -243,7 +269,6 @@ router.post('/reset-password', async (req, res) => {
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     
     // Step 3c: Delete the 6-digit code and expiration timer from the database.
-    // This makes it impossible to reuse the code again!
     user.resetCode = undefined;
     user.resetCodeExpires = undefined;
     await user.save();

@@ -49,16 +49,31 @@ def predict():
             data['CPU'] = data['CPU'].replace('Core i', 'i')
             
         # Provide safe realistic medians for numerical columns before Pandas fills with 0
-        data['CPU Cores'] = data.get('CPU Cores') or 6
-        data['CPU Threads'] = data.get('CPU Threads') or 12
-        data['CPU TDP (W)'] = data.get('CPU TDP (W)') or 65
-        data['GPU VRAM (GB)'] = data.get('GPU VRAM (GB)') or 8
-        data['GPU Bandwidth (GB/s)'] = data.get('GPU Bandwidth (GB/s)') or 300
-        data['GPU TDP (W)'] = data.get('GPU TDP (W)') or 200
-        data['RAM (GB)'] = data.get('RAM (GB)') or 16
+        def safe_num(val, default, min_val=1, max_val=10000):
+            try:
+                num = float(val) if val is not None else float(default)
+                if pd.isna(num):
+                    return float(default)
+                return max(float(min_val), min(float(max_val), num))
+            except (ValueError, TypeError):
+                return float(default)
+
+        data['CPU Cores'] = safe_num(data.get('CPU Cores'), 6, min_val=1, max_val=128)
+        data['CPU Threads'] = safe_num(data.get('CPU Threads'), 12, min_val=1, max_val=256)
+        data['CPU TDP (W)'] = safe_num(data.get('CPU TDP (W)'), 65, min_val=10, max_val=1000)
+        data['GPU VRAM (GB)'] = safe_num(data.get('GPU VRAM (GB)'), 8, min_val=1, max_val=128)
+        data['GPU Bandwidth (GB/s)'] = safe_num(data.get('GPU Bandwidth (GB/s)'), 300, min_val=10, max_val=5000)
+        data['GPU TDP (W)'] = safe_num(data.get('GPU TDP (W)'), 200, min_val=10, max_val=1500)
+        data['RAM (GB)'] = safe_num(data.get('RAM (GB)'), 16, min_val=1, max_val=512)
 
         # Convert request payload to DataFrame
         df = pd.DataFrame([data])
+
+        # Ensure all continuous features are explicitly numeric
+        num_cols = ['CPU Cores', 'CPU Threads', 'CPU TDP (W)', 'GPU VRAM (GB)', 'GPU Bandwidth (GB/s)', 'GPU TDP (W)', 'RAM (GB)']
+        for col in num_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(data[col])
 
         # Apply one-hot encoding for categorical variables to match training data
         df = pd.get_dummies(df)
@@ -68,7 +83,7 @@ def predict():
         df = df.reindex(columns=model_columns, fill_value=0) 
 
         # Generate base FPS prediction
-        base_prediction = model.predict(df)[0]
+        base_prediction = float(model.predict(df)[0])
         
         # EXTRAPOLATION & OUTLIER HANDLING
         # If hardware is significantly stronger than training bounds, extrapolate slightly
@@ -79,7 +94,7 @@ def predict():
             base_prediction *= 1.05
             
         # Clamp FPS bounds to ensure realistic engine limits and prevent negative values
-        final_prediction = max(10, min(base_prediction, 1200))
+        final_prediction = max(5.0, min(base_prediction, 1200.0))
 
         # Return the prediction rounded to 2 decimal places
         return jsonify({'predicted_fps': round(final_prediction, 2)})

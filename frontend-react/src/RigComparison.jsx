@@ -1,174 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { analyzeBottleneck } from './utils/BottleneckLogic';
 
 // Component SVG Icons
-
-const IconCpu = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8"/>
-    <path d="M8 2v2M12 2v2M16 2v2M8 20v2M12 20v2M16 20v2M2 8h2M2 12h2M2 16h2M20 8h2M20 12h2M20 16h2"/>
-  </svg>
-);
-
-const IconGpu = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="6" width="20" height="12" rx="2"/>
-    <circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/>
-    <path d="M2 10h2M20 10h2M2 14h2M20 14h2"/>
-  </svg>
-);
-
-const IconRam = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="8" width="20" height="8" rx="2"/>
-    <path d="M6 8V6M10 8V6M14 8V6M18 8V6M6 16v2M10 16v2M14 16v2M18 16v2"/>
-  </svg>
-);
-
-const IconScan = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
-    <rect x="7" y="7" width="10" height="10" rx="1"/>
-  </svg>
-);
-
-const IconWarning = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-  </svg>
-);
-
-const IconArrowLeft = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
-  </svg>
-);
-
-const IconCheck = () => (
-  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-);
-
-const IconSwords = () => (
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/>
-    <line x1="13" y1="19" x2="19" y2="13"/>
-    <line x1="16" y1="16" x2="20" y2="20"/>
-    <line x1="19" y1="21" x2="21" y2="19"/>
-    <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/>
-    <line x1="5" y1="11" x2="9" y2="15"/>
-  </svg>
-);
-
-const IconTrophy = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 9H4a2 2 0 0 1-2-2V5h4"/>
-    <path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/>
-    <path d="M12 17c-2.67 0-8-1.34-8-4V5h16v8c0 2.66-5.33 4-8 4z"/>
-    <path d="M12 17v4"/>
-    <path d="M8 21h8"/>
-  </svg>
-);
-
-const IconEquals = () => (
-  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="5" y1="9" x2="19" y2="9"/>
-    <line x1="5" y1="15" x2="19" y2="15"/>
-  </svg>
-);
-
-const IconMonitor = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="20" height="14" rx="2"/>
-    <path d="M8 21h8M12 17v4"/>
-  </svg>
-);
-
-const IconSliders = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-    <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-    <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-    <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
-    <line x1="17" y1="16" x2="23" y2="16"/>
-  </svg>
-);
-
-const IconZap = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-  </svg>
-);
-
-const IconBarChart = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="20" x2="18" y2="10"/>
-    <line x1="12" y1="20" x2="12" y2="4"/>
-    <line x1="6" y1="20" x2="6" y2="14"/>
-    <line x1="2" y1="20" x2="22" y2="20"/>
-  </svg>
-);
-
-const IconRefresh = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 4 23 10 17 10"/>
-    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-  </svg>
-);
-
-// Core Bottleneck Logic (mirrors App.jsx analyzeBottleneck)
-
-function analyzeBottleneck(cpu, gpu) {
-  const cpuMark = parseInt(cpu.cpuMark) || 3000;
-  const gpuCUDA = parseInt(gpu.CUDA)    || 0;
-
-  const cpuTier = cpuMark < 1000  ? 1
-                : cpuMark < 2500  ? 2
-                : cpuMark < 5000  ? 3
-                : cpuMark < 8000  ? 4
-                : cpuMark < 12000 ? 5
-                : cpuMark < 16000 ? 6
-                : cpuMark < 20000 ? 7
-                : cpuMark < 25000 ? 8
-                : cpuMark < 30000 ? 9 : 10;
-
-  const gpuTier = gpuCUDA < 15000  ? 1
-                : gpuCUDA < 45000  ? 2
-                : gpuCUDA < 75000  ? 3
-                : gpuCUDA < 100000 ? 4
-                : gpuCUDA < 135000 ? 5
-                : gpuCUDA < 175000 ? 6
-                : gpuCUDA < 210000 ? 7
-                : gpuCUDA < 260000 ? 8
-                : gpuCUDA < 300000 ? 9 : 10;
-
-  const diff    = cpuTier - gpuTier;
-  const absDiff = Math.abs(diff);
-  const SEVERITY_TABLE = [5, 10, 25, 45, 60, 75, 80];
-  const severity = SEVERITY_TABLE[Math.min(absDiff, 6)];
-
-  let message, color, cardClass, type;
-
-  if (absDiff === 0) {
-    type = null; color = '#10b981'; cardClass = 'has-bottleneck-ok';
-    message = 'Balanced Build';
-  } else if (absDiff === 1) {
-    type = diff > 0 ? 'gpu' : 'cpu'; color = '#10b981'; cardClass = 'has-bottleneck-ok';
-    message = diff > 0 ? 'Slightly GPU-limited' : 'Slightly CPU-limited';
-  } else if (diff > 0) {
-    type = 'gpu';
-    if (absDiff >= 3) { color = '#ef4444'; cardClass = 'has-bottleneck-severe'; message = 'GPU Bottleneck'; }
-    else              { color = '#f59e0b'; cardClass = 'has-bottleneck-warning'; message = 'Mild GPU Bottleneck'; }
-  } else {
-    type = 'cpu';
-    if (absDiff >= 3) { color = '#ef4444'; cardClass = 'has-bottleneck-severe'; message = 'CPU Bottleneck'; }
-    else              { color = '#f59e0b'; cardClass = 'has-bottleneck-warning'; message = 'Mild CPU Bottleneck'; }
-  }
-
-  return { severity, message, color, cardClass, type };
-}
 
 // Empty Rig State Factory
 const emptyRig = () => ({
@@ -352,9 +186,10 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
       // Fallback: fetch hardware lists directly
       (async () => {
         try {
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
           const [c, g] = await Promise.all([
-            axios.get(`${import.meta.env.VITE_API_URL}/api/cpus`),
-            axios.get(`${import.meta.env.VITE_API_URL}/api/gpus`),
+            axios.get(`${baseUrl}/api/cpus/all-lightweight`),
+            axios.get(`${baseUrl}/api/gpus/all-lightweight`),
           ]);
           setLocalCpuList(c.data);
           setLocalGpuList(g.data);
@@ -405,8 +240,9 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
       'Graphics Settings': rig.settings,
     };
 
-    // 5. Send it to the Flask AI server
-    const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/predict`, payload);
+    // 5. Send it to the Flask AI server via backend bridge
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+    const { data } = await axios.post(`${baseUrl}/api/predict`, payload);
     const analysis  = analyzeBottleneck(fullCpu, fullGpu);
     const cpuScore  = parseInt(fullCpu.cpuMark) || 8000;
     let finalFps    = data.predicted_fps;

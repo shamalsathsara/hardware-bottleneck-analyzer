@@ -27,11 +27,47 @@ describe('Hardware Analyzer Backend API Tests', () => {
       const res = await request(app).get('/api/cpus/search?q=Intel');
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBeTruthy();
-      // Even if no CPUs exist, it should be an empty array, not an error
+    });
+
+    it('should safely handle regex special characters without crashing', async () => {
+      const res = await request(app).get('/api/cpus/search?q=Intel (R) [Core] *+?');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBeTruthy();
+    });
+  });
+
+  describe('GET /api/gpus/search', () => {
+    it('should safely handle regex special characters in GPU search', async () => {
+      const res = await request(app).get('/api/gpus/search?q=RTX (4090) *+?');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBeTruthy();
+    });
+  });
+
+  describe('GET /api/cpus and /api/gpus aliases', () => {
+    it('should support /api/cpus lightweight alias', async () => {
+      const res = await request(app).get('/api/cpus');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBeTruthy();
+    });
+
+    it('should support /api/gpus lightweight alias', async () => {
+      const res = await request(app).get('/api/gpus');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBeTruthy();
     });
   });
 
   describe('POST /api/predict', () => {
+    it('should reject invalid payload with missing CPU', async () => {
+      const res = await request(app)
+        .post('/api/predict')
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('error');
+    });
+
     it('should forward data to python AI and return prediction successfully', async () => {
       // Mock the successful response from the Python backend
       axios.post.mockResolvedValue({ data: { predicted_fps: 144.5 } });

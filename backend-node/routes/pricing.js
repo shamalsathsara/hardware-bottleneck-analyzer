@@ -1,14 +1,22 @@
 const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
+
+// Limit pricing queries to 20 per 10 minutes per IP
+const pricingLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many price estimation requests, please try again in a few minutes.' }
+});
 
 // --------------------------------------------------------------------------
 // DYNAMIC SRI LANKAN PRICING (VIA GEMINI AI)
 // --------------------------------------------------------------------------
 // Route: POST /api/pricing/estimate
 // Purpose: Fetch real-time estimated Sri Lankan market prices for PC parts.
-router.post('/estimate', async (req, res) => {
+router.post('/estimate', pricingLimiter, async (req, res) => {
   try {
     const { cpu, gpu, ram } = req.body;
 

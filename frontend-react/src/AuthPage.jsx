@@ -100,12 +100,13 @@ export default function AuthPage({ onLogin }) {
     }
 
     setLoading(true);
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
     try {
        
       // PASSWORD RECOVERY: STEP 1 (Send Email)
       if (mode === 'forgot') {
         // Send the email to the backend to generate a code
-        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, { email });
+        const { data } = await axios.post(`${baseUrl}/api/auth/forgot-password`, { email });
         setSuccess(data.message);
         
         // Wait 2 seconds so the user can read the success message, then show the "Verify Code" screen
@@ -116,7 +117,7 @@ export default function AuthPage({ onLogin }) {
        
       else if (mode === 'verify') {
         // Send both the email AND the code they just typed to see if it's correct
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-code`, { email, code: resetCode });
+        await axios.post(`${baseUrl}/api/auth/verify-code`, { email, code: resetCode });
         setSuccess('Code verified! Set your new password.');
         
         // Wait 1 second, then show the "New Password" screen
@@ -131,7 +132,7 @@ export default function AuthPage({ onLogin }) {
         if (password !== confirm) { setLoading(false); return setError('Passwords do not match.'); }
         
         // Send the email, the code, AND the brand new password to save it
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/reset-password`, { 
+        await axios.post(`${baseUrl}/api/auth/reset-password`, { 
           email, code: resetCode, newPassword: password 
         });
         setSuccess('Password reset successfully! Please sign in.');
@@ -142,8 +143,8 @@ export default function AuthPage({ onLogin }) {
       else {
         // Normal Login / Register flow
         const endpoint = mode === 'login'
-          ? `${import.meta.env.VITE_API_URL}/api/auth/login`
-          : `${import.meta.env.VITE_API_URL}/api/auth/register`;
+          ? `${baseUrl}/api/auth/login`
+          : `${baseUrl}/api/auth/register`;
 
         const body = mode === 'login'
           ? { email, password }

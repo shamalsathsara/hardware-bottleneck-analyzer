@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 4000; // Run on port 4000 unless specified othe
 // MIDDLEWARE CONFIGURATION
 // --------------------------------------------------------------------------
 app.use(cors()); // Allow our React frontend to talk to this server from any local port (5173, 5174, etc.)
-app.use(express.json()); // Tells the server to understand incoming JSON data (like form submissions)
+app.use(express.json({ limit: '100kb' })); // Tells the server to understand incoming JSON data with safe size limits
 
 // Auth routes (handles /api/auth/login and /api/auth/register)
 app.use('/api/auth', authRouter);
@@ -31,6 +31,11 @@ app.use('/api/user', userRouter);
 
 // Pricing routes
 app.use('/api/pricing', pricingRouter);
+
+// Helper function to escape special Regex characters to prevent ReDoS and query crashes
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
 
 // --------------------------------------------------------------------------
 // DATABASE CONFIGURATION
@@ -63,11 +68,11 @@ connectDB();
 // 1. GET /api/cpus/search -> Searches CPUs by name (limits to 20 to save bandwidth)
 app.get('/api/cpus/search', async(req, res) => {
     try{
-        const searchQuery = req.query.q || '';
-        console.log(`Searching CPUs for: "${searchQuery}"`);
+        const searchQuery = (req.query.q || '').trim();
+        const safeQuery = escapeRegex(searchQuery);
         
-        // Use a case-insensitive regular expression to find matches
-        const cpus = await CPU.find({ cpuName: { $regex: searchQuery, $options: 'i' } })
+        // Use a safe, case-insensitive regular expression to find matches
+        const cpus = await CPU.find({ cpuName: { $regex: safeQuery, $options: 'i' } })
                               .select('cpuName cpuMark cores') // Only send what frontend needs
                               .sort({ cpuName: 1 })
                               .limit(20)
@@ -81,10 +86,10 @@ app.get('/api/cpus/search', async(req, res) => {
 // 2. GET /api/gpus/search -> Searches GPUs by name (limits to 20 to save bandwidth)
 app.get('/api/gpus/search', async (req, res) => {
     try{
-        const searchQuery = req.query.q || '';
-        console.log(`Searching GPUs for: "${searchQuery}"`);
+        const searchQuery = (req.query.q || '').trim();
+        const safeQuery = escapeRegex(searchQuery);
         
-        const gpus = await GPU.find({ Device: { $regex: searchQuery, $options: 'i' } })
+        const gpus = await GPU.find({ Device: { $regex: safeQuery, $options: 'i' } })
                               .select('Device Manufacturer CUDA') // Only send what frontend needs
                               .sort({ Device: 1 })
                               .limit(20)
@@ -113,7 +118,7 @@ app.get('/api/hardware/stats', async (req, res) => {
 });
 
 // 2.6 GET /api/cpus/all-lightweight -> Lightweight fetch for recommendation engine
-app.get('/api/cpus/all-lightweight', async(req, res) => {
+app.get(['/api/cpus/all-lightweight', '/api/cpus'], async(req, res) => {
     try{
         const cpus = await CPU.find().select('cpuName cpuMark cores').sort({ cpuName: 1 }).lean(); 
         res.json(cpus);
@@ -123,7 +128,7 @@ app.get('/api/cpus/all-lightweight', async(req, res) => {
 });
 
 // 2.7 GET /api/gpus/all-lightweight -> Lightweight fetch for recommendation engine
-app.get('/api/gpus/all-lightweight', async(req, res) => {
+app.get(['/api/gpus/all-lightweight', '/api/gpus'], async(req, res) => {
     try{
         const gpus = await GPU.find().select('Device CUDA').sort({ Device: 1 }).lean(); 
         res.json(gpus);
@@ -136,6 +141,15 @@ app.get('/api/gpus/all-lightweight', async(req, res) => {
 // React sends hardware specs here, and this server forwards it to the Python Flask AI.
 app.post('/api/predict', async (req, res) => {
     try{
+        if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+            return res.status(400).json({ error: "Invalid payload format. Expected a JSON object." });
+        }
+
+        const { CPU, GPU, Resolution } = req.body;
+        if (!CPU && !req.body.CPU_Model && !req.body.CPU_Make) {
+            return res.status(400).json({ error: "CPU information is required for prediction." });
+        }
+
         console.log("Received Hardware Data from Frontend...")
         
         // Call the Python AI. 
@@ -148,6 +162,9 @@ app.post('/api/predict', async (req, res) => {
     
     }catch (error){
         console.error("Have an Error with Aura AI!", error.message);
+        if (error.response && error.response.data && error.response.data.error) {
+            return res.status(error.response.status || 500).json({ error: error.response.data.error });
+        }
         res.status(500).json({ error: "Failed to get prediction!"});
     }
 });

@@ -39,13 +39,34 @@ router.post('/rigs', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'All fields (name, cpu, gpu, ram, resolution) are required to save a PC.' });
     }
 
+    const cleanName = String(name).trim().substring(0, 80);
+    const cleanCpu = String(cpu).trim().substring(0, 120);
+    const cleanGpu = String(gpu).trim().substring(0, 120);
+    const cleanRam = String(ram).trim().substring(0, 20);
+    const cleanResolution = String(resolution).trim().substring(0, 30);
+
+    if (!cleanName || !cleanCpu || !cleanGpu) {
+      return res.status(400).json({ error: 'Invalid component specifications provided.' });
+    }
+
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }
 
+    // Limit maximum saved rigs per user to protect database storage
+    if (user.savedRigs && user.savedRigs.length >= 50) {
+      return res.status(400).json({ error: 'Maximum limit of 50 saved PCs reached. Please delete an older rig first.' });
+    }
+
     // Add the new rig to the list
-    const newRig = { name, cpu, gpu, ram, resolution };
+    const newRig = { 
+      name: cleanName, 
+      cpu: cleanCpu, 
+      gpu: cleanGpu, 
+      ram: cleanRam, 
+      resolution: cleanResolution 
+    };
     user.savedRigs.push(newRig);
     
     await user.save();
@@ -66,6 +87,9 @@ router.post('/rigs', requireAuth, async (req, res) => {
 router.delete('/rigs/:rigId', requireAuth, async (req, res) => {
   try {
     const { rigId } = req.params;
+    if (!rigId || typeof rigId !== 'string') {
+      return res.status(400).json({ error: 'Invalid rig ID provided.' });
+    }
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -74,7 +98,7 @@ router.delete('/rigs/:rigId', requireAuth, async (req, res) => {
 
     // Filter out the rig with the matching ID
     // We use .toString() because MongoDB IDs are special objects
-    user.savedRigs = user.savedRigs.filter(rig => rig._id.toString() !== rigId);
+    user.savedRigs = user.savedRigs.filter(rig => rig._id && rig._id.toString() !== rigId);
     
     await user.save();
 

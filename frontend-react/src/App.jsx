@@ -661,104 +661,7 @@ function App() {
   };
 
 
-  // Returns an explanation of the bottleneck — either simplified or technical
-  // depending on what the user selects.
-  const getExplanation = (data, style) => {
-    if (!data) return '';
 
-    if (data.type === 'cpu') {
-      if (style === 'technical') {
-        return `The processor is operating at or near 100% utilization while the GPU still has available compute headroom. This CPU bottleneck scenario occurs because the processor cannot generate render commands fast enough to keep the GPU fully saturated. The result is reduced GPU utilization and lower overall FPS than the graphics card is capable of delivering.`;
-      } else {
-        return `Your computer's brain (the CPU) is working so hard that it's struggling to keep up with your graphics card. Imagine a chef cooking orders too slowly — the kitchen (GPU) is sitting idle waiting. This makes your games run slower than they should.`;
-      }
-    }
-
-    // GPU Bottleneck Explanations
-    if (data.type === 'gpu') {
-      if (style === 'technical') {
-        return `The GPU is operating at maximum utilization (close to 100% render load) while the CPU still has available processing headroom. This GPU bottleneck occurs because the graphics card cannot render frames fast enough to match the processor's output rate. The result is the CPU waiting on the GPU, which limits overall FPS.`;
-      } else {
-        return `Your graphics card is working much harder than the rest of your computer. It's like a car engine running at full speed but the wheels can't keep up. This slows down your overall gaming performance, especially at higher resolutions.`;
-      }
-    }
-
-    // Balanced Build Explanations
-    if (style === 'technical') {
-      return `The CPU and GPU are operating with a balanced utilization ratio. Neither component is a significant limiting factor for the other, which means the system can sustain consistent frame delivery. Performance is optimized across both processing units.`;
-    } else {
-      return `Great news! Your CPU and GPU are working well together as a team. Neither one is holding the other back. This means you get smooth, consistent gaming performance without any major weak links in your system.`;
-    }
-  };
-
-
-  // NEW FEATURE 05 — Q&A Generator
-  // This function returns 3 helpful Q&A items based on the
-  // current bottleneck result. The questions and answers
-  // change dynamically depending on whether it's a CPU,
-  // GPU, or balanced build.
-  const generateQA = (data) => {
-    // Default Q&A for when no analysis has been run yet
-    if (!data) {
-      return [
-        { q: 'What is a bottleneck?', a: 'A bottleneck happens when one component in your PC is much slower than the others, limiting overall performance.' },
-        { q: 'How does Project Aura detect bottlenecks?', a: 'Project Aura uses a trained AI model to predict FPS and then checks if your CPU and GPU power levels are balanced.' },
-        { q: 'What should I do first?', a: 'Run an analysis by selecting your CPU, GPU, and game settings, then click "Run Analysis".' },
-      ];
-    }
-
-    // Q&A tailored for CPU bottleneck
-    if (data.type === 'cpu') {
-      return [
-        {
-          q: 'Why is my setup bottlenecked?',
-          a: 'Your CPU has too few cores or is too slow to send enough render commands to keep your GPU busy. The GPU ends up waiting, which reduces your FPS.',
-        },
-        {
-          q: 'Will upgrading the GPU improve my performance?',
-          a: 'Not much — since the CPU is the bottleneck, a stronger GPU would still be limited by the slow processor. Upgrading the CPU first will give you a much bigger improvement.',
-        },
-        {
-          q: 'What should I upgrade first?',
-          a: 'Upgrade your CPU. Look for a modern processor with 6 or more cores. This will free up your GPU to perform at its full potential.',
-        },
-      ];
-    }
-
-    // Q&A tailored for GPU bottleneck
-    if (data.type === 'gpu') {
-      return [
-        {
-          q: 'Why is my setup bottlenecked?',
-          a: 'Your GPU is not powerful enough to keep up with what your CPU is capable of processing. The graphics card becomes the weakest link, capping your FPS.',
-        },
-        {
-          q: 'Will upgrading the GPU improve my performance?',
-          a: 'Yes! Since the GPU is the main limiting component, upgrading to a more powerful graphics card will directly give you higher FPS and smoother gameplay.',
-        },
-        {
-          q: 'What should I upgrade first?',
-          a: 'Upgrade your GPU. Look for a card with a higher CUDA core count or compute score. This will immediately improve your gaming performance.',
-        },
-      ];
-    }
-
-    // Q&A for a balanced, well-matched build
-    return [
-      {
-        q: 'Why is my build performing well?',
-        a: 'Your CPU and GPU are well-matched — neither one is significantly slower than the other, so they work together efficiently.',
-      },
-      {
-        q: 'Should I still upgrade anything?',
-        a: 'There is no urgent need. However, if you want higher FPS at 4K or Ultra settings, upgrading the GPU first usually gives the best improvement.',
-      },
-      {
-        q: 'What is the best future upgrade path?',
-        a: 'Start by upgrading your GPU for better visuals, then upgrade RAM if you\'re multitasking heavily. Your CPU is in good shape.',
-      },
-    ];
-  };
 
 
   // Auth boundary guard — show login page if not logged in (unchanged)
@@ -1104,7 +1007,7 @@ function App() {
                     <p className="bottleneck-message">{bottleneckData.message}</p>
                   </div>
 
-                  <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                     <button 
                       onClick={() => setCurrentView('quotation')}
                       className="save-pc-btn"
@@ -1113,6 +1016,10 @@ function App() {
                       <span className="btn-icon"><IconScan /></span> View Live Pricing Quotation
                     </button>
                   </div>
+
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1rem', lineHeight: '1.4' }}>
+                    * Performance and FPS values are AI-generated regression estimates. Real-world framerates may vary based on GPU drivers, background apps, cooling/thermal throttling, and game updates.
+                  </p>
                 </div>
 
                 {/* Hardware Upgrade Recommendation */}
@@ -1479,7 +1386,8 @@ function App() {
                   if (!rigNameInput.trim()) return;
                   try {
                     const token = localStorage.getItem('aura_token');
-                    await axios.post(`${import.meta.env.VITE_API_URL}/api/user/rigs`, 
+                    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+                    await axios.post(`${baseUrl}/api/user/rigs`, 
                       { name: rigNameInput.trim(), cpu: selectedCpu, gpu: selectedGpu, ram, resolution },
                       { headers: { Authorization: `Bearer ${token}` } }
                     );
