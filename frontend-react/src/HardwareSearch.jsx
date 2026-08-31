@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
+import { searchCpus, searchGpus } from './services/hardwareService';
 
-// A simple autocomplete search component that fetches data dynamically
-// This fixes Issue 3.1: Massive Data Fetch on Mount
-const HardwareSearch = ({ type, onSelect, placeholder, value }) => {
+export default function HardwareSearch({ type, onSelect, placeholder, value }) {
   const [query, setQuery] = useState(value || '');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,7 +15,6 @@ const HardwareSearch = ({ type, onSelect, placeholder, value }) => {
   }, [value]);
 
   useEffect(() => {
-    // If the user clears the input, clear the results
     if (query.trim() === '') {
       setResults([]);
       return;
@@ -26,17 +23,15 @@ const HardwareSearch = ({ type, onSelect, placeholder, value }) => {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        // Dynamically search via API instead of loading the whole database
-        const endpoint = type === 'cpu' ? '/api/cpus/search' : '/api/gpus/search';
-        const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}${endpoint}?q=${query}`);
-        setResults(res.data);
+        const data = type === 'cpu' ? await searchCpus(query) : await searchGpus(query);
+        setResults(data || []);
         setIsOpen(true);
       } catch (err) {
-        console.error("Search error:", err);
+        console.error('Hardware search error:', err.message);
       } finally {
         setLoading(false);
       }
-    }, 300); // 300ms debounce to prevent spamming the API while typing
+    }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
   }, [query, type]);
@@ -45,7 +40,7 @@ const HardwareSearch = ({ type, onSelect, placeholder, value }) => {
     const itemName = type === 'cpu' ? item.cpuName : item.Device;
     setQuery(itemName);
     setIsOpen(false);
-    onSelect(item); // Send the full selected object back to parent
+    onSelect(item);
   };
 
   return (
@@ -57,10 +52,14 @@ const HardwareSearch = ({ type, onSelect, placeholder, value }) => {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => { if (results.length > 0) setIsOpen(true); }}
-        onBlur={() => setTimeout(() => setIsOpen(false), 200)} // delay to allow click
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
       />
       
-      {loading && <div style={{ position: 'absolute', right: '10px', top: '12px', color: '#888', fontSize: '0.8rem' }}>Searching...</div>}
+      {loading && (
+        <div style={{ position: 'absolute', right: '10px', top: '12px', color: '#888', fontSize: '0.8rem' }}>
+          Searching...
+        </div>
+      )}
 
       {isOpen && results.length > 0 && (
         <ul style={{
@@ -82,8 +81,6 @@ const HardwareSearch = ({ type, onSelect, placeholder, value }) => {
           {results.map((item, idx) => (
             <li 
               key={idx}
-              // onMouseDown fires before onBlur, so preventDefault stops the input
-              // from losing focus before the selection is registered (fixes blur-before-click race)
               onMouseDown={(e) => {
                 e.preventDefault();
                 handleSelect(item);
@@ -104,6 +101,4 @@ const HardwareSearch = ({ type, onSelect, placeholder, value }) => {
       )}
     </div>
   );
-};
-
-export default HardwareSearch;
+}

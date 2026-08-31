@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchUserRigs, deleteUserRig } from './services/rigService';
 
 // Component SVG Icons
 const IconTrash = () => (
@@ -29,26 +29,17 @@ export default function MyRigs({ currentUser, onLoadRig, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch the user's saved rigs as soon as this page opens
   useEffect(() => {
-    fetchRigs();
+    loadRigs();
   }, []);
 
-  const fetchRigs = async () => {
+  const loadRigs = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('aura_token');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      
-      // We pass the login token to prove who we are to the backend
-      const { data } = await axios.get(`${baseUrl}/api/user/rigs`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      const data = await fetchUserRigs();
       setRigs(data);
       setError(null);
-    // eslint-disable-next-line no-unused-vars
-    } catch (_err) {
+    } catch {
       setError('Could not load your saved PCs. Please try again later.');
     } finally {
       setLoading(false);
@@ -56,20 +47,12 @@ export default function MyRigs({ currentUser, onLoadRig, onBack }) {
   };
 
   const handleDeleteRig = async (rigId) => {
-    // Ask for confirmation before deleting so the user doesn't delete by mistake
     if (!window.confirm('Are you sure you want to delete this saved PC?')) return;
 
     try {
-      const token = localStorage.getItem('aura_token');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      const { data } = await axios.delete(`${baseUrl}/api/user/rigs/${rigId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Update the screen with the new list from the backend
+      const data = await deleteUserRig(rigId);
       setRigs(data);
-    // eslint-disable-next-line no-unused-vars
-    } catch (_err) {
+    } catch {
       alert('Failed to delete rig.');
     }
   };
@@ -77,10 +60,7 @@ export default function MyRigs({ currentUser, onLoadRig, onBack }) {
   return (
     <div className="my-rigs-page" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       
-      {/* -------------------------------------------------------------------
-          PROFILE HEADER 
-          Shows the user's name prominently as requested!
-      -------------------------------------------------------------------- */}
+      {/* Profile Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', background: 'var(--surface)', padding: '1.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
         <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
           <span style={{ width: '30px', height: '30px' }}><IconUser /></span>
@@ -100,8 +80,8 @@ export default function MyRigs({ currentUser, onLoadRig, onBack }) {
         <button 
           onClick={onBack}
           style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-main)', padding: '0.5rem 1rem', borderRadius: 'var(--radius)', cursor: 'pointer', transition: 'all 0.2s' }}
-          onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)' }}
-          onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-main)' }}
+          onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+          onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-main)'; }}
         >
           Back to Analyzer
         </button>

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -15,74 +14,23 @@ import MyRigs from './MyRigs';
 import Quotation from './Quotation';
 import RigComparison from './RigComparison';
 import ErrorBoundary from './ErrorBoundary';
+import SaveRigModal from './components/common/SaveRigModal';
+
+import { ROUTES, ROUTE_TITLES, getNormalizedRoute } from './constants/routes';
+import { SRI_LK_STORES } from './constants/stores';
+import { useAuth } from './hooks/useAuth';
+import { useHardwareData } from './hooks/useHardwareData';
+import { predictFps } from './services/analysisService';
+import { saveUserRig } from './services/rigService';
 import { analyzeBottleneck } from './utils/BottleneckLogic';
 
-/* Static data for local PC stores used in the Need Help section */
-const SRI_LK_STORES = [
-  {
-    name: 'Nanotek',
-    url: 'https://www.nanotek.lk',
-    description: 'One of Sri Lanka\'s leading computer hardware retailers with a wide range of CPUs, GPUs, and accessories.',
-  },
-  {
-    name: 'Redline Technologies',
-    url: 'https://www.redline.lk',
-    description: 'A premium tech store offering high-performance gaming components and custom PC builds.',
-  },
-  {
-    name: 'Barclays Computer',
-    url: 'https://www.barclayscomputer.lk',
-    description: 'A well-established store known for competitive prices on computer parts and peripherals.',
-  },
-  {
-    name: 'Gamestreet',
-    url: 'https://www.gamestreet.lk',
-    description: 'Sri Lanka\'s go-to destination for gaming gear, from graphics cards to gaming monitors.',
-  },
-  {
-    name: 'Tecroot',
-    url: 'https://www.tecroot.lk',
-    description: 'A modern tech retailer specializing in the latest PC hardware with fast island-wide delivery.',
-  },
-];
-
-// Helper to normalize pathnames
-function getNormalizedPath() {
-  const path = window.location.pathname.toLowerCase();
-  if (path === '' || path === '/') return '/';
-  if (path.startsWith('/bottleneck')) return '/bottleneck-calculator';
-  if (path.startsWith('/compare')) return '/compare';
-  if (path.startsWith('/my-rigs') || path.startsWith('/rigs')) return '/my-rigs';
-  if (path.startsWith('/about')) return '/about';
-  if (path.startsWith('/method')) return '/methodology';
-  if (path.startsWith('/privacy')) return '/privacy';
-  if (path.startsWith('/terms')) return '/terms';
-  if (path.startsWith('/contact')) return '/contact';
-  if (path.startsWith('/auth') || path.startsWith('/login') || path.startsWith('/register')) return '/auth';
-  if (path.startsWith('/quotation') || path.startsWith('/quote')) return '/quotation';
-  return '/';
-}
-
 function updatePageMetadata(route) {
-  const titles = {
-    '/': 'Project Aura – PC Bottleneck & Gaming Performance Analyzer',
-    '/bottleneck-calculator': 'PC Bottleneck Calculator – Project Aura',
-    '/compare': 'Compare Gaming PC Builds – Project Aura',
-    '/my-rigs': 'My Saved Rigs – Project Aura',
-    '/about': 'About Platform – Project Aura',
-    '/methodology': 'ML Methodology & Limitations – Project Aura',
-    '/privacy': 'Privacy Policy – Project Aura',
-    '/terms': 'Terms of Use – Project Aura',
-    '/contact': 'Contact & Support – Project Aura',
-    '/auth': 'Sign In / Register – Project Aura',
-    '/quotation': 'Hardware Pricing Quotation – Project Aura',
-  };
-  document.title = titles[route] || 'Project Aura – PC Bottleneck Analyzer';
+  document.title = ROUTE_TITLES[route] || 'Project Aura – PC Bottleneck Analyzer';
 }
 
 function App() {
   // ── ROUTING STATE ──
-  const [currentRoute, setCurrentRoute] = useState(getNormalizedPath);
+  const [currentRoute, setCurrentRoute] = useState(() => getNormalizedRoute(window.location.pathname));
 
   const navigate = useCallback((route) => {
     window.history.pushState({}, '', route);
@@ -94,7 +42,7 @@ function App() {
   // Listen to browser Back / Forward buttons
   useEffect(() => {
     const onPopState = () => {
-      const route = getNormalizedPath();
+      const route = getNormalizedRoute(window.location.pathname);
       setCurrentRoute(route);
       updatePageMetadata(route);
     };
@@ -103,30 +51,18 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [currentRoute]);
 
-  // ── USER AUTHENTICATION STATE ──
-  const [currentUser, setCurrentUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('aura_user')) || null; }
-    catch { return null; }
-  });
-
-  const handleLogin = useCallback((user) => {
-    setCurrentUser(user);
-  }, []);
+  // ── USER AUTHENTICATION HOOK ──
+  const { currentUser, login, logout } = useAuth();
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('aura_token');
-    localStorage.removeItem('aura_user');
-    setCurrentUser(null);
-    if (currentRoute === '/my-rigs') {
-      navigate('/bottleneck-calculator');
+    logout();
+    if (currentRoute === ROUTES.MY_RIGS) {
+      navigate(ROUTES.BOTTLENECK_CALCULATOR);
     }
-  }, [currentRoute, navigate]);
+  }, [currentRoute, logout, navigate]);
 
-  // ── HARDWARE DATA COLLECTIONS ──
-  const [cpuList, setCpuList] = useState([]);
-  const [gpuList, setGpuList] = useState([]);
-  const [loadingData, setLoadingData] = useState(false);
-  const [maxStats, setMaxStats] = useState({ maxCpuMark: 100000, maxGpuCuda: 500000 });
+  // ── HARDWARE DATA HOOK ──
+  const { cpuList, gpuList, maxStats, loading: loadingData } = useHardwareData();
 
   // ── ANALYZER CONFIGURATION STATE ──
   const [selectedCpu, setSelectedCpu] = useState('');
@@ -150,30 +86,6 @@ function App() {
 
   // ── SAVE RIG MODAL STATE ──
   const [showSaveRigModal, setShowSaveRigModal] = useState(false);
-  const [rigNameInput, setRigNameInput] = useState('');
-
-  // Fetch initial lightweight hardware lists for autocomplete and stats
-  useEffect(() => {
-    const fetchHardware = async () => {
-      setLoadingData(true);
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-        const [cpusRes, gpusRes, statsRes] = await Promise.all([
-          axios.get(`${baseUrl}/api/cpus/all-lightweight`),
-          axios.get(`${baseUrl}/api/gpus/all-lightweight`),
-          axios.get(`${baseUrl}/api/hardware/stats`).catch(() => ({ data: { maxCpuMark: 100000, maxGpuCuda: 500000 } })),
-        ]);
-        setCpuList(cpusRes.data);
-        setGpuList(gpusRes.data);
-        if (statsRes.data) setMaxStats(statsRes.data);
-      } catch (err) {
-        console.error('Hardware fetch error:', err.message);
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    fetchHardware();
-  }, []);
 
   // ── RUN ANALYSIS HANDLER ──
   const handleConsultAura = async () => {
@@ -225,8 +137,7 @@ function App() {
         'Graphics Settings': settings,
       };
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      const { data } = await axios.post(`${baseUrl}/api/predict`, payload);
+      const data = await predictFps(payload);
 
       const analysis = analyzeBottleneck(fullCpu, fullGpu, maxStats);
       const cpuScore = parseInt(fullCpu.cpuMark) || 8000;
@@ -331,20 +242,15 @@ function App() {
   };
 
   // ── SAVE RIG HANDLER ──
-  const handleSaveRigSubmit = async () => {
-    if (!rigNameInput.trim()) return;
+  const handleSaveRigSubmit = async (rigName) => {
     try {
-      const token = localStorage.getItem('aura_token');
-      if (!token || token === 'null' || token === 'undefined') {
-        setError('You are not logged in. Please sign in to save PC builds.');
-        setShowSaveRigModal(false);
-        return;
-      }
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      await axios.post(`${baseUrl}/api/user/rigs`, 
-        { name: rigNameInput.trim(), cpu: selectedCpu, gpu: selectedGpu, ram, resolution },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await saveUserRig({ 
+        name: rigName, 
+        cpu: selectedCpu, 
+        gpu: selectedGpu, 
+        ram, 
+        resolution 
+      });
       setShowSaveRigModal(false);
       alert('PC Build saved successfully! You can view it in your "My Rigs" profile.');
     } catch (err) {
@@ -362,7 +268,7 @@ function App() {
     setResolution(rig.resolution || '1920x1080');
     setSelectedCpuData(null);
     setSelectedGpuData(null);
-    navigate('/bottleneck-calculator');
+    navigate(ROUTES.BOTTLENECK_CALCULATOR);
   };
 
   return (
@@ -378,13 +284,13 @@ function App() {
         />
 
         {/* Dynamic Route Content */}
-        <div className="site-main-content">
+        <main className="site-main-content">
           
-          {currentRoute === '/' && (
+          {currentRoute === ROUTES.HOME && (
             <HomePage onNavigate={navigate} />
           )}
 
-          {currentRoute === '/bottleneck-calculator' && (
+          {currentRoute === ROUTES.BOTTLENECK_CALCULATOR && (
             <BottleneckCalculatorPage 
               loadingData={loadingData}
               selectedCpu={selectedCpu}
@@ -414,114 +320,76 @@ function App() {
               error={error}
               currentUser={currentUser}
               onNavigate={navigate}
-              onOpenSaveModal={() => { setRigNameInput(''); setShowSaveRigModal(true); }}
+              onOpenSaveModal={() => setShowSaveRigModal(true)}
               SRI_LK_STORES={SRI_LK_STORES}
             />
           )}
 
-          {currentRoute === '/compare' && (
+          {currentRoute === ROUTES.COMPARE && (
             <RigComparison
               cpuList={cpuList}
               gpuList={gpuList}
-              onBack={() => navigate('/bottleneck-calculator')}
+              onBack={() => navigate(ROUTES.BOTTLENECK_CALCULATOR)}
               initialRig={selectedCpu && selectedGpu ? { cpu: selectedCpu, gpu: selectedGpu, ram, resolution, settings } : null}
             />
           )}
 
-          {currentRoute === '/my-rigs' && (
+          {currentRoute === ROUTES.MY_RIGS && (
             currentUser ? (
               <MyRigs 
                 currentUser={currentUser}
-                onBack={() => navigate('/bottleneck-calculator')}
+                onBack={() => navigate(ROUTES.BOTTLENECK_CALCULATOR)}
                 onLoadRig={handleLoadRig}
               />
             ) : (
-              <AuthPage onLogin={(u) => { handleLogin(u); navigate('/my-rigs'); }} />
+              <AuthPage onLogin={(u) => { login(localStorage.getItem('aura_token'), u); navigate(ROUTES.MY_RIGS); }} />
             )
           )}
 
-          {currentRoute === '/about' && (
+          {currentRoute === ROUTES.ABOUT && (
             <AboutPage onNavigate={navigate} />
           )}
 
-          {currentRoute === '/methodology' && (
+          {currentRoute === ROUTES.METHODOLOGY && (
             <MethodologyPage onNavigate={navigate} />
           )}
 
-          {currentRoute === '/privacy' && (
+          {currentRoute === ROUTES.PRIVACY && (
             <PrivacyPage />
           )}
 
-          {currentRoute === '/terms' && (
+          {currentRoute === ROUTES.TERMS && (
             <TermsPage />
           )}
 
-          {currentRoute === '/contact' && (
+          {currentRoute === ROUTES.CONTACT && (
             <ContactPage />
           )}
 
-          {currentRoute === '/auth' && (
-            <AuthPage onLogin={(u) => { handleLogin(u); navigate('/bottleneck-calculator'); }} />
+          {currentRoute === ROUTES.AUTH && (
+            <AuthPage onLogin={(u) => { login(localStorage.getItem('aura_token'), u); navigate(ROUTES.BOTTLENECK_CALCULATOR); }} />
           )}
 
-          {currentRoute === '/quotation' && (
+          {currentRoute === ROUTES.QUOTATION && (
             <Quotation 
               cpu={selectedCpu}
               gpu={selectedGpu}
               ram={ram}
-              onBack={() => navigate('/bottleneck-calculator')}
+              onBack={() => navigate(ROUTES.BOTTLENECK_CALCULATOR)}
             />
           )}
 
-        </div>
+        </main>
 
         {/* Global Footer */}
         <Footer onNavigate={navigate} />
 
         {/* Save Rig Modal */}
-        {showSaveRigModal && (
-          <div className="save-modal-backdrop">
-            <div className="save-modal-card">
-              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)' }}>Save This PC Build</h3>
-              <p style={{ margin: '0 0 1.2rem 0', color: 'var(--text-sub)', fontSize: '0.9rem' }}>
-                Give your setup a memorable name to view and compare it anytime in "My Rigs".
-              </p>
-              <input 
-                type="text"
-                placeholder="e.g. My 1440p Gaming Rig"
-                value={rigNameInput}
-                onChange={(e) => setRigNameInput(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.8rem 1rem',
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-main)',
-                  borderRadius: 'var(--radius)',
-                  marginBottom: '1.5rem',
-                  outline: 'none',
-                }}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRigSubmit(); }}
-                autoFocus
-              />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                <button 
-                  onClick={() => setShowSaveRigModal(false)}
-                  style={{ background: 'transparent', color: 'var(--text-main)', border: '1px solid var(--border)', padding: '0.6rem 1.2rem', borderRadius: 'var(--radius)', cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleSaveRigSubmit}
-                  disabled={!rigNameInput.trim()}
-                  style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '0.6rem 1.2rem', borderRadius: 'var(--radius)', cursor: rigNameInput.trim() ? 'pointer' : 'not-allowed', fontWeight: 'bold', opacity: rigNameInput.trim() ? 1 : 0.5 }}
-                >
-                  Save PC
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <SaveRigModal 
+          isOpen={showSaveRigModal}
+          onClose={() => setShowSaveRigModal(false)}
+          onSave={handleSaveRigSubmit}
+        />
 
       </div>
     </ErrorBoundary>

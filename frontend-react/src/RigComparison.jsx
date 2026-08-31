@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { analyzeBottleneck } from './utils/BottleneckLogic';
+import { fetchAllCpusLightweight, fetchAllGpusLightweight } from './services/hardwareService';
+import { predictFps } from './services/analysisService';
 
 // Component SVG Icons
 
@@ -186,13 +187,12 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
       // Fallback: fetch hardware lists directly
       (async () => {
         try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
           const [c, g] = await Promise.all([
-            axios.get(`${baseUrl}/api/cpus/all-lightweight`),
-            axios.get(`${baseUrl}/api/gpus/all-lightweight`),
+            fetchAllCpusLightweight(),
+            fetchAllGpusLightweight(),
           ]);
-          setLocalCpuList(c.data);
-          setLocalGpuList(g.data);
+          setLocalCpuList(c);
+          setLocalGpuList(g);
         } catch {
           setError('Could not load hardware lists. Make sure the backend is running.');
         }
@@ -241,8 +241,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
     };
 
     // 5. Send it to the Flask AI server via backend bridge
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-    const { data } = await axios.post(`${baseUrl}/api/predict`, payload);
+    const data = await predictFps(payload);
     const analysis  = analyzeBottleneck(fullCpu, fullGpu);
     const cpuScore  = parseInt(fullCpu.cpuMark) || 8000;
     let finalFps    = data.predicted_fps;

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { estimatePrices } from './services/pricingService';
 
 // Simple Icons
 const IconArrowLeft = () => (
@@ -26,10 +26,10 @@ const Quotation = ({ cpu, gpu, ram, onBack }) => {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/pricing/estimate`, { cpu, gpu, ram });
-        setPrices(response.data);
+        const data = await estimatePrices({ cpu, gpu, ram });
+        setPrices(data);
       } catch (err) {
-        console.error(err);
+        console.error('Pricing error:', err.message);
         const msg = err?.response?.data?.error || 'Failed to fetch live prices. Please make sure the Gemini API key is configured.';
         setError(msg);
       } finally {

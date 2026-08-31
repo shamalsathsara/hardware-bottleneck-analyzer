@@ -1,80 +1,211 @@
-# Smart PC Hardware Bottleneck Analyzer
+# Project Aura — ML-Powered PC Gaming Bottleneck Analyzer
 
-> [!IMPORTANT]
-> ###  SETUP REQUIREMENT FOR MULTIPLE PCS (GITHUBS PULLS)
-> The `.env` file containing secret configuration keys (like database passwords and AI keys) is **ignored by Git** for security reasons. When pulling this repository to a new PC or a friend's laptop, you **MUST manually create** a file named `.env` inside the `backend-node/` directory.
-> 
-> Create the file `backend-node/.env` and paste the following template, filling in the keys:
-> ```env
-> # AURA environment variables
-> PORT=4000
-> MONGO_URI=mongodb+srv://<db_user>:<db_password>@<cluster>.mongodb.net/?appName=aura
-> JWT_SECRET=your_jwt_secret_key_here
-> EMAIL_USER=your_email@gmail.com
-> EMAIL_PASS=your_email_app_password_here
-> GEMINI_API_KEY=your_gemini_api_key_here
-> ```
+> An intelligent, Machine Learning-driven PC hardware analysis platform that predicts gaming framerates (FPS), identifies CPU/GPU bottlenecks, recommends upgrade paths, and simulates PC builds.
 
 ---
 
-## 🚀 New Feature (v2.1) — Live Sri Lankan Pricing & A4 PDF Quotation
-Project Aura now features a dynamic pricing estimator and PDF quotation engine.
-* **Gemini AI Integration**: Connects to Google Gemini 2.5 Flash dynamically to estimate local Sri Lankan Rupees (LKR) retail pricing for the selected CPU, GPU, and RAM.
-* **A4 PDF Export**: Compiles components and prices into a standard, clean, print-ready A4 PDF invoice without heavy colors using `jsPDF` and `jsPDF-AutoTable`.
-* **Dynamic Layout Spacing**: Automatically calculates document space constraints using dynamic table positioning to avoid any overlapping text in the PDF.
+## 📌 Overview
+
+**Project Aura** empowers PC gamers, system builders, and hardware enthusiasts to evaluate component synergy and balance before investing in hardware. By combining a trained **Random Forest Machine Learning Regressor** with real-world hardware benchmark data, Project Aura estimates gaming framerates across multiple resolutions and isolates performance bottlenecks with fine-grained precision.
 
 ---
 
-ai-python = python app.py
-backend-node = node server.js
-frontend-react =npm run dev
+## 🏗️ System Architecture
 
+Project Aura is organized as a decoupled, multi-service architecture:
 
-# DAY 01...
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    React 19 + Vite Frontend                 │
+│         (Client Routing, SEO Metadata, Dynamic UI)          │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTP / REST
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 Node.js + Express 5 API Gateway             │
+│        (Auth, Security, Rate Limiting, Database CRUD)       │
+└──────────────┬──────────────────────────────┬───────────────┘
+               │                              │
+               ▼                              ▼
+┌─────────────────────────────┐┌──────────────────────────────┐
+│     MongoDB Atlas Cloud     ││    Python Flask AI Service   │
+│  (CPUs, GPUs, Users, Rigs)  ││  (Random Forest Regressor)   │
+└─────────────────────────────┘└──────────────────────────────┘
+```
 
-What We Accomplished Today
-1. Project Foundation & Version Control (Phase 1)
+* **Frontend**: React 19, Vite, Vanilla CSS design system.
+* **Backend API Gateway**: Node.js, Express 5, Mongoose 8.
+* **Database**: MongoDB Atlas.
+* **ML Microservice**: Python 3.13, Flask, scikit-learn, joblib, pandas.
 
-Created your master microservice architecture folders (frontend-react, backend-node, ai-python).
+---
 
-Successfully initialized Git and linked your local Ubuntu machine to your remote GitHub repository.
+## 📁 Repository Structure
 
-2. Data Acquisition (Phase 1)
+```
+hardware-bottleneck-analyzer/
+├── frontend-react/               # React 19 + Vite User Interface
+│   ├── public/                   # Static assets, robots.txt, sitemap.xml
+│   ├── src/
+│   │   ├── components/           # UI components (Navbar, Footer, Modals)
+│   │   ├── constants/            # Hardware, routing, and store constants
+│   │   ├── hooks/                # Custom state hooks (useAuth, useHardwareData)
+│   │   ├── pages/                # Public and tool pages
+│   │   ├── services/             # Centralized API service layer
+│   │   ├── utils/                # Pure business logic (Bottleneck calculations)
+│   │   ├── App.jsx               # Client application orchestrator
+│   │   ├── index.css             # Unified dark gaming design system
+│   │   └── main.jsx              # React DOM mounting
+│   ├── package.json
+│   └── vite.config.js
+│
+├── backend-node/                 # Express 5 API Gateway
+│   ├── config/                   # Database connection configuration
+│   ├── middleware/               # Auth verification & rate limiters
+│   ├── models/                   # Mongoose schemas (User, Hardware)
+│   ├── routes/                   # Modular API routers (auth, user, hardware, predict, pricing)
+│   ├── utils/                    # ReDoS-safe regex escaping
+│   ├── server.js                 # Express server entry point
+│   ├── server.test.js            # Jest backend test suite
+│   └── package.json
+│
+├── ai-python/                    # Flask Machine Learning Microservice
+│   ├── ai_columns.joblib         # 71-dimension feature schema artifact
+│   ├── project_aura.joblib       # Trained Random Forest model artifact
+│   ├── preprocessing.py          # Input bounding, mapping, and one-hot encoding
+│   ├── app.py                    # Flask REST API server
+│   ├── test_app.py               # Pytest ML verification suite
+│   └── requirements.txt          # Python dependencies
+│
+├── docs/                         # Technical Architecture Specifications
+│   └── ARCHITECTURE.md
+└── README.md
+```
 
-Hunted down the perfect industry-level datasets from Kaggle.
+---
 
-Secured CPU/GPU component lists for your future database.
+## 🚀 Local Development Setup
 
-Secured the golden fps_data.csv to train your AI.
+### Prerequisites
+* **Node.js** (v18+ recommended)
+* **Python** (v3.10+ recommended)
+* **MongoDB Atlas** database connection URI
 
-3. The Birth of "Project Aura" (Phase 3)
+### 1. Start the Python AI Microservice
+```bash
+cd ai-python
+# Create and activate virtual environment
+python -m venv venv
+venv\Scripts\activate      # On Windows
+# source venv/bin/activate # On Linux/macOS
 
-Set up a secure Python virtual environment (venv).
+# Install dependencies
+pip install -r requirements.txt
 
-Built and trained a Machine Learning model (Random Forest Regressor) using scikit-learn.
+# Run the Flask prediction server (Port 5000)
+python app.py
+```
 
-Result: Aura achieved a highly accurate 3.64 FPS average error margin.
+### 2. Start the Node.js Backend API
+```bash
+cd backend-node
 
-Saved Aura's brain to your hard drive as project_aura.joblib.
+# Install dependencies
+npm install
 
-Wrapped Aura in a Flask web server and brought her online to listen for internet requests on port 5000.
+# Create environment configuration
+# Copy .env.example or create .env with required keys (see below)
 
-4. Backend Preparation (Phase 4)
+# Run the Express API server (Port 4000)
+node server.js
+```
 
-Initialized your Node.js environment in the backend-node folder.
+### 3. Start the React Frontend
+```bash
+cd frontend-react
 
-Installed your heavy-lifting server packages: express, mongoose, cors, axios, and dotenv.
+# Install dependencies
+npm install
 
+# Start the Vite development server (Port 5173)
+npm run dev
+```
 
-# Mongodb
+---
 
-mongodb+srv://tai303860_db_user:<db_password>@cluster0.zbaoi7m.mongodb.net/?appName=Cluster0
+## 🔑 Environment Variables
 
-# DAY 02...
+Create a `.env` file in `backend-node/`:
 
-5. Connected to MongoDB Atlas.
+```env
+PORT=4000
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?appName=aura
+JWT_SECRET=your_jwt_secret_key_here
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_email_app_password_here
+GEMINI_API_KEY=your_gemini_api_key_here
+AURA_AI_URL=http://127.0.0.1:5000
+```
 
-create seed file.
-run first testing.
-update server folder.
-completed backend development.
+*(Optional)* Create a `.env` file in `frontend-react/`:
+```env
+VITE_API_URL=http://localhost:4000
+```
+
+---
+
+## 🧪 Testing Suite
+
+### Backend Jest Tests (9 Suites)
+```bash
+cd backend-node
+npm test
+```
+
+### Python ML Pytest Tests (5 Suites)
+```bash
+cd ai-python
+venv\Scripts\python.exe -m pytest
+```
+
+### Frontend Linting & Build Verification
+```bash
+cd frontend-react
+npm run lint
+npm run build
+```
+
+---
+
+## 🌐 Public Routes
+
+| Path | Purpose | Access |
+| :--- | :--- | :--- |
+| `/` | Homepage & Feature Overview | Public |
+| `/bottleneck-calculator` | Bottleneck & FPS Analyzer | Public |
+| `/compare` | Side-by-Side PC Rig Comparison | Public |
+| `/my-rigs` | Saved PC Builds Profile | Authenticated |
+| `/about` | Mission & Architecture | Public |
+| `/methodology` | ML Regression & Limitation Guide | Public |
+| `/privacy` | Privacy Policy | Public |
+| `/terms` | Terms of Service | Public |
+| `/contact` | Contact & Inquiries | Public |
+| `/auth` | Sign In / Sign Up / Password Reset | Public |
+| `/quotation` | Sri Lankan Retail Hardware Quotation | Public |
+
+---
+
+## 🚦 Project Versions & Branches
+
+* **`main`**: Verified stable release of Project Aura (Phases 01 & 02).
+* **`V2`**: Cleaned, modularized foundation branch prepared for Phase 03 feature expansion.
+
+---
+
+## 🔮 Future Roadmap (Phase 03)
+
+* **Game Database & Game-Aware FPS Modeling**: Specific framerate estimates for popular titles (Cyberpunk 2077, CS2, Valorant, GTA V, etc.).
+* **"Can I Run It?" Validator**: Direct minimum and recommended system requirements checker.
+* **Upgrade Advisor V2**: Algorithmic cost-to-performance recommendations with component compatibility checks.
+* **Hardware Catalog**: Searchable, sortable browseable index for CPUs and GPUs.
+* **1% Low Framerate Predictions**: Microservice expansion for frame stability estimates.
