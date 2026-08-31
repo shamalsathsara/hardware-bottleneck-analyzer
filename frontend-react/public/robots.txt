@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /bottleneck-calculator
+Allow: /compare
+Allow: /about
+Allow: /methodology
+Allow: /privacy
+Allow: /terms
+Allow: /contact
+Disallow: /my-rigs
+Disallow: /api/
+
+Sitemap: https://projectaura.dev/sitemap.xml
