@@ -1,5 +1,5 @@
 const express = require('express');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const axios   = require('axios');
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
@@ -25,28 +25,19 @@ router.post('/estimate', pricingLimiter, async (req, res) => {
     }
 
     // Sanitize inputs to prevent LLM prompt injection
-    // Only allow alphanumeric characters, spaces, and basic punctuation
     const sanitize = (str) => String(str).replace(/[^a-zA-Z0-9\s\.\-]/g, '').trim().substring(0, 100);
     const safeCpu = sanitize(cpu);
     const safeGpu = sanitize(gpu);
     const safeRam = sanitize(ram);
 
-
-    if (!process.env.GEMINI_API_KEY) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
       console.error('GEMINI_API_KEY is missing in .env!');
       return res.status(500).json({ error: 'Server configuration error (missing Gemini API key).' });
     }
 
-    // Initialize the Gemini API client here so it always uses the latest .env
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
     console.log(`Asking Gemini for prices -> CPU: ${safeCpu}, GPU: ${safeGpu}, RAM: ${safeRam}GB`);
 
-    // We use the gemini-2.5-flash model as it's very fast for simple JSON responses
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    // We give Gemini a very strict prompt so it ONLY returns JSON data
-    // This allows our React frontend to read the numbers easily without parsing paragraphs of text.
     const prompt = `You are a PC hardware pricing expert in Sri Lanka. Estimate the current average retail price in Sri Lankan Rupees (LKR) for the following components if they were bought today in Colombo:
     CPU: ${safeCpu}
     GPU: ${safeGpu}
@@ -59,10 +50,18 @@ router.post('/estimate', pricingLimiter, async (req, res) => {
       "ramPriceLkr": 25000
     }`;
 
-    const result = await model.generateContent(prompt);
-    let textResponse = result.response.text();
-    
-    // Clean up the response just in case Gemini accidentally includes markdown code blocks
+    // Use gemini-3.1-flash-lite as it is the most stable/available free-tier model right now
+    const geminiRes = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`,
+      {
+        contents: [{ parts: [{ text: prompt }] }]
+      },
+      { timeout: 15000 }
+    );
+
+    let textResponse = geminiRes.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Clean up markdown code fences if Gemini accidentally adds them
     textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
 
     const prices = JSON.parse(textResponse);
@@ -71,8 +70,13 @@ router.post('/estimate', pricingLimiter, async (req, res) => {
     res.json(prices);
 
   } catch (err) {
-    console.error('Error fetching dynamic prices from Gemini:', err);
-    res.status(500).json({ error: 'Failed to estimate prices. The AI might be busy.' });
+    const isTimeout = err.code === 'ECONNABORTED' || (err.message || '').includes('timeout');
+    const apiError  = err?.response?.data?.error?.message || err.message;
+    console.error('Error fetching dynamic prices from Gemini:', apiError);
+    const userMsg = isTimeout
+      ? 'Request timed out — your GEMINI_API_KEY may be invalid. Get a valid key from aistudio.google.com/apikey (it should start with AIza).'
+      : `Failed to estimate prices: ${apiError}`;
+    res.status(500).json({ error: userMsg });
   }
 });
 

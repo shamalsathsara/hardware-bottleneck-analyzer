@@ -30,7 +30,8 @@ const Quotation = ({ cpu, gpu, ram, onBack }) => {
         setPrices(response.data);
       } catch (err) {
         console.error(err);
-        setError('Failed to fetch live prices. Please make sure the Gemini API key is configured.');
+        const msg = err?.response?.data?.error || 'Failed to fetch live prices. Please make sure the Gemini API key is configured.';
+        setError(msg);
       } finally {
         setLoading(false);
       }

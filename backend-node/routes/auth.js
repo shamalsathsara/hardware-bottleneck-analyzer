@@ -58,7 +58,7 @@ function signToken(user) {
 /* POST /api/auth/register */
 router.post('/register', registerLimiter, async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, contact } = req.body;
 
     // 1. Basic validation: Make sure they filled out all fields
     if (!username || !email || !password) {
@@ -87,7 +87,12 @@ router.post('/register', registerLimiter, async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
     
     // 4. Save the new user to MongoDB
-    const user = await User.create({ username: cleanUsername, email: cleanEmail, passwordHash });
+    const user = await User.create({
+      username: cleanUsername,
+      email: cleanEmail,
+      passwordHash,
+      ...(contact ? { contact: String(contact).trim() } : {})
+    });
 
     // 5. Generate a login token and send it back to React so they auto-login
     const token = signToken(user);

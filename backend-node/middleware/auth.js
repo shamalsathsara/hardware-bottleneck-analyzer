@@ -17,6 +17,11 @@ const requireAuth = (req, res, next) => {
 
     // 2. Extract just the token part
     const token = authHeader.split(' ')[1];
+    
+    // Check if token is null or undefined
+    if (!token || token === 'null' || token === 'undefined') {
+      return res.status(401).json({ error: 'Access denied. No valid token provided.' });
+    }
 
     // 3. Verify the token using our secret key
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

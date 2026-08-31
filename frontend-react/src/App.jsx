@@ -240,6 +240,10 @@ function App() {
   // Form state
   const [selectedCpu, setSelectedCpu]   = useState('');
   const [selectedGpu, setSelectedGpu]   = useState('');
+  // Store the full selected hardware objects so handleConsultAura doesn't
+  // have to look them up in cpuList/gpuList (fixes "can't select" bug)
+  const [selectedCpuData, setSelectedCpuData] = useState(null);
+  const [selectedGpuData, setSelectedGpuData] = useState(null);
   const [resolution, setResolution]     = useState('1920x1080');
   const [settings, setSettings]         = useState('High');
   const [ram, setRam]                   = useState('16');
@@ -383,9 +387,10 @@ function App() {
       return;
     }
 
-    // Map selections to full dataset objects
-    const fullCpu = cpuList.find(c => c.cpuName === selectedCpu);
-    const fullGpu = gpuList.find(g => g.Device  === selectedGpu);
+    // Use the full objects stored at selection time.
+    // Fall back to searching cpuList/gpuList for backward-compat (e.g. loaded rigs).
+    const fullCpu = selectedCpuData || cpuList.find(c => c.cpuName === selectedCpu);
+    const fullGpu = selectedGpuData || gpuList.find(g => g.Device  === selectedGpu);
     if (!fullCpu || !fullGpu) {
       setError('Could not find matching specs. Please choose from the autocomplete suggestions.');
       return;
@@ -458,6 +463,11 @@ function App() {
     setExplanationType(null);
     setShowHelp(false);
     setOpenQA(null);
+    // Clear selected hardware objects too
+    setSelectedCpu('');
+    setSelectedGpu('');
+    setSelectedCpuData(null);
+    setSelectedGpuData(null);
   };
 
 
@@ -468,9 +478,9 @@ function App() {
     if (!bottleneckData) return;  // no analysis data yet
     setSelectedUpgradeComponent(component);
 
-    // Look up the full data objects for the currently selected CPU and GPU
-    const currentCpuData = cpuList.find(c => c.cpuName === selectedCpu);
-    const currentGpuData = gpuList.find(g => g.Device  === selectedGpu);
+    // Use the full objects stored at selection time (fall back to list search for loaded rigs)
+    const currentCpuData = selectedCpuData || cpuList.find(c => c.cpuName === selectedCpu);
+    const currentGpuData = selectedGpuData || gpuList.find(g => g.Device  === selectedGpu);
 
     const currentCpuMark  = parseInt(currentCpuData?.cpuMark) || 3000;
     const currentCpuCores = parseInt(currentCpuData?.cores)   || 4; // eslint-disable-line no-unused-vars
@@ -719,6 +729,9 @@ function App() {
             setSelectedGpu(rig.gpu);
             setRam(rig.ram);
             setResolution(rig.resolution);
+            // Clear full objects so handleConsultAura falls back to cpuList/gpuList search
+            setSelectedCpuData(null);
+            setSelectedGpuData(null);
             // Switch back to the analyzer view automatically
             setCurrentView('analyzer');
           }}
@@ -857,7 +870,10 @@ function App() {
                 type="cpu" 
                 placeholder="Type to search CPUs..." 
                 value={selectedCpu}
-                onSelect={(item) => setSelectedCpu(item.cpuName)} 
+                onSelect={(item) => {
+                  setSelectedCpu(item.cpuName);
+                  setSelectedCpuData(item); // store full object for analysis
+                }} 
               />
             </div>
 
@@ -867,7 +883,10 @@ function App() {
                 type="gpu" 
                 placeholder="Type to search GPUs..." 
                 value={selectedGpu}
-                onSelect={(item) => setSelectedGpu(item.Device)} 
+                onSelect={(item) => {
+                  setSelectedGpu(item.Device);
+                  setSelectedGpuData(item); // store full object for analysis
+                }} 
               />
             </div>
 
@@ -931,6 +950,11 @@ function App() {
                 onClick={() => {
                   if (!selectedCpu || !selectedGpu) {
                     setError('Please select a CPU and GPU before saving.');
+                    return;
+                  }
+                  // Guard: user must be logged in to save a rig
+                  if (!currentUser) {
+                    setError('Please log in to save your PC build.');
                     return;
                   }
                   setRigNameInput('');
@@ -1385,7 +1409,15 @@ function App() {
                 onClick={async () => {
                   if (!rigNameInput.trim()) return;
                   try {
+                    // Get the JWT token saved at login time
                     const token = localStorage.getItem('aura_token');
+                    // Guard: if token is missing or literally the string "null", stop immediately
+                    if (!token || token === 'null' || token === 'undefined') {
+                      setError('You are not logged in. Please sign in and try again.');
+                      setShowSaveRigModal(false);
+                      return;
+                    }
+
                     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
                     await axios.post(`${baseUrl}/api/user/rigs`, 
                       { name: rigNameInput.trim(), cpu: selectedCpu, gpu: selectedGpu, ram, resolution },
@@ -1393,9 +1425,11 @@ function App() {
                     );
                     setShowSaveRigModal(false);
                     alert('PC Saved successfully! You can view it in the "My Rigs" tab.');
-                  // eslint-disable-next-line no-unused-vars
-                  } catch (_err) {
-                    setError('Failed to save PC. Please try again.');
+                  } catch (err) {
+                    // Extract the real error message from the backend response
+                    const msg = err.response?.data?.error || err.message || 'Failed to save PC.';
+                    console.error('Save Rig error:', msg);
+                    setError(`Save failed: ${msg}`);
                     setShowSaveRigModal(false);
                   }
                 }}

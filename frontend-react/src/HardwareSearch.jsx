@@ -82,15 +82,20 @@ const HardwareSearch = ({ type, onSelect, placeholder, value }) => {
           {results.map((item, idx) => (
             <li 
               key={idx}
-              onClick={() => handleSelect(item)}
+              // onMouseDown fires before onBlur, so preventDefault stops the input
+              // from losing focus before the selection is registered (fixes blur-before-click race)
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(item);
+              }}
               style={{
                 padding: '10px',
                 cursor: 'pointer',
                 borderBottom: idx !== results.length - 1 ? '1px solid #334155' : 'none',
                 color: '#e2e8f0'
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#334155'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#334155'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
               {type === 'cpu' ? item.cpuName : item.Device}
             </li>

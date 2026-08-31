@@ -1100,7 +1100,7 @@ input[type="text"]::placeholder {
   margin-top: 0.4rem;
   border: none;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #38bdf8 0%, #2563eb 55%, #818cf8 100%);
+  background: var(--primary);
   color: #fff;
   font-family: 'Inter', sans-serif;
   font-size: 0.92rem;
