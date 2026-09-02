@@ -251,7 +251,8 @@ function App() {
         cpu: selectedCpu, 
         gpu: selectedGpu, 
         ram, 
-        resolution 
+        resolution,
+        settings,
       });
       setShowSaveRigModal(false);
       alert('PC Build saved successfully! You can view it in your "My Rigs" profile.');
@@ -266,8 +267,9 @@ function App() {
   const handleLoadRig = (rig) => {
     setSelectedCpu(rig.cpu);
     setSelectedGpu(rig.gpu);
-    setRam(rig.ram || '16');
+    setRam(String(rig.ram || '16'));
     setResolution(rig.resolution || '1920x1080');
+    setSettings(rig.settings || 'High');
     setSelectedCpuData(null);
     setSelectedGpuData(null);
     navigate(ROUTES.BOTTLENECK_CALCULATOR);
@@ -333,6 +335,7 @@ function App() {
               gpuList={gpuList}
               onBack={() => navigate(ROUTES.BOTTLENECK_CALCULATOR)}
               initialRig={selectedCpu && selectedGpu ? { cpu: selectedCpu, gpu: selectedGpu, ram, resolution, settings } : null}
+              currentUser={currentUser}
             />
           )}
 

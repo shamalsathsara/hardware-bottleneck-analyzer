@@ -1,9 +1,124 @@
 import { useState, useEffect } from 'react';
 import { analyzeBottleneck } from './utils/BottleneckLogic';
-import { fetchAllCpusLightweight, fetchAllGpusLightweight } from './services/hardwareService';
+import { fetchAllCpusLightweight, fetchAllGpusLightweight, searchCpus, searchGpus } from './services/hardwareService';
+import { fetchUserRigs } from './services/rigService';
 import { predictFps } from './services/analysisService';
 
 // Component SVG Icons
+const IconCpu = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+    <rect x="9" y="9" width="6" height="6" />
+    <line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
+    <line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" />
+    <line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="15" x2="23" y2="15" />
+    <line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="15" x2="4" y2="15" />
+  </svg>
+);
+
+const IconGpu = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <circle cx="8" cy="12" r="2.5" /><circle cx="16" cy="12" r="2.5" />
+    <line x1="6" y1="18" x2="6" y2="21" /><line x1="10" y1="18" x2="10" y2="21" />
+    <line x1="14" y1="18" x2="14" y2="21" /><line x1="18" y1="18" x2="18" y2="21" />
+  </svg>
+);
+
+const IconRam = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 7h20v10H2z" />
+    <path d="M6 11v2M10 11v2M14 11v2M18 11v2" />
+  </svg>
+);
+
+const IconSwords = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+    <line x1="13" y1="19" x2="19" y2="13" />
+    <line x1="16" y1="16" x2="20" y2="20" />
+    <line x1="19" y1="21" x2="21" y2="19" />
+    <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" />
+    <line x1="5" y1="14" x2="9" y2="18" />
+    <line x1="7" y1="17" x2="4" y2="20" />
+    <line x1="3" y1="19" x2="5" y2="21" />
+  </svg>
+);
+
+const IconTrophy = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M5 4h14a1 1 0 0 1 1 1v1a5 5 0 0 1-4 4.9 6 6 0 0 1-3 4.1V18h3a1 1 0 0 1 1 1v2H7v-2a1 1 0 0 1 1-1h3v-3a6 6 0 0 1-3-4.1A5 5 0 0 1 4 7V5a1 1 0 0 1 1-1zm-1 3a3 3 0 0 0 2 2.83V6H4v1zm16 0h-2v2.83A3 3 0 0 0 20 7z" />
+  </svg>
+);
+
+const IconEquals = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <line x1="5" y1="9" x2="19" y2="9" />
+    <line x1="5" y1="15" x2="19" y2="15" />
+  </svg>
+);
+
+const IconArrowLeft = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
+  </svg>
+);
+
+const IconRefresh = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </svg>
+);
+
+const IconWarning = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const IconScan = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+    <rect x="7" y="7" width="10" height="10" rx="1" />
+  </svg>
+);
+
+const IconBarChart = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" />
+  </svg>
+);
+
+const IconMonitor = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+  </svg>
+);
+
+const IconSliders = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+    <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+    <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+  </svg>
+);
+
+const IconZap = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
 
 // Empty Rig State Factory
 const emptyRig = () => ({
@@ -11,13 +126,50 @@ const emptyRig = () => ({
 });
 
 // Single Rig Config Panel
-function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, panelId }) {
+function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, savedRigs, panelId }) {
+  const handleSelectSavedRig = (e) => {
+    const selectedId = e.target.value;
+    if (!selectedId) return;
+    const found = savedRigs.find((r) => String(r._id) === String(selectedId));
+    if (found) {
+      onChange({
+        cpu: found.cpu,
+        gpu: found.gpu,
+        ram: String(found.ram || '16'),
+        resolution: found.resolution || '1920x1080',
+        settings: found.settings || 'High',
+      });
+    }
+  };
+
   return (
     <div className={`cmp-panel cmp-panel--${panelId}`} style={{ '--accent': accent }}>
       <div className="cmp-panel-header">
         <span className="cmp-panel-accent-bar" />
         <span className="cmp-panel-label">{label}</span>
       </div>
+
+      {/* Saved Rigs Quick Selector */}
+      {savedRigs && savedRigs.length > 0 && (
+        <div className="cmp-form-group" style={{ marginBottom: '1rem' }}>
+          <label className="cmp-label" style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>
+            ⚡ Load From Your Saved Rigs
+          </label>
+          <select 
+            className="cmp-select"
+            defaultValue=""
+            onChange={handleSelectSavedRig}
+            style={{ fontSize: '0.85rem' }}
+          >
+            <option value="" disabled>-- Select a saved build to populate --</option>
+            {savedRigs.map((sr) => (
+              <option key={sr._id} value={sr._id}>
+                {sr.name} ({sr.cpu} + {sr.gpu})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* CPU */}
       <div className="cmp-form-group">
@@ -29,12 +181,14 @@ function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, panelId }) {
           type="text"
           list={`cmp-cpu-${panelId}`}
           className="cmp-input"
-          placeholder="Type to search CPUs..."
+          placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i5-12400F)..."
           value={rig.cpu}
           onChange={e => onChange({ ...rig, cpu: e.target.value })}
         />
         <datalist id={`cmp-cpu-${panelId}`}>
-          {cpuList.map((c, i) => <option key={i} value={c.cpuName} />)}
+          {cpuList.map((c, i) => (
+            <option key={i} value={c.cpuName || c.canonicalName} />
+          ))}
         </datalist>
       </div>
 
@@ -48,12 +202,14 @@ function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, panelId }) {
           type="text"
           list={`cmp-gpu-${panelId}`}
           className="cmp-input"
-          placeholder="Type to search GPUs..."
+          placeholder="Type to search GPUs (e.g. RTX 4070, RX 7800 XT)..."
           value={rig.gpu}
           onChange={e => onChange({ ...rig, gpu: e.target.value })}
         />
         <datalist id={`cmp-gpu-${panelId}`}>
-          {gpuList.map((g, i) => <option key={i} value={g.Device} />)}
+          {gpuList.map((g, i) => (
+            <option key={i} value={g.Device || g.canonicalName} />
+          ))}
         </datalist>
       </div>
 
@@ -99,7 +255,8 @@ function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, panelId }) {
 // Result Card - displayed once comparison runs
 function ResultCard({ label, accent, result, isWinner, isTied }) {
   const { fps, bottleneck, confidence, rigName } = result;
-  const bottleneckColor = bottleneck.color;
+  const bottleneckColor = bottleneck?.color || '#10b981';
+  const severity = bottleneck?.severity !== undefined ? bottleneck.severity : 0;
 
   return (
     <div
@@ -135,35 +292,34 @@ function ResultCard({ label, accent, result, isWinner, isTied }) {
       <div className="cmp-bk-section">
         <div className="cmp-bk-header">
           <span className="cmp-bk-label">Bottleneck Severity</span>
-          <span className="cmp-bk-pct" style={{ color: bottleneckColor }}>{bottleneck.severity}%</span>
+          <span className="cmp-bk-pct" style={{ color: bottleneckColor }}>{severity}%</span>
         </div>
         <div className="cmp-bar-track">
           <div className="cmp-bar-fill"
-               style={{ width: `${bottleneck.severity}%`, background: bottleneckColor }} />
+               style={{ width: `${severity}%`, background: bottleneckColor }} />
         </div>
         <div className="cmp-bk-type" style={{ color: bottleneckColor }}>
-          {bottleneck.type
+          {bottleneck?.type
             ? bottleneck.type.charAt(0).toUpperCase() + bottleneck.type.slice(1) + ' Bottleneck'
             : 'Balanced Build'}
         </div>
       </div>
 
       {/* Short verdict text */}
-      <div className="cmp-bk-msg">{bottleneck.message}</div>
+      <div className="cmp-bk-msg">{bottleneck?.message || 'System performance calculated successfully.'}</div>
     </div>
   );
 }
 
 // Main Component
-export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) {
-
+export default function RigComparison({ cpuList, gpuList, onBack, initialRig, currentUser }) {
   // Rig A pre-filled from Analyzer if provided
   const [rigA, setRigA] = useState(() => initialRig
     ? {
-        cpu:        initialRig.cpu,
-        gpu:        initialRig.gpu,
-        ram:        initialRig.ram,
-        resolution: initialRig.resolution,
+        cpu:        initialRig.cpu || '',
+        gpu:        initialRig.gpu || '',
+        ram:        String(initialRig.ram || '16'),
+        resolution: initialRig.resolution || '1920x1080',
         settings:   initialRig.settings || 'High',
       }
     : emptyRig()
@@ -174,77 +330,184 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
-  // Local copies of hardware lists — updated from props when available,
-  // or fetched directly as fallback.
-  const [localCpuList, setLocalCpuList] = useState([]);
-  const [localGpuList, setLocalGpuList] = useState([]);
+  // Local copies of hardware lists
+  const [localCpuList, setLocalCpuList] = useState(cpuList || []);
+  const [localGpuList, setLocalGpuList] = useState(gpuList || []);
+  const [savedRigs, setSavedRigs] = useState([]);
 
+  // Sync with incoming props
   useEffect(() => {
-    if (cpuList && cpuList.length > 0 && gpuList && gpuList.length > 0) {
-      setLocalCpuList(cpuList);
-      setLocalGpuList(gpuList);
-    } else {
-      // Fallback: fetch hardware lists directly
-      (async () => {
+    if (cpuList && cpuList.length > 0) setLocalCpuList(cpuList);
+    if (gpuList && gpuList.length > 0) setLocalGpuList(gpuList);
+  }, [cpuList, gpuList]);
+
+  // Load hardware fallback and saved rigs
+  useEffect(() => {
+    let isMounted = true;
+
+    async function init() {
+      if ((!cpuList || cpuList.length === 0) || (!gpuList || gpuList.length === 0)) {
         try {
           const [c, g] = await Promise.all([
-            fetchAllCpusLightweight(),
-            fetchAllGpusLightweight(),
+            fetchAllCpusLightweight().catch(() => []),
+            fetchAllGpusLightweight().catch(() => []),
           ]);
-          setLocalCpuList(c);
-          setLocalGpuList(g);
+          if (isMounted) {
+            if (c.length > 0) setLocalCpuList(c);
+            if (g.length > 0) setLocalGpuList(g);
+          }
         } catch {
-          setError('Could not load hardware lists. Make sure the backend is running.');
+          // silently handle
         }
-      })();
+      }
+
+      // Fetch saved rigs if user is logged in
+      try {
+        const rigs = await fetchUserRigs();
+        if (isMounted && Array.isArray(rigs)) {
+          setSavedRigs(rigs);
+        }
+      } catch {
+        // user may not be logged in; safe to ignore
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount — props will already be populated from parent
 
-  // Run Analysis for one rig: This function formats the data and asks the AI for a prediction
+    init();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [cpuList, gpuList, currentUser]);
+
+  // Find CPU with flexible matching (exact -> case-insensitive -> backend search)
+  const resolveCpu = async (cpuName) => {
+    if (!cpuName) return null;
+    const clean = cpuName.trim();
+    const lower = clean.toLowerCase();
+
+    let found = localCpuList.find(c => 
+      (c.cpuName && c.cpuName.trim() === clean) || 
+      (c.canonicalName && c.canonicalName.trim() === clean)
+    );
+    if (found) return found;
+
+    found = localCpuList.find(c => 
+      (c.cpuName && c.cpuName.toLowerCase().trim() === lower) || 
+      (c.canonicalName && c.canonicalName.toLowerCase().trim() === lower)
+    );
+    if (found) return found;
+
+    try {
+      const searchRes = await searchCpus(clean);
+      if (Array.isArray(searchRes) && searchRes.length > 0) {
+        return searchRes[0];
+      }
+    } catch {
+      // ignore
+    }
+
+    return null;
+  };
+
+  // Find GPU with flexible matching (exact -> case-insensitive -> backend search)
+  const resolveGpu = async (gpuName) => {
+    if (!gpuName) return null;
+    const clean = gpuName.trim();
+    const lower = clean.toLowerCase();
+
+    let found = localGpuList.find(g => 
+      (g.Device && g.Device.trim() === clean) || 
+      (g.canonicalName && g.canonicalName.trim() === clean)
+    );
+    if (found) return found;
+
+    found = localGpuList.find(g => 
+      (g.Device && g.Device.toLowerCase().trim() === lower) || 
+      (g.canonicalName && g.canonicalName.toLowerCase().trim() === lower)
+    );
+    if (found) return found;
+
+    try {
+      const searchRes = await searchGpus(clean);
+      if (Array.isArray(searchRes) && searchRes.length > 0) {
+        return searchRes[0];
+      }
+    } catch {
+      // ignore
+    }
+
+    return null;
+  };
+
+  // Run Analysis for one rig: formats data and requests AI prediction
   const analyzeRig = async (rig) => {
-    // 1. Find the full specs for the selected CPU and GPU from the local database
-    const fullCpu = localCpuList.find(c => c.cpuName === rig.cpu);
-    const fullGpu = localGpuList.find(g => g.Device  === rig.gpu);
+    const fullCpu = await resolveCpu(rig.cpu);
+    const fullGpu = await resolveGpu(rig.gpu);
 
-    if (!fullCpu) throw new Error(`CPU not found: "${rig.cpu}". Please choose from the autocomplete suggestions.`);
-    if (!fullGpu) throw new Error(`GPU not found: "${rig.gpu}". Please choose from the autocomplete suggestions.`);
+    if (!fullCpu) {
+      throw new Error(`CPU not found: "${rig.cpu}". Please choose from the autocomplete suggestions.`);
+    }
+    if (!fullGpu) {
+      throw new Error(`GPU not found: "${rig.gpu}". Please choose from the autocomplete suggestions.`);
+    }
 
-    // 2. Safely parse the raw numerical data, defaulting to average values if missing
-    const cores     = parseInt(fullCpu.cores) || 6;
-    const threads   = cores * 2;
-    const cpuTDP    = Math.min(cores * 10, 125);
-    const cuda      = parseInt(fullGpu.CUDA) || 5000;
+    // Safely parse CPU cores and specs
+    let cores = 6;
+    if (typeof fullCpu.cores === 'number') {
+      cores = fullCpu.cores;
+    } else if (typeof fullCpu.cores === 'object' && fullCpu.cores !== null) {
+      cores = fullCpu.cores.total || fullCpu.cores.performanceCores || 6;
+    } else if (typeof fullCpu.cores === 'string') {
+      cores = parseInt(fullCpu.cores, 10) || 6;
+    }
 
-    // 3. Estimate missing GPU specs based on how many CUDA cores it has
-    let vram = 4, gpuTdp = 75, bandwidth = 128;
-    if      (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }
-    else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760;  }
-    else if (cuda > 100000) { vram = 12; gpuTdp = 200; bandwidth = 448;  }
-    else if (cuda > 75000)  { vram = 8;  gpuTdp = 130; bandwidth = 256;  }
-    else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }
+    const threads = cores * 2;
+    const cpuTDP = Math.min(cores * 10, 125);
 
-    // 4. Build the exact JSON object the Python AI backend expects
+    // Safely parse GPU specs
+    let cuda = 100000;
+    if (typeof fullGpu.CUDA === 'number' && Number.isFinite(fullGpu.CUDA)) {
+      cuda = fullGpu.CUDA;
+    } else if (typeof fullGpu.CUDA === 'string') {
+      cuda = parseInt(fullGpu.CUDA, 10) || 100000;
+    }
+
+    let vram = 4;
+    let gpuTdp = 75;
+    let bandwidth = 128;
+
+    if (fullGpu.memory?.vramGB) {
+      vram = fullGpu.memory.vramGB;
+      gpuTdp = fullGpu.power?.defaultTgpWatts || 200;
+      bandwidth = fullGpu.memory.memoryBandwidthGBs || 448;
+    } else {
+      if      (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }
+      else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760;  }
+      else if (cuda > 100000) { vram = 12; gpuTdp = 200; bandwidth = 448;  }
+      else if (cuda > 75000)  { vram = 8;  gpuTdp = 130; bandwidth = 256;  }
+      else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }
+    }
+
+    // Build payload for AI
     const payload = {
-      'CPU':               fullCpu.cpuName,
-      'CPU Cores':         cores,
-      'CPU Threads':       threads,
-      'CPU TDP (W)':       cpuTDP,
-      'GPU':               fullGpu.Device,
-      'GPU Series':        fullGpu.Manufacturer || 'Nvidia',
-      'GPU VRAM (GB)':     vram,
+      'CPU': fullCpu.cpuName || fullCpu.canonicalName || rig.cpu,
+      'CPU Cores': cores,
+      'CPU Threads': threads,
+      'CPU TDP (W)': cpuTDP,
+      'GPU': fullGpu.Device || fullGpu.canonicalName || rig.gpu,
+      'GPU Series': fullGpu.Manufacturer || 'Nvidia',
+      'GPU VRAM (GB)': vram,
       'GPU Bandwidth (GB/s)': bandwidth,
-      'GPU TDP (W)':       gpuTdp,
-      'RAM (GB)':          parseInt(rig.ram),
-      'Resolution':        rig.resolution,
-      'Graphics Settings': rig.settings,
+      'GPU TDP (W)': gpuTdp,
+      'RAM (GB)': parseInt(rig.ram, 10) || 16,
+      'Resolution': rig.resolution || '1920x1080',
+      'Graphics Settings': rig.settings || 'High',
     };
 
-    // 5. Send it to the Flask AI server via backend bridge
     const data = await predictFps(payload);
-    const analysis  = analyzeBottleneck(fullCpu, fullGpu);
-    const cpuScore  = parseInt(fullCpu.cpuMark) || 8000;
-    let finalFps    = data.predicted_fps;
+    const analysis = analyzeBottleneck(fullCpu, fullGpu);
+    const cpuScore = parseInt(fullCpu.cpuMark, 10) || 8000;
+    let finalFps = Number(data?.predicted_fps) || 60;
 
     if (cpuScore < 3000) {
       finalFps = (cpuScore / 100) + 5;
@@ -253,73 +516,84 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
     }
 
     finalFps = Math.max(5, Math.min(900, finalFps));
+    if (!Number.isFinite(finalFps)) finalFps = 60;
 
     const baseConf = 99.2;
-    const conf     = (baseConf - (analysis.severity / 100) * 8.5).toFixed(1);
+    const confVal = baseConf - (analysis.severity / 100) * 8.5;
+    const conf = (Number.isFinite(confVal) ? confVal : 95.0).toFixed(1);
 
-    // Short display name: first 3 words of CPU + GPU
     const rigName =
-      rig.cpu.split(' ').slice(0, 3).join(' ') +
+      (rig.cpu || 'CPU').split(' ').slice(0, 3).join(' ') +
       ' + ' +
-      rig.gpu.split(' ').slice(0, 3).join(' ');
+      (rig.gpu || 'GPU').split(' ').slice(0, 3).join(' ');
 
-    return { fps: finalFps.toFixed(1), confidence: conf, bottleneck: analysis, rigName };
+    return { 
+      fps: finalFps.toFixed(1), 
+      confidence: conf, 
+      bottleneck: analysis, 
+      rigName 
+    };
   };
 
-  // This runs when the user clicks "Run Comparison"
+  // Run Comparison
   const handleCompare = async () => {
     setError(null);
-    // Make sure the user didn't leave any fields blank
-    if (!rigA.cpu || !rigA.gpu) { setError('Please fill in both CPU and GPU for Rig A.'); return; }
-    if (!rigB.cpu || !rigB.gpu) { setError('Please fill in both CPU and GPU for Rig B.'); return; }
+    if (!rigA.cpu || !rigA.gpu) { 
+      setError('Please fill in both CPU and GPU for Rig A.'); 
+      return; 
+    }
+    if (!rigB.cpu || !rigB.gpu) { 
+      setError('Please fill in both CPU and GPU for Rig B.'); 
+      return; 
+    }
 
     setLoading(true);
     setResults(null);
     try {
-      // Promise.all runs BOTH AI predictions at the exact same time (in parallel)
-      // This makes the comparison twice as fast!
       const [resA, resB] = await Promise.all([analyzeRig(rigA), analyzeRig(rigB)]);
-      setResults({ a: resA, b: resB }); // Save the finished calculations to state
+      setResults({ a: resA, b: resB });
     } catch (err) {
-      setError(err.message || 'Analysis failed. Make sure both AI and Node.js servers are running.');
+      setError(err.message || 'Analysis failed. Make sure backend and ML services are running.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleReset = () => { setResults(null); setError(null); };
 
-  // Determine winner by simply comparing the final FPS numbers
-  const fpsA  = results ? parseFloat(results.a.fps) : 0;
-  const fpsB  = results ? parseFloat(results.b.fps) : 0;
+  // Calculate winner safely
+  const fpsA  = results ? (parseFloat(results.a.fps) || 0) : 0;
+  const fpsB  = results ? (parseFloat(results.b.fps) || 0) : 0;
   const aWins = results && fpsA > fpsB;
   const bWins = results && fpsB > fpsA;
-  const tied  = results && fpsA === fpsB;
+  const tied  = results && Math.abs(fpsA - fpsB) < 0.05;
 
-  // Verdict text: Generates a smart explanation of WHY one rig beat the other
+  // Build verdict text
   const buildVerdict = () => {
     if (!results) return '';
     if (tied) return 'Both rigs produce identical performance at these settings. Consider changing resolution or quality to see a difference.';
 
-    // Figure out who won and lost
     const winner    = aWins ? 'Rig A' : 'Rig B';
     const loserSide = aWins ? 'Rig B' : 'Rig A';
     
-    // Calculate math for the UI description (e.g., "Rig A wins by 15 FPS (20% faster)")
     const fpsDiff   = Math.abs(fpsA - fpsB).toFixed(1);
-    const pct       = ((Math.abs(fpsA - fpsB) / Math.min(fpsA, fpsB)) * 100).toFixed(0);
+    const minFps    = Math.max(1, Math.min(fpsA, fpsB));
+    const pctRaw    = ((Math.abs(fpsA - fpsB) / minFps) * 100);
+    const pct       = (Number.isFinite(pctRaw) ? pctRaw : 0).toFixed(0);
     
-    const wBk       = aWins ? results.a.bottleneck : results.b.bottleneck; // Winner's bottleneck
-    const lBk       = aWins ? results.b.bottleneck : results.a.bottleneck; // Loser's bottleneck
+    const wBk       = aWins ? results.a.bottleneck : results.b.bottleneck;
+    const lBk       = aWins ? results.b.bottleneck : results.a.bottleneck;
 
     let text = `${winner} wins by ${fpsDiff} FPS (${pct}% faster). `;
 
-    // Smart explanations based on the bottleneck data
-    if (wBk.type === null && lBk.type !== null) {
-      text += `${winner} has a perfectly balanced build, while ${loserSide} suffers a ${lBk.type.toUpperCase()} bottleneck — this is the primary reason for the performance gap.`;
-    } else if (wBk.severity < lBk.severity) {
-      text += `${winner} has a lower bottleneck severity (${wBk.severity}% vs ${lBk.severity}%), giving it a significant efficiency advantage.`;
-    } else {
-      text += `${winner}'s components are better matched for the selected resolution and quality settings.`;
+    if (wBk && lBk) {
+      if (wBk.type === null && lBk.type !== null) {
+        text += `${winner} has a perfectly balanced build, while ${loserSide} suffers a ${String(lBk.type).toUpperCase()} bottleneck — this is the primary reason for the performance gap.`;
+      } else if (wBk.severity < lBk.severity) {
+        text += `${winner} has a lower bottleneck severity (${wBk.severity}% vs ${lBk.severity}%), giving it a significant efficiency advantage.`;
+      } else {
+        text += `${winner}'s components are better matched for the selected resolution and quality settings.`;
+      }
     }
 
     return text;
@@ -354,6 +628,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
               onChange={setRigA}
               cpuList={localCpuList}
               gpuList={localGpuList}
+              savedRigs={savedRigs}
               panelId="a"
             />
 
@@ -370,6 +645,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
               onChange={setRigB}
               cpuList={localCpuList}
               gpuList={localGpuList}
+              savedRigs={savedRigs}
               panelId="b"
             />
           </div>
@@ -407,7 +683,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
       {results && (
         <div className="cmp-results-section">
 
-          {/* Result cards - Visual Summary Cards for Rig A and Rig B */}
+          {/* Result cards */}
           <div className="cmp-results-grid">
             <ResultCard
               label="Rig A"
@@ -432,7 +708,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
             />
           </div>
 
-          {/* Spec Comparison Table - Renders the side-by-side hardware table */}
+          {/* Spec Comparison Table */}
           <div className="cmp-table-card">
             <div className="cmp-table-title">
               <span className="cmp-table-title-icon"><IconBarChart /></span>
@@ -490,8 +766,8 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
                   </tr>
                   <tr>
                     <td className="cmp-td-label"><span className="cmp-table-icon"><IconWarning /></span>Bottleneck</td>
-                    <td style={{ color: results.a.bottleneck.color }}>{results.a.bottleneck.message}</td>
-                    <td style={{ color: results.b.bottleneck.color }}>{results.b.bottleneck.message}</td>
+                    <td style={{ color: results.a.bottleneck?.color || '#10b981' }}>{results.a.bottleneck?.message}</td>
+                    <td style={{ color: results.b.bottleneck?.color || '#10b981' }}>{results.b.bottleneck?.message}</td>
                   </tr>
                 </tbody>
               </table>
@@ -519,17 +795,17 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig }) 
                   </div>
                   <div className="cmp-verdict-tip">
                     <span className="cmp-verdict-tip-icon"><IconCheck /></span>
-                    Performance gain: <strong>{((Math.abs(fpsA - fpsB) / Math.min(fpsA, fpsB)) * 100).toFixed(0)}%</strong>
+                    Performance gain: <strong>{((Math.abs(fpsA - fpsB) / Math.max(1, Math.min(fpsA, fpsB))) * 100).toFixed(0)}%</strong>
                   </div>
                 </>
               )}
               <div className="cmp-verdict-tip">
                 <span className="cmp-verdict-tip-icon"><IconCheck /></span>
-                Rig A bottleneck: <strong style={{ color: results.a.bottleneck.color }}>{results.a.bottleneck.severity}%</strong>
+                Rig A bottleneck: <strong style={{ color: results.a.bottleneck?.color || '#10b981' }}>{results.a.bottleneck?.severity}%</strong>
               </div>
               <div className="cmp-verdict-tip">
                 <span className="cmp-verdict-tip-icon"><IconCheck /></span>
-                Rig B bottleneck: <strong style={{ color: results.b.bottleneck.color }}>{results.b.bottleneck.severity}%</strong>
+                Rig B bottleneck: <strong style={{ color: results.b.bottleneck?.color || '#10b981' }}>{results.b.bottleneck?.severity}%</strong>
               </div>
             </div>
           </div>

@@ -12,7 +12,7 @@ export const apiClient = axios.create({
 
 // Attach Authorization Bearer token automatically if available
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('aura_token');
+  const token = localStorage.getItem('aura_token') || localStorage.getItem('token');
   if (token && token !== 'null' && token !== 'undefined') {
     config.headers.Authorization = `Bearer ${token}`;
   }

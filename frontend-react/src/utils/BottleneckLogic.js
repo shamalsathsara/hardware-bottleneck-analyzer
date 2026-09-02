@@ -5,21 +5,57 @@
 
 // 1. Analyzes the bottleneck severity based on dynamic max scores from the database
 export const analyzeBottleneck = (cpu, gpu, maxStats) => {
-    const cpuMark = parseInt(cpu.cpuMark) || 3000;
-    const gpuCUDA = parseInt(gpu.CUDA)    || 0;
+    if (!cpu || !gpu) {
+      return { 
+        severity: 0, 
+        message: 'Please select both CPU and GPU to analyze bottleneck.', 
+        color: '#10b981', 
+        cardClass: 'has-bottleneck-ok', 
+        type: null 
+      };
+    }
+
+    // Safely extract CPU benchmark score or calculate from physical features
+    let cpuMark = 8000;
+    if (typeof cpu.cpuMark === 'number' && Number.isFinite(cpu.cpuMark)) {
+      cpuMark = cpu.cpuMark;
+    } else if (typeof cpu.cpuMark === 'string') {
+      cpuMark = parseInt(cpu.cpuMark, 10) || 8000;
+    } else if (cpu.performance?.multiCoreScore) {
+      cpuMark = cpu.performance.multiCoreScore;
+    } else if (cpu.cores) {
+      const cores = typeof cpu.cores === 'object' ? (cpu.cores.total || 6) : (parseInt(cpu.cores, 10) || 6);
+      cpuMark = cores * 3000;
+    }
+
+    // Safely extract GPU benchmark score or calculate from physical features
+    let gpuCUDA = 100000;
+    if (typeof gpu.CUDA === 'number' && Number.isFinite(gpu.CUDA)) {
+      gpuCUDA = gpu.CUDA;
+    } else if (typeof gpu.CUDA === 'string') {
+      gpuCUDA = parseInt(gpu.CUDA, 10) || 100000;
+    } else if (gpu.performance?.rasterPerformanceScore) {
+      gpuCUDA = gpu.performance.rasterPerformanceScore * 3000;
+    } else if (gpu.memory?.vramGB) {
+      const vram = gpu.memory.vramGB;
+      if (vram >= 24) gpuCUDA = 350000;
+      else if (vram >= 16) gpuCUDA = 220000;
+      else if (vram >= 12) gpuCUDA = 140000;
+      else if (vram >= 8) gpuCUDA = 80000;
+      else gpuCUDA = 50000;
+    }
   
-    // We calculate an absolute "Performance Index" (0-100) based on established hardware benchmarks.
-    // This completely removes dependency on database 'max' values or specific hardware names,
-    // making the logic mathematically bulletproof for ANY random rig combinations.
-    
     // Check if the database stores raw G3DMark (max ~40,000) or CUDA scores (max ~400,000)
     const isRawG3D = (maxStats?.maxGpuCuda || 400000) < 50000;
     const gpuAnchor = isRawG3D ? 40000 : 400000;
     const cpuAnchor = 60000; // Anchor to typical flagship CPU (e.g. i9-13900K)
 
     // Calculate a 0-100 performance index using a square root curve (to model real-world scaling)
-    const cpuIndex = Math.min(Math.sqrt(cpuMark / cpuAnchor) * 100, 100) || 1;
-    const gpuIndex = Math.min(Math.sqrt(gpuCUDA / gpuAnchor) * 100, 100) || 1;
+    const cpuRatio = Math.max(0, cpuMark) / cpuAnchor;
+    const gpuRatio = Math.max(0, gpuCUDA) / gpuAnchor;
+
+    const cpuIndex = Math.min(Math.sqrt(cpuRatio) * 100, 100) || 1;
+    const gpuIndex = Math.min(Math.sqrt(gpuRatio) * 100, 100) || 1;
 
     // Convert the 0-100 index into 1-10 tiers for the severity calculation
     const cpuTier = Math.ceil(cpuIndex / 10);
@@ -32,7 +68,7 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
   
     // Maps the tier gap to a severity percentage — bigger gap means more severe bottleneck
     const SEVERITY_TABLE = [0, 5, 15, 30, 50, 70, 85];
-    const severity = SEVERITY_TABLE[Math.min(absDiff, 6)];
+    const severity = SEVERITY_TABLE[Math.min(absDiff, 6)] || 0;
   
     let message, color, cardClass, type;
   

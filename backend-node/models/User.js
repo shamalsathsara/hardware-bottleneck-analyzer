@@ -34,13 +34,18 @@ const userSchema = new mongoose.Schema(
     // re-enter them manually every time they visit the site.
     savedRigs: [
       {
-        name:       { type: String, required: true }, // e.g., "My Gaming PC" or "Living Room Build"
-        cpu:        { type: String, required: true },
-        gpu:        { type: String, required: true },
-        ram:        { type: String, required: true },
-        resolution: { type: String, required: true },
+        name:           { type: String, required: true }, // e.g., "My Gaming PC" or "Living Room Build"
+        cpu:            { type: String, required: true },
+        gpu:            { type: String, required: true },
+        ram:            { type: String, required: true },
+        resolution:     { type: String, required: true },
+        settings:       { type: String, default: 'High' },
+        cpuHardwareId:  { type: String, trim: true },
+        gpuHardwareId:  { type: String, trim: true },
+        cpuDisplayName: { type: String, trim: true },
+        gpuDisplayName: { type: String, trim: true },
         // We save the exact date they added this rig to their profile
-        createdAt:  { type: Date, default: Date.now }
+        createdAt:      { type: Date, default: Date.now }
       }
     ]
   },
