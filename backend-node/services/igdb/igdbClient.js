@@ -43,18 +43,19 @@ async function query(endpoint, apicalypseQuery = '', options = {}) {
     try {
       const token = await getAccessToken();
 
-      const response = await axios({
-        method: 'POST',
+      const response = await axios.post(
         url,
-        data: apicalypseQuery.trim(),
-        headers: {
-          'Client-ID': clientId,
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'text/plain',
-        },
-        timeout,
-      });
+        apicalypseQuery.trim(),
+        {
+          headers: {
+            'Client-ID': clientId,
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'text/plain',
+          },
+          timeout,
+        }
+      );
 
       return response.data;
     } catch (error) {

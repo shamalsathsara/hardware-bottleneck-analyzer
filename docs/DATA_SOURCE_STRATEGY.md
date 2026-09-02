@@ -1,14 +1,14 @@
-# Project Aura V2: Game Data Source Strategy & Architecture Specification
+# Project Aura V2: Game Data Source Strategy & Large Catalog Specification
 
-> **Version:** 2.1.1  
-> **Status:** Active  
+> **Version:** 2.1.1B  
+> **Status:** Production-Ready  
 > **Primary Game Metadata Source:** IGDB (Internet Game Database via Twitch OAuth 2.0)
 
 ---
 
-## 1. Executive Summary
+## 1. Executive Summary & Large Sync Architecture
 
-Project Aura is evolving into a global PC gaming performance platform. This specification establishes the architecture for external catalog ingestion, data source isolation, metadata provenance, and data layer separation.
+Project Aura is evolving into a global PC gaming performance platform. This specification establishes the architecture for scalable catalog ingestion, multi-batch pagination, bounded-memory bulk operations, checkpointing, and field ownership protection.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -29,8 +29,8 @@ Project Aura is evolving into a global PC gaming performance platform. This spec
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────┐
-│               Controlled Sync Service                   │
-│        (Field Ownership & Duplicate Reconciliation)     │
+│               Multi-Batch Sync Service                  │
+│       (Bounded Memory, bulkWrite, Atomic Checkpoint)    │
 └────────────────────────────┬────────────────────────────┘
                              │
                              ▼
@@ -55,67 +55,62 @@ Project Aura is evolving into a global PC gaming performance platform. This spec
 
 ---
 
-## 2. Data Layer Separation
+## 2. Data Coverage States & Hierarchy
 
-To maintain architectural integrity, Project Aura strictly separates three distinct data layers:
+To prevent false claims of performance data, Project Aura enforces four distinct coverage states:
 
-| Layer | Responsibility | Primary Source | Mutation Rules |
+| Coverage State | Meaning | Database Indicator | Frontend Badge |
 | :--- | :--- | :--- | :--- |
-| **Game Metadata** | Title, release year, developer, publisher, genres, platforms, cover images. | **IGDB** | Synced and refreshed via background sync scripts. |
-| **System Requirements** | Minimum & recommended CPU, GPU, VRAM, RAM, Storage, OS, DirectX. | **Official Dev Specs / Steam / Curated** | Manually verified or enriched via store APIs. **Never overwritten by basic metadata sync.** |
-| **FPS Benchmark Data** | Real-world hardware framerate observations (FPS, 1% Lows, Settings). | **Dedicated Benchmarks Collection** | Kept separate from game documents; never hallucinated or synthetically fabricated. |
+| **1. CATALOG LISTED** | Game metadata exists (title, release year, genres, platforms, cover art). System requirements and performance observations are uncollected. | `dataQuality: 'metadata_only'` | *"Requirements Available"* / Base Profile |
+| **2. REQUIREMENTS AVAILABLE** | System requirements collected from store pages or publisher materials, awaiting verification. | `dataQuality: 'requirements_available'` | *"Requirements Available"* |
+| **3. OFFICIAL SPECS VERIFIED** | Hardware requirements confirmed by the Project Aura team against official developer publications. | `dataQuality: 'verified'`, `requirementsVerified: true` | *"✓ Official Verified Specs"* |
+| **4. BENCHMARK OBSERVED** | Real-world hardware framerate observations recorded in dedicated benchmark collection (Future V2.2+). | Linked `GameBenchmark` records | *"Tested On Real Hardware"* |
 
 ---
 
-## 3. IGDB Authentication & Security
+## 3. Large Sync Pagination & Deterministic Ordering
 
-1. **Protocol:** Twitch OAuth 2.0 Client Credentials Flow (`POST https://id.twitch.tv/oauth2/token`).
-2. **Secrets Storage:** Strictly backend environment variables:
-   - `IGDB_CLIENT_ID`
-   - `IGDB_CLIENT_SECRET`
-3. **Zero Frontend Exposure:** Credentials must never be prefixed with `VITE_` or exposed in React builds, client bundles, network responses, error messages, or logs.
-4. **In-Memory Token Cache:** Tokens are cached in `igdbAuth.js`. Expiry is calculated with a safety buffer of 60 seconds (`expiresAt = Date.now() + (expires_in - 60) * 1000`).
-5. **No Per-Request Auth:** OAuth tokens are reused across calls until expiration or invalidation.
+1. **Deterministic Ordering:** IGDB API queries use `where platforms = (6) & rating_count != null; sort rating_count desc;`. Rating count indexing provides stable result ordering across pagination offsets.
+2. **Bounded Batches:** Large jobs are partitioned into discrete chunks of 50–100 games (`--batch-size=50`).
+3. **Bounded Memory:** Temporary game data from each batch is mapped, written, and garbage-collected before requesting the next batch. Memory consumption stays flat regardless of whether 100 or 10,000 games are processed.
+4. **Rate Limit Safety Pacing:** A 250ms pause is enforced between consecutive batch requests to keep overall API request velocity well within IGDB's 4 requests/second limit.
 
 ---
 
-## 4. Resilience & Rate-Limit Strategy
+## 4. Checkpoint & Resume Architecture
 
-All external communication is centralized in `backend-node/services/igdb/igdbClient.js`:
+Synchronization state is persisted atomically after each batch in `backend-node/data/igdb_sync_checkpoint.json`:
 
-* **Request Timeout:** Configurable 10,000 ms timeout per HTTP request.
-* **401 Unauthorized Recovery:** If an access token is revoked or rejected, the client invalidates its in-memory cache and transparently retries once with a fresh token.
-* **429 Rate-Limit Backoff:** Uses `Retry-After` response headers or exponential backoff to pause and retry without crashing.
-* **5xx Transient Error Retry:** Up to 3 retries with exponential backoff (`delay = 500ms * 2^attempt`).
-* **Failure Isolation:** An IGDB outage will only cause catalog sync scripts to report failure; it will **never crash** the Project Aura API, database, or ML prediction services.
-
----
-
-## 5. PC Platform Filtering
-
-Project Aura is focused on PC gaming performance. Catalog ingestion filters out console-exclusive and mobile-only titles using official IGDB platform identifiers:
-
-```javascript
-const IGDB_PLATFORM_IDS = {
-  WINDOWS: 6, // PC (Microsoft Windows)
-  LINUX: 3,   // Linux
-  MAC: 14,    // Mac / macOS
-};
+```json
+{
+  "syncRunId": "sync_20260902141500_a1b2c3",
+  "mode": "initial",
+  "requestedLimit": 1000,
+  "batchSize": 50,
+  "currentOffset": 250,
+  "processedTotal": 250,
+  "createdTotal": 220,
+  "updatedTotal": 30,
+  "skippedTotal": 0,
+  "failedTotal": 0,
+  "batchesCompleted": 5,
+  "status": "in_progress",
+  "startedAt": "2026-09-02T08:45:00.000Z",
+  "updatedAt": "2026-09-02T08:47:30.000Z",
+  "completedAt": null,
+  "lastError": null
+}
 ```
 
-Apicalypse query filter:
-```
-where platforms = (6) & category = (0, 8, 9, 10) & first_release_date != null & total_rating_count != null;
-sort total_rating_count desc;
-```
-* **Category 0:** Main Game
-* **Category 8:** Remake
-* **Category 9:** Remaster
-* **Category 10:** Expanded Game
+### Checkpoint Lifecycle Rules
+- **Strict Post-Write Saving:** Checkpoints are updated ONLY AFTER a batch's MongoDB writes succeed.
+- **Failed Batch Isolation:** If a batch fails (network error, rate-limit, or MongoDB error), the checkpoint remains at the previous successful offset.
+- **Interruption Safety:** Handlers for `SIGINT` (Ctrl+C) and `SIGTERM` allow the active batch to complete, save state with `status: 'interrupted'`, and exit gracefully.
+- **Resuming:** Running `npm run games:sync -- --resume` automatically reads the checkpoint and resumes from the exact saved offset.
 
 ---
 
-## 6. Field Ownership & Reconciliation Strategy
+## 5. Field Ownership & Reconciliation Strategy
 
 To protect manually curated game entries (e.g. Cyberpunk 2077, GTA V, The Witcher 3), the synchronization engine enforces strict field ownership:
 
@@ -145,31 +140,29 @@ To protect manually curated game entries (e.g. Cyberpunk 2077, GTA V, The Witche
 
 ---
 
-## 7. Synchronization Commands
-
-Execute sync through npm scripts in `backend-node`:
+## 6. CLI Commands & Execution Examples
 
 ```bash
-# Dry Run (Preview mappings and actions without writing to MongoDB)
-npm run games:sync -- --limit=50 --dry-run
+# 1. Preview / Dry Run (200 games across 4 batches of 50)
+npm run games:sync -- --limit=200 --batch-size=50 --dry-run
 
-# Live Ingestion (Upsert 50 games into MongoDB)
-npm run games:sync -- --limit=50
+# 2. Live Large Ingestion (200 games)
+npm run games:sync -- --limit=200 --batch-size=50
 
-# Offset / Pagination
-npm run games:sync -- --limit=50 --offset=50
+# 3. Resume previous interrupted or stopped sync
+npm run games:sync -- --resume
 
-# Incremental Mode (Only updates metadata for already-imported games)
+# 4. Fresh sync (clears existing checkpoint and starts from offset 0)
+npm run games:sync -- --limit=500 --batch-size=50 --fresh
+
+# 5. Incremental sync (only refreshes metadata for already-imported games)
 npm run games:sync -- --mode=incremental
 ```
 
 ---
 
-## 8. Future Data Sources (Roadmap V2.2+)
+## 7. Future Scheduled Ingestion (Roadmap)
 
-| Source | Target Phase | Planned Purpose |
-| :--- | :--- | :--- |
-| **Steam Store API** | V2.2 | Official PC system requirements extraction, Steam AppIDs, player counts. |
-| **PCGamingWiki** | V2.2 | PC-specific graphics engine features (FOV, ultrawide, frame limiters, HDR). |
-| **Master Hardware DB** | V2.3 | Exhaustive CPU/GPU hardware database with clock speeds, architecture, TDP. |
-| **Dataset V2 Benchmarks**| V2.3 | Multi-resolution verified real-world framerate samples. |
+When automated synchronization is introduced in future milestones:
+- **Nightly Incremental Sync:** `npm run games:sync -- --mode=incremental` will run off-peak to refresh metadata and new releases.
+- **Weekly Catalog Discovery:** `npm run games:sync -- --limit=500` will discover newly trending PC releases.
