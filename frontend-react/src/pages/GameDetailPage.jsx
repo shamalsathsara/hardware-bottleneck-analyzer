@@ -98,7 +98,18 @@ export default function GameDetailPage({ slug, onNavigate }) {
         alignItems: 'center',
         gap: '1.5rem',
       }}>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+          {game.thumbnailUrl && (
+            <div style={{ width: '130px', height: '180px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, background: '#1e293b', boxShadow: '0 8px 20px rgba(0,0,0,0.5)' }}>
+              <img
+                src={game.thumbnailUrl}
+                alt={game.name}
+                onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+          )}
+          <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.6rem' }}>
             <span style={{
               fontSize: '0.75rem',
@@ -134,6 +145,7 @@ export default function GameDetailPage({ slug, onNavigate }) {
             ))}
           </div>
         </div>
+      </div>
 
         <div>
           <button

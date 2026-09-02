@@ -130,6 +130,17 @@ export default function GamesPage({ onNavigate }) {
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border, #334155)'; }}
             >
               <div>
+                {game.thumbnailUrl && (
+                  <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', marginBottom: '1rem', background: '#1e293b' }}>
+                    <img
+                      src={game.thumbnailUrl}
+                      alt={game.name}
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
                   <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main, #f8fafc)', lineHeight: '1.3' }}>
                     {game.name}

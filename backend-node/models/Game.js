@@ -106,6 +106,25 @@ const gameSchema = new mongoose.Schema({
     requirementsVerified: { type: Boolean, default: false },
     lastVerifiedAt: { type: Date, default: null },
   },
+  externalIds: {
+    igdb: {
+      type: Number,
+      default: null,
+    },
+    steam: {
+      type: Number,
+      default: null,
+    },
+  },
+  metadataSource: {
+    type: String,
+    trim: true,
+    default: 'manual',
+  },
+  metadataLastSyncedAt: {
+    type: Date,
+    default: null,
+  },
   seo: {
     title: { type: String, default: null },
     description: { type: String, default: null },
@@ -118,6 +137,7 @@ const gameSchema = new mongoose.Schema({
 gameSchema.index({ name: 1 });
 gameSchema.index({ alternateNames: 1 });
 gameSchema.index({ genres: 1 });
+gameSchema.index({ 'externalIds.igdb': 1 }, { unique: true, sparse: true });
 
 const Game = mongoose.models.Game || mongoose.model('Game', gameSchema);
 

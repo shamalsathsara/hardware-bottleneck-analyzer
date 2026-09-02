@@ -89,7 +89,7 @@ router.get('/', async (req, res) => {
 
     const [games, total] = await Promise.all([
       Game.find(filter)
-        .select('name slug developer publisher releaseYear genres platforms performanceProfile.rayTracingSupported performanceProfile.dlssSupported performanceProfile.fsrSupported dataQuality')
+        .select('name slug developer publisher releaseYear genres platforms thumbnailUrl externalIds metadataSource performanceProfile.rayTracingSupported performanceProfile.dlssSupported performanceProfile.fsrSupported dataQuality')
         .sort({ name: 1 })
         .skip(skip)
         .limit(limit)
