@@ -1,6 +1,99 @@
-import { useState } from 'react';
 import HardwareSearch from '../HardwareSearch';
-import { getExplanation, generateQA } from '../utils/BottleneckLogic';
+
+// SVG Icons
+const IconCpu = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+    <rect x="9" y="9" width="6" height="6" />
+    <line x1="9" y1="1" x2="9" y2="4" />
+    <line x1="15" y1="1" x2="15" y2="4" />
+    <line x1="9" y1="20" x2="9" y2="23" />
+    <line x1="15" y1="20" x2="15" y2="23" />
+    <line x1="20" y1="9" x2="23" y2="9" />
+    <line x1="20" y1="14" x2="23" y2="14" />
+    <line x1="1" y1="9" x2="4" y2="9" />
+    <line x1="1" y1="14" x2="4" y2="14" />
+  </svg>
+);
+
+const IconGpu = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <circle cx="8" cy="12" r="2.5" />
+    <circle cx="16" cy="12" r="2.5" />
+    <line x1="6" y1="18" x2="6" y2="21" />
+    <line x1="10" y1="18" x2="10" y2="21" />
+    <line x1="14" y1="18" x2="14" y2="21" />
+  </svg>
+);
+
+const IconRam = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="7" width="20" height="10" rx="1" />
+    <line x1="6" y1="17" x2="6" y2="19" />
+    <line x1="10" y1="17" x2="10" y2="19" />
+    <line x1="14" y1="17" x2="14" y2="19" />
+    <line x1="18" y1="17" x2="18" y2="19" />
+    <line x1="5" y1="11" x2="7" y2="11" />
+    <line x1="9" y1="11" x2="11" y2="11" />
+    <line x1="13" y1="11" x2="15" y2="11" />
+    <line x1="17" y1="11" x2="19" y2="11" />
+  </svg>
+);
+
+const IconDisplay = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
+  </svg>
+);
+
+const IconBolt = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
+
+const IconGauge = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2v2" />
+    <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />
+    <path d="M12 14l3-3" />
+  </svg>
+);
+
+const IconShield = () => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const IconTarget = () => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+const IconChart = () => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const IconGamepad = () => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="6" y1="12" x2="10" y2="12" />
+    <line x1="8" y1="10" x2="8" y2="14" />
+    <line x1="15" y1="13" x2="15.01" y2="13" />
+    <line x1="18" y1="11" x2="18.01" y2="11" />
+    <rect x="2" y="6" width="20" height="12" rx="6" />
+  </svg>
+);
 
 export default function BottleneckCalculatorPage({
   loadingData,
@@ -20,489 +113,521 @@ export default function BottleneckCalculatorPage({
   handleConsultAura,
   handleResetAnalysis,
   prediction,
-  confidence,
   bottleneckData,
   recommendation,
   smartRec,
   selectedUpgradeComponent,
   generateSmartRecommendation,
-  explanationType,
-  setExplanationType,
   error,
   currentUser,
   onNavigate,
   onOpenSaveModal,
-  SRI_LK_STORES,
 }) {
-  const [showHelp, setShowHelp] = useState(false);
-  const [openQA, setOpenQA] = useState(null);
+  // Semicircle gauge calculation
+  const maxScaleFps = 165;
+  const fpsNumber = prediction ? Number(prediction) : 0;
+  const clampedFpsRatio = Math.min(Math.max(fpsNumber / maxScaleFps, 0.05), 1);
+  const arcLength = 172.78; // PI * 55
+  const strokeDashoffset = arcLength * (1 - clampedFpsRatio);
 
-  const qaItems = generateQA(bottleneckData);
+  // Derived metric cards data
+  const isCpuBottleneck = bottleneckData?.type === 'cpu';
+  const isGpuBottleneck = bottleneckData?.type === 'gpu';
+  const severity = bottleneckData?.severity || 0;
+
+  let cpuStatus = 'Good';
+  let cpuSubtext = 'No significant bottleneck';
+  let cpuColor = 'var(--green)';
+  if (isCpuBottleneck) {
+    if (severity >= 30) {
+      cpuStatus = 'Bottleneck';
+      cpuSubtext = 'Restricting graphics throughput';
+      cpuColor = 'var(--red)';
+    } else {
+      cpuStatus = 'Mild Limit';
+      cpuSubtext = 'Minor headroom constraint';
+      cpuColor = 'var(--amber)';
+    }
+  } else if (severity <= 10) {
+    cpuStatus = 'Good';
+    cpuSubtext = 'Optimal CPU throughput';
+    cpuColor = 'var(--green)';
+  }
+
+  let gpuStatus = 'Good';
+  let gpuSubtext = 'Well utilizing the graphics card';
+  let gpuColor = 'var(--green)';
+  if (isGpuBottleneck) {
+    if (severity >= 30) {
+      gpuStatus = 'Bottleneck';
+      gpuSubtext = 'Operating at maximum capacity';
+      gpuColor = 'var(--red)';
+    } else {
+      gpuStatus = 'Mild Limit';
+      gpuSubtext = 'Marginally limiting at high res';
+      gpuColor = 'var(--amber)';
+    }
+  } else if (severity <= 10) {
+    gpuStatus = 'Good';
+    gpuSubtext = 'Well utilizing the graphics card';
+    gpuColor = 'var(--green)';
+  }
+
+  const ramGB = parseInt(ram, 10) || 16;
+  const ramStatus = ramGB >= 16 ? 'Sufficient' : 'Upgrade Suggested';
+  const ramSubtext = ramGB >= 16 ? 'Meets recommended requirements' : '8GB may cause frame stutters';
+  const ramColor = ramGB >= 16 ? 'var(--green)' : 'var(--amber)';
+
+  let overallRating = 'Great';
+  let overallSubtext = 'This setup should deliver smooth gameplay';
+  let overallColor = 'var(--green)';
+  if (severity > 40) {
+    overallRating = 'Imbalanced';
+    overallSubtext = 'Significant component mismatch present';
+    overallColor = 'var(--red)';
+  } else if (severity > 20) {
+    overallRating = 'Fair';
+    overallSubtext = 'Moderate component headroom difference';
+    overallColor = 'var(--amber)';
+  } else if (severity > 10) {
+    overallRating = 'Good';
+    overallSubtext = 'Solid setup with minor limits';
+    overallColor = 'var(--green)';
+  }
+
+  // Dynamic explanation text
+  const resLabel = resolution === '3840x2160' ? '4K' : resolution === '2560x1440' ? '1440p' : '1080p';
+  let meaningText = `You can expect smooth gaming performance at ${resLabel} ${settings} settings in most modern titles.`;
+  if (severity <= 10) {
+    meaningText += ` Your CPU and GPU are well balanced with no significant bottleneck restrictions.`;
+  } else if (isCpuBottleneck) {
+    meaningText += ` In CPU-intensive titles, your processor may restrict peak framerates before your graphics card is fully saturated.`;
+  } else if (isGpuBottleneck) {
+    meaningText += ` At higher graphics fidelity, your graphics card is the primary hardware limiter.`;
+  }
+
+  // Bottleneck status banner text
+  let bottleneckTitle = 'Well Balanced';
+  let bottleneckIcon = '✓';
+  let bottleneckDesc = 'Your system components are well matched for this workload.';
+  let bottleneckBadgeColor = 'var(--green)';
+
+  if (isCpuBottleneck) {
+    bottleneckTitle = severity >= 30 ? 'CPU Bottleneck' : 'Mild CPU Limit';
+    bottleneckIcon = '⚠️';
+    bottleneckBadgeColor = severity >= 30 ? 'var(--red)' : 'var(--amber)';
+    bottleneckDesc = bottleneckData?.message || 'Your processor is holding back graphics card output.';
+  } else if (isGpuBottleneck) {
+    bottleneckTitle = severity >= 30 ? 'GPU Bottleneck' : 'Mild GPU Limit';
+    bottleneckIcon = '⚠️';
+    bottleneckBadgeColor = severity >= 30 ? 'var(--red)' : 'var(--amber)';
+    bottleneckDesc = bottleneckData?.message || 'Your graphics card is running near 100% capacity.';
+  }
 
   return (
-    <div className="calculator-page-wrap">
-      <div className="dashboard-shell">
+    <div className="analyzer-page-wrapper">
+      
+      {/* ── 1. PAGE HEADER ── */}
+      <header className="analyzer-page-header">
+        <h1 className="analyzer-headline">
+          PC Bottleneck &amp; Performance Analyzer
+        </h1>
+        <p className="analyzer-subheadline">
+          Select your CPU, GPU, and target resolution to estimate gaming FPS and determine if your processor or graphics card is the bottleneck.
+        </p>
+      </header>
 
-        {/* ── LEFT SIDEBAR (Quick Actions / Stores / Q&A) ── */}
-        <aside className="left-sidebar" aria-label="Support and Knowledge Base">
-          <div className="sidebar-section-title">Quick Support</div>
-
-          <button
-            id="sidebar-need-help"
-            className={`sidebar-action-btn need-help-btn ${showHelp ? 'active' : ''}`}
-            onClick={() => setShowHelp(prev => !prev)}
-            title="Show Sri Lankan PC stores and helpful Q&A"
-          >
-            <span className="sidebar-btn-icon">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      {/* ── 2. TWO-COLUMN MAIN GRID ── */}
+      <main className="analyzer-main-grid">
+        
+        {/* LEFT COLUMN: YOUR PC COMPONENTS CARD */}
+        <section className="analyzer-card configuration-card" aria-labelledby="config-card-title">
+          <div className="card-header-bar">
+            <span className="card-icon-wrap text-cyan">
+              <IconBolt />
             </span>
-            Need Hardware Help?
-          </button>
+            <h2 id="config-card-title" className="card-title-text">Your PC Components</h2>
+          </div>
 
-          {showHelp && (
-            <div className="left-sidebar-help-content" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div className="right-panel-card">
-                <div className="right-panel-heading">
-                  <span className="right-panel-icon">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                  </span>
-                  Sri Lankan PC Stores
-                </div>
-                <div className="store-cards-list">
-                  {SRI_LK_STORES.map((store, index) => (
-                    <div key={index} className="store-card">
-                      <div className="store-card-name">{store.name}</div>
-                      <p className="store-card-desc" style={{ fontSize: '0.8rem' }}>{store.description}</p>
-                      <a
-                        href={store.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="store-card-link"
-                      >
-                        Visit Store
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: '4px' }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="right-panel-card">
-                <div className="right-panel-heading">
-                  <span className="right-panel-icon">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  </span>
-                  Helpful Q&amp;A
-                </div>
-                <div className="qa-list">
-                  {qaItems.map((item, index) => (
-                    <div key={index} className="qa-item">
-                      <button
-                        className={`qa-question ${openQA === index ? 'open' : ''}`}
-                        onClick={() => setOpenQA(openQA === index ? null : index)}
-                        style={{ fontSize: '0.85rem' }}
-                      >
-                        <span>{item.q}</span>
-                        <span className={`qa-chevron ${openQA === index ? 'rotated' : ''}`}>
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-                        </span>
-                      </button>
-                      {openQA === index && (
-                        <div className="qa-answer" style={{ fontSize: '0.8rem' }}>
-                          <p>{item.a}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {loadingData && (
+            <div className="loading-data-pill">
+              <span>⏳ Loading hardware database (CPUs &amp; GPUs)...</span>
             </div>
           )}
-        </aside>
 
-        {/* ── MAIN CONTENT AREA ── */}
-        <main className="analyzer-main">
+          <div className="form-subheading">Your Components</div>
 
-          {/* Header */}
-          <section className="hero">
-            <div className="hero-tag">
-              <span className="hero-tag-icon">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8"/></svg>
-              </span>
-              Powered by Random Forest ML
-            </div>
-            <h1>PC Bottleneck Calculator</h1>
-            <p>
-              Select your processor, graphics card, and target resolution to predict gaming FPS and determine whether your CPU or GPU limits peak performance.
-            </p>
-            <div className="hero-stats">
-              <div className="stat-item">
-                <div className="stat-value">3.64</div>
-                <div className="stat-label">FPS Error Margin</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-value">100</div>
-                <div className="stat-label">Ensemble Trees</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-value">4K</div>
-                <div className="stat-label">Max Resolution</div>
-              </div>
-            </div>
-          </section>
+          <div className="form-group">
+            <label htmlFor="cpu-search-input">Processor (CPU)</label>
+            <HardwareSearch 
+              type="cpu" 
+              placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i7-14700K)..." 
+              value={selectedCpu}
+              onSelect={(item) => {
+                setSelectedCpu(item.cpuName);
+                setSelectedCpuData(item);
+              }} 
+            />
+          </div>
 
-          {/* Hardware Configuration Tool Card */}
-          <section className="analyzer-card" id="analyzer">
-            <div className="card-title">
-              <span className="card-title-icon">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-              </span>
-              Hardware Configuration
-            </div>
+          <div className="form-group">
+            <label htmlFor="gpu-search-input">Graphics Card (GPU)</label>
+            <HardwareSearch 
+              type="gpu" 
+              placeholder="Type to search GPUs (e.g. RTX 4070 Ti, RX 7800 XT)..." 
+              value={selectedGpu}
+              onSelect={(item) => {
+                setSelectedGpu(item.Device);
+                setSelectedGpuData(item);
+              }} 
+            />
+          </div>
 
-            {loadingData && (
-              <div style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>
-                <span style={{ display: 'inline-block', marginRight: '5px' }}>⏳</span>
-                Loading hardware database (CPUs &amp; GPUs)...
-              </div>
-            )}
+          <div className="form-subheading">Target Workload Settings</div>
 
-            <div className="section-label">Your Components</div>
-
+          <div className="form-row-2col">
             <div className="form-group">
-              <label htmlFor="cpu-search-input">Processor (CPU)</label>
-              <HardwareSearch 
-                type="cpu" 
-                placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i7-14700K)..." 
-                value={selectedCpu}
-                onSelect={(item) => {
-                  setSelectedCpu(item.cpuName);
-                  setSelectedCpuData(item);
-                }} 
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="gpu-search-input">Graphics Card (GPU)</label>
-              <HardwareSearch 
-                type="gpu" 
-                placeholder="Type to search GPUs (e.g. RTX 4070 Ti, RX 7800 XT)..." 
-                value={selectedGpu}
-                onSelect={(item) => {
-                  setSelectedGpu(item.Device);
-                  setSelectedGpuData(item);
-                }} 
-              />
-            </div>
-
-            <div className="section-label">Target Workload Settings</div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="resolution-select">Target Resolution</label>
-                <select id="resolution-select" value={resolution} onChange={e => setResolution(e.target.value)}>
-                  <option value="1920x1080">1080p (FHD - 1920 &times; 1080)</option>
-                  <option value="2560x1440">1440p (QHD - 2560 &times; 1440)</option>
-                  <option value="3840x2160">4K (UHD - 3840 &times; 2160)</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="settings-select">Graphics Quality Preset</label>
-                <select id="settings-select" value={settings} onChange={e => setSettings(e.target.value)}>
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                  <option value="Ultra">Ultra</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="ram-select">System RAM Capacity</label>
-              <select id="ram-select" value={ram} onChange={e => setRam(e.target.value)}>
-                <option value="4">4 GB</option>
-                <option value="8">8 GB</option>
-                <option value="16">16 GB (Recommended)</option>
-                <option value="32">32 GB</option>
-                <option value="64">64 GB</option>
+              <label htmlFor="resolution-select">Target Resolution</label>
+              <select id="resolution-select" value={resolution} onChange={e => setResolution(e.target.value)}>
+                <option value="1920x1080">1080p (FHD - 1920 &times; 1080)</option>
+                <option value="2560x1440">1440p (QHD - 2560 &times; 1440)</option>
+                <option value="3840x2160">4K (UHD - 3840 &times; 2160)</option>
               </select>
             </div>
-
-            <div className="action-buttons-row" style={{ display: 'flex', gap: '1rem', marginTop: '1.2rem', flexWrap: 'wrap' }}>
-              <button
-                className={`action-btn${isThinking ? ' loading' : ''}`}
-                onClick={handleConsultAura}
-                disabled={isThinking}
-                style={{ flex: '1', minWidth: '200px' }}
-              >
-                <span className="btn-icon">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
-                </span>
-                {isThinking ? 'Aura is Analyzing…' : 'Run Analysis'}
-              </button>
-
-              <button
-                id="compare-rigs-btn"
-                className="compare-action-btn"
-                onClick={() => onNavigate('/compare')}
-                title="Compare two PC builds side by side"
-              >
-                Compare Rigs
-              </button>
-              
-              <button
-                className="save-pc-btn"
-                onClick={() => {
-                  if (!selectedCpu || !selectedGpu) {
-                    alert('Please select a CPU and GPU before saving.');
-                    return;
-                  }
-                  if (!currentUser) {
-                    if (window.confirm('You need an account to save PC builds to your profile. Would you like to sign in?')) {
-                      onNavigate('/auth');
-                    }
-                    return;
-                  }
-                  onOpenSaveModal();
-                }}
-              >
-                Save this PC
-              </button>
+            <div className="form-group">
+              <label htmlFor="settings-select">Graphics Quality Preset</label>
+              <select id="settings-select" value={settings} onChange={e => setSettings(e.target.value)}>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Ultra">Ultra</option>
+              </select>
             </div>
+          </div>
 
-            {error && (
-              <div className="error-banner" style={{ marginTop: '1rem' }}>
-                <span className="error-icon">⚠️</span>
-                <span>{error}</span>
-              </div>
+          <div className="form-group">
+            <label htmlFor="ram-select">System RAM Capacity</label>
+            <select id="ram-select" value={ram} onChange={e => setRam(e.target.value)}>
+              <option value="4">4 GB</option>
+              <option value="8">8 GB</option>
+              <option value="16">16 GB (Recommended)</option>
+              <option value="32">32 GB</option>
+              <option value="64">64 GB</option>
+            </select>
+          </div>
+
+          <div className="config-actions-stack">
+            <button
+              id="run-analysis-btn"
+              className={`btn-primary-action${isThinking ? ' loading' : ''}`}
+              onClick={handleConsultAura}
+              disabled={isThinking}
+            >
+              <span className="btn-icon">
+                <IconBolt />
+              </span>
+              {isThinking ? 'Analyzing…' : 'Run Analysis'}
+            </button>
+
+            <button
+              id="compare-rigs-btn"
+              className="btn-secondary-action"
+              onClick={() => onNavigate('/compare')}
+            >
+              Compare Rigs
+            </button>
+
+            {prediction && (
+              <button
+                className="btn-ghost-action"
+                onClick={handleResetAnalysis}
+              >
+                &larr; Back to Selection
+              </button>
             )}
+          </div>
 
-            {/* Results Display */}
-            {prediction && bottleneckData && (
-              <div className="results-wrapper">
+          {error && (
+            <div className="error-banner">
+              <span className="error-icon">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+        </section>
 
-                <button
-                  onClick={handleResetAnalysis}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-sub)',
-                    padding: '0.6rem 1.2rem',
-                    borderRadius: 'var(--radius)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    marginBottom: '1rem',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseOver={(e) => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-sub)'; }}
-                >
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                  Back to Selection
-                </button>
 
-                {/* Main Results Card */}
-                <div className={`results-card ${bottleneckData.cardClass}`}>
-                  <div className="fps-display">
-                    <div className="fps-label">Predicted Performance</div>
-                    <div className="fps-value" style={{ color: bottleneckData.color }}>
-                      {prediction}<span className="fps-unit" style={{ color: bottleneckData.color }}>FPS</span>
+        {/* RIGHT COLUMN: PERFORMANCE RESULT CARD */}
+        <section className="analyzer-card result-panel-card" aria-labelledby="result-card-title">
+          <div className="card-header-bar">
+            <span className="card-icon-wrap text-cyan">
+              <IconGauge />
+            </span>
+            <h2 id="result-card-title" className="card-title-text">Performance Result</h2>
+          </div>
+
+          {/* STATE A: THINKING / LOADING */}
+          {isThinking && (
+            <div className="result-loading-state">
+              <div className="loading-spinner" />
+              <h3 className="loading-title">Analyzing your configuration…</h3>
+              <p className="loading-subtext">Evaluating hardware compute tiers and calculating frame delivery estimates.</p>
+            </div>
+          )}
+
+          {/* STATE B: EMPTY STATE (Before running analysis) */}
+          {!isThinking && !prediction && (
+            <div className="result-empty-state">
+              <div className="empty-state-icon-box">
+                <IconChart />
+              </div>
+              <h3 className="empty-state-title">Ready to analyze</h3>
+              <p className="empty-state-desc">
+                Select your PC components on the left and click <strong>&quot;Run Analysis&quot;</strong> to see your estimated gaming performance and hardware bottleneck evaluation.
+              </p>
+            </div>
+          )}
+
+          {/* STATE C: ACTIVE RESULT STATE */}
+          {!isThinking && prediction && bottleneckData && (
+            <div className="result-active-content">
+              
+              {/* Top Hero Section: Semicircle Gauge + Bottleneck Summary */}
+              <div className="result-hero-row">
+                
+                {/* Gauge Area */}
+                <div className="fps-gauge-container">
+                  <div className="gauge-svg-wrap">
+                    <svg viewBox="0 0 160 90" className="gauge-svg">
+                      {/* Background track */}
+                      <path
+                        d="M 25 75 A 55 55 0 0 1 135 75"
+                        fill="none"
+                        stroke="rgba(255, 255, 255, 0.08)"
+                        strokeWidth="11"
+                        strokeLinecap="round"
+                      />
+                      {/* Active colored arc */}
+                      <path
+                        d="M 25 75 A 55 55 0 0 1 135 75"
+                        fill="none"
+                        stroke={bottleneckBadgeColor}
+                        strokeWidth="11"
+                        strokeDasharray={arcLength}
+                        strokeDashoffset={strokeDashoffset}
+                        strokeLinecap="round"
+                        className="gauge-arc-active"
+                      />
+                    </svg>
+
+                    <div className="gauge-center-text">
+                      <div className="gauge-fps-value">{prediction}</div>
+                      <div className="gauge-fps-unit">FPS</div>
                     </div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      AI Accuracy: {confidence}%
-                    </div>
+                  </div>
+                  <div className="gauge-fps-label">Estimated Average FPS</div>
+                </div>
+
+                {/* Bottleneck Status Details */}
+                <div className="bottleneck-status-block">
+                  <span className="section-micro-label">Bottleneck</span>
+                  
+                  <div className="bottleneck-status-badge" style={{ color: bottleneckBadgeColor }}>
+                    <span className="badge-icon-bullet">{bottleneckIcon}</span>
+                    <span className="badge-title-text">{bottleneckTitle}</span>
                   </div>
 
-                  <div className="bottleneck-header">
-                    <span className="bottleneck-label">Bottleneck Severity</span>
-                    <span className="bottleneck-pct" style={{ color: bottleneckData.color }}>{bottleneckData.severity}%</span>
-                  </div>
-
-                  <div className="bar-track">
-                    <div className="bar-fill" style={{ width: `${bottleneckData.severity}%`, background: bottleneckData.color }} />
-                  </div>
-
-                  <div className="bottleneck-msg-wrap">
-                    <p className="bottleneck-message">{bottleneckData.message}</p>
-                  </div>
-
-                  <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    <button 
-                      onClick={() => onNavigate('/quotation')}
-                      className="save-pc-btn"
-                      style={{ background: 'rgba(56,189,248,0.1)' }}
-                    >
-                      View Live Pricing Quotation (LKR)
-                    </button>
-                  </div>
-
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1rem', lineHeight: '1.4' }}>
-                    * Performance and FPS values are AI-generated regression estimates. Real-world framerates may vary based on GPU drivers, background apps, cooling/thermal throttling, and game updates.
+                  <p className="bottleneck-summary-desc">
+                    {bottleneckDesc}
                   </p>
                 </div>
 
-                {/* Recommendation Card */}
-                {recommendation && (
-                  <div className="recommendation-card">
-                    <div className="rec-header">
-                      {recommendation.title}
-                    </div>
-                    <div className="rec-hardware">
-                      {recommendation.hardware}
-                    </div>
-                    <p className="rec-desc">
-                      Upgrading to this component will significantly reduce your system bottleneck and increase overall gaming performance.
-                    </p>
+              </div>
+
+              {/* 4 Performance Metric Cards */}
+              <div className="metrics-quad-grid">
+                
+                <div className="metric-box">
+                  <div className="metric-box-header">
+                    <span className="metric-box-icon text-cyan"><IconCpu /></span>
+                    <span className="metric-box-title">CPU Performance</span>
                   </div>
-                )}
+                  <div className="metric-box-value" style={{ color: cpuColor }}>{cpuStatus}</div>
+                  <div className="metric-box-sub">{cpuSubtext}</div>
+                </div>
 
-                {/* Smart Component Recommendation Panel */}
-                {bottleneckData.severity >= 30 && (
-                  <div className="smart-rec-panel">
-                    <div className="smart-rec-title">
-                      Upgrade Recommendation
-                    </div>
-
-                    <p className="smart-rec-question">Which component would you like to upgrade?</p>
-
-                    <div className="smart-rec-choices">
-                      <button
-                        id="smart-rec-cpu-btn"
-                        className={`smart-rec-choice-btn ${selectedUpgradeComponent === 'CPU' ? 'selected' : ''}`}
-                        onClick={() => generateSmartRecommendation('CPU')}
-                      >
-                        CPU
-                      </button>
-                      <button
-                        id="smart-rec-gpu-btn"
-                        className={`smart-rec-choice-btn ${selectedUpgradeComponent === 'GPU' ? 'selected' : ''}`}
-                        onClick={() => generateSmartRecommendation('GPU')}
-                      >
-                        GPU
-                      </button>
-                      <button
-                        id="smart-rec-ram-btn"
-                        className={`smart-rec-choice-btn ${selectedUpgradeComponent === 'RAM' ? 'selected' : ''}`}
-                        onClick={() => generateSmartRecommendation('RAM')}
-                      >
-                        RAM
-                      </button>
-                    </div>
-
-                    {smartRec && (
-                      <div className="smart-rec-result">
-                        <div className="smart-rec-row">
-                          <span className="smart-rec-label">Recommended</span>
-                          <span className="smart-rec-value highlight">{smartRec.recommended}</span>
-                        </div>
-                        <div className="smart-rec-row">
-                          <span className="smart-rec-label">Est. Improvement</span>
-                          <span className="smart-rec-value green">{smartRec.improvement}</span>
-                        </div>
-                        <div className="smart-rec-row">
-                          <span className="smart-rec-label">Compatibility</span>
-                          <span className="smart-rec-value">{smartRec.compatibility}</span>
-                        </div>
-                        <div className="smart-rec-row">
-                          <span className="smart-rec-label">Priority</span>
-                          <span className="smart-rec-value">{smartRec.priority}</span>
-                        </div>
-                        <div className="smart-rec-tip">
-                          <p>{smartRec.tip}</p>
-                        </div>
-                      </div>
-                    )}
+                <div className="metric-box">
+                  <div className="metric-box-header">
+                    <span className="metric-box-icon text-indigo"><IconGpu /></span>
+                    <span className="metric-box-title">GPU Performance</span>
                   </div>
-                )}
+                  <div className="metric-box-value" style={{ color: gpuColor }}>{gpuStatus}</div>
+                  <div className="metric-box-sub">{gpuSubtext}</div>
+                </div>
 
-                {/* Explanation Panel */}
-                <div className="explanation-panel">
-                  <div className="explanation-title">
-                    Performance Explanation
+                <div className="metric-box">
+                  <div className="metric-box-header">
+                    <span className="metric-box-icon text-amber"><IconRam /></span>
+                    <span className="metric-box-title">RAM Capacity</span>
                   </div>
+                  <div className="metric-box-value" style={{ color: ramColor }}>{ramStatus}</div>
+                  <div className="metric-box-sub">{ramSubtext}</div>
+                </div>
 
-                  <div className="explanation-toggle">
-                    <button
-                      id="explanation-technical-btn"
-                      className={`exp-toggle-btn ${explanationType === 'technical' ? 'active' : ''}`}
-                      onClick={() => setExplanationType('technical')}
-                    >
-                      Technical Reason
-                    </button>
-                    <button
-                      id="explanation-nontechnical-btn"
-                      className={`exp-toggle-btn ${explanationType === 'nontechnical' ? 'active' : ''}`}
-                      onClick={() => setExplanationType('nontechnical')}
-                    >
-                      Non-Technical Reason
-                    </button>
+                <div className="metric-box">
+                  <div className="metric-box-header">
+                    <span className="metric-box-icon text-cyan"><IconDisplay /></span>
+                    <span className="metric-box-title">Overall Rating</span>
                   </div>
-
-                  {explanationType && (
-                    <div className="explanation-text">
-                      <p>{getExplanation(bottleneckData, explanationType)}</p>
-                    </div>
-                  )}
-
-                  {!explanationType && (
-                    <p className="explanation-prompt">
-                      Select an explanation style above to understand why this bottleneck is happening.
-                    </p>
-                  )}
+                  <div className="metric-box-value" style={{ color: overallColor }}>{overallRating}</div>
+                  <div className="metric-box-sub">{overallSubtext}</div>
                 </div>
 
               </div>
-            )}
-          </section>
 
-          {/* ── EDUCATIONAL GUIDE ACCORDION / EXPLAINER ── */}
-          <section className="calculator-guide-section" aria-labelledby="guide-title">
-            <h2 id="guide-title" className="section-headline" style={{ fontSize: '1.4rem', marginBottom: '1rem' }}>
-              Understanding Your Results
-            </h2>
-
-            <div className="guide-cards-grid">
-              <div className="guide-card">
-                <h3>What is a PC Bottleneck?</h3>
-                <p>
-                  A bottleneck occurs when one component in your PC reaches 100% capacity and prevents the remaining hardware from operating at peak throughput. For example, if your CPU cannot prepare render frames quickly enough, your GPU will sit idle waiting for draw calls.
+              {/* "What this means" Panel */}
+              <div className="what-this-means-panel">
+                <div className="means-header">
+                  <span className="means-icon-box">💡</span>
+                  <span className="means-title">What this means</span>
+                </div>
+                <p className="means-body-text">
+                  {meaningText}
                 </p>
               </div>
 
-              <div className="guide-card">
-                <h3>How to Interpret Severity</h3>
-                <p>
-                  <strong>0% – 10% (Balanced):</strong> Your CPU and GPU are well-matched. No upgrades needed.<br />
-                  <strong>15% – 30% (Mild Bottleneck):</strong> Minor performance limitation at specific resolutions.<br />
-                  <strong>50%+ (Severe Bottleneck):</strong> Major mismatch causing frame stutters and low utilization.
-                </p>
+              {/* Smart Upgrade Recommendation (if severity >= 30) */}
+              {bottleneckData.severity >= 30 && (
+                <div className="smart-rec-container">
+                  <div className="smart-rec-header-row">
+                    <span className="smart-rec-heading">Component Upgrade Advisor</span>
+                    <div className="smart-rec-picker">
+                      {['GPU', 'CPU', 'RAM'].map((comp) => (
+                        <button
+                          key={comp}
+                          className={`smart-tab-btn ${selectedUpgradeComponent === comp ? 'active' : ''}`}
+                          onClick={() => generateSmartRecommendation(comp)}
+                        >
+                          {comp}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {smartRec ? (
+                    <div className="smart-rec-details-grid">
+                      <div className="smart-rec-field">
+                        <span className="smart-field-lbl">Recommended:</span>
+                        <span className="smart-field-val text-cyan">{smartRec.recommended}</span>
+                      </div>
+                      <div className="smart-rec-field">
+                        <span className="smart-field-lbl">Expected Uplift:</span>
+                        <span className="smart-field-val text-emerald">{smartRec.improvement}</span>
+                      </div>
+                      <div className="smart-rec-field full-row">
+                        <span className="smart-field-lbl">Compatibility Note:</span>
+                        <span className="smart-field-val">{smartRec.compatibility}</span>
+                      </div>
+                      <p className="smart-field-tip">{smartRec.tip}</p>
+                    </div>
+                  ) : (
+                    <div className="smart-rec-field" style={{ padding: '0.5rem 0' }}>
+                      <span className="smart-field-val">
+                        {recommendation?.title}: <strong className="text-cyan">{recommendation?.hardware}</strong>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Disclaimer + Actions Bar */}
+              <div className="result-disclaimer-bar">
+                <div className="disclaimer-info-text">
+                  <span className="info-icon-badge">ℹ️</span>
+                  <span>Predictions are estimates and may vary based on game, driver version, background apps, and system conditions.</span>
+                </div>
+                <button
+                  className="btn-methodology-link"
+                  onClick={() => onNavigate('/methodology')}
+                >
+                  How it works?
+                </button>
               </div>
 
-              <div className="guide-card">
-                <h3>Why Real-World FPS Can Differ</h3>
-                <p>
-                  FPS predictions represent average gameplay across modern gaming workloads. Individual game optimizations, ray tracing settings, background applications, and cooling thermals will cause natural framerate variance.
-                </p>
+              {/* Secondary Result Actions */}
+              <div className="result-actions-footer">
+                <button
+                  className="btn-save-rig-pill"
+                  onClick={() => {
+                    if (!currentUser) {
+                      if (window.confirm('You need an account to save PC builds to your profile. Would you like to sign in?')) {
+                        onNavigate('/auth');
+                      }
+                      return;
+                    }
+                    onOpenSaveModal();
+                  }}
+                >
+                  💾 Save Rig
+                </button>
+                <button
+                  className="btn-quotation-link"
+                  onClick={() => onNavigate('/quotation')}
+                >
+                  View Pricing (LKR)
+                </button>
               </div>
+
             </div>
+          )}
+        </section>
 
-            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-              <a 
-                href="/methodology" 
-                className="interpret-link"
-                onClick={(e) => { e.preventDefault(); onNavigate('/methodology'); }}
-              >
-                Learn more about our Random Forest ML methodology &rarr;
-              </a>
-            </div>
-          </section>
+      </main>
 
-        </main>
+      {/* ── 3. BOTTOM FEATURE STRIP ── */}
+      <footer className="analyzer-feature-strip" aria-label="Project Aura Platform Capabilities">
+        
+        <div className="feature-strip-cell">
+          <div className="feature-cell-icon text-cyan">
+            <IconShield />
+          </div>
+          <div className="feature-cell-content">
+            <h3 className="feature-cell-title">Data-Driven Predictions</h3>
+            <p className="feature-cell-desc">Trained on real hardware benchmarks and gaming data</p>
+          </div>
+        </div>
 
-      </div>
+        <div className="feature-strip-cell">
+          <div className="feature-cell-icon text-cyan">
+            <IconTarget />
+          </div>
+          <div className="feature-cell-content">
+            <h3 className="feature-cell-title">Bottleneck Detection</h3>
+            <p className="feature-cell-desc">Identify CPU or GPU limitations in your system</p>
+          </div>
+        </div>
+
+        <div className="feature-strip-cell">
+          <div className="feature-cell-icon text-indigo">
+            <IconChart />
+          </div>
+          <div className="feature-cell-content">
+            <h3 className="feature-cell-title">Resolution &amp; Quality Aware</h3>
+            <p className="feature-cell-desc">Get accurate FPS estimates for your target settings</p>
+          </div>
+        </div>
+
+        <div className="feature-strip-cell">
+          <div className="feature-cell-icon text-purple">
+            <IconGamepad />
+          </div>
+          <div className="feature-cell-content">
+            <h3 className="feature-cell-title">Game Ready</h3>
+            <p className="feature-cell-desc">Make informed decisions and enjoy better gaming experiences</p>
+          </div>
+        </div>
+
+      </footer>
+
     </div>
   );
 }

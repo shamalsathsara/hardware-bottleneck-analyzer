@@ -78,7 +78,6 @@ function App() {
   // ── PREDICTION & ANALYSIS RESULTS ──
   const [isThinking, setIsThinking] = useState(false);
   const [prediction, setPrediction] = useState(null);
-  const [confidence, setConfidence] = useState(null);
   const [bottleneckData, setBottleneckData] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
   const [smartRec, setSmartRec] = useState(null);
@@ -155,10 +154,6 @@ function App() {
       setPrediction(Math.round(finalFps));
       setBottleneckData(analysis);
 
-      const baseConf = 99.2;
-      const conf = (baseConf - (analysis.severity / 100) * 8.5).toFixed(1);
-      setConfidence(conf);
-
       // Upgrade Recommendation
       if (analysis.type === 'gpu') {
         const higherGpu = gpuList.find(g => (parseInt(g.CUDA) || 0) > cuda + 20000);
@@ -189,7 +184,6 @@ function App() {
 
   const handleResetAnalysis = () => {
     setPrediction(null);
-    setConfidence(null);
     setBottleneckData(null);
     setRecommendation(null);
     setSmartRec(null);
@@ -321,7 +315,6 @@ function App() {
               handleConsultAura={handleConsultAura}
               handleResetAnalysis={handleResetAnalysis}
               prediction={prediction}
-              confidence={confidence}
               bottleneckData={bottleneckData}
               recommendation={recommendation}
               smartRec={smartRec}

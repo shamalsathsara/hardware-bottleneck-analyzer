@@ -32,7 +32,7 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
             className={`nav-link ${currentRoute === '/bottleneck-calculator' ? 'active' : ''}`}
             onClick={(e) => handleNav('/bottleneck-calculator', e)}
           >
-            Bottleneck Calculator
+            Analyze PC
           </a>
           <a 
             href="/games" 
@@ -47,13 +47,6 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
             onClick={(e) => handleNav('/compare', e)}
           >
             Compare Rigs
-          </a>
-          <a 
-            href="/methodology" 
-            className={`nav-link ${currentRoute === '/methodology' ? 'active' : ''}`}
-            onClick={(e) => handleNav('/methodology', e)}
-          >
-            Methodology
           </a>
           <a 
             href="/about" 
@@ -148,7 +141,7 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
             onClick={(e) => handleNav('/bottleneck-calculator', e)}
             role="menuitem"
           >
-            Bottleneck Calculator
+            Analyze PC
           </a>
           <a 
             href="/games" 
@@ -167,20 +160,20 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
             Compare Rigs
           </a>
           <a 
-            href="/methodology" 
-            className={`mobile-nav-item ${currentRoute === '/methodology' ? 'active' : ''}`}
-            onClick={(e) => handleNav('/methodology', e)}
-            role="menuitem"
-          >
-            Methodology
-          </a>
-          <a 
             href="/about" 
             className={`mobile-nav-item ${currentRoute === '/about' ? 'active' : ''}`}
             onClick={(e) => handleNav('/about', e)}
             role="menuitem"
           >
             About
+          </a>
+          <a 
+            href="/methodology" 
+            className={`mobile-nav-item ${currentRoute === '/methodology' ? 'active' : ''}`}
+            onClick={(e) => handleNav('/methodology', e)}
+            role="menuitem"
+          >
+            Methodology
           </a>
           <a 
             href="/contact" 

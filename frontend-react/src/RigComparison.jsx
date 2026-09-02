@@ -3,10 +3,11 @@ import { analyzeBottleneck } from './utils/BottleneckLogic';
 import { fetchAllCpusLightweight, fetchAllGpusLightweight, searchCpus, searchGpus } from './services/hardwareService';
 import { fetchUserRigs } from './services/rigService';
 import { predictFps } from './services/analysisService';
+import HardwareSearch from './HardwareSearch';
 
-// Component SVG Icons
+// SVG Icons
 const IconCpu = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="4" width="16" height="16" rx="2" />
     <rect x="9" y="9" width="6" height="6" />
     <line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
@@ -17,7 +18,7 @@ const IconCpu = () => (
 );
 
 const IconGpu = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="6" width="20" height="12" rx="2" />
     <circle cx="8" cy="12" r="2.5" /><circle cx="16" cy="12" r="2.5" />
     <line x1="6" y1="18" x2="6" y2="21" /><line x1="10" y1="18" x2="10" y2="21" />
@@ -26,14 +27,38 @@ const IconGpu = () => (
 );
 
 const IconRam = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 7h20v10H2z" />
-    <path d="M6 11v2M10 11v2M14 11v2M18 11v2" />
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="7" width="20" height="10" rx="1" />
+    <line x1="6" y1="17" x2="6" y2="19" />
+    <line x1="10" y1="17" x2="10" y2="19" />
+    <line x1="14" y1="17" x2="14" y2="19" />
+    <line x1="18" y1="17" x2="18" y2="19" />
+    <line x1="5" y1="11" x2="7" y2="11" />
+    <line x1="9" y1="11" x2="11" y2="11" />
+    <line x1="13" y1="11" x2="15" y2="11" />
+    <line x1="17" y1="11" x2="19" y2="11" />
+  </svg>
+);
+
+const IconMonitor = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
+  </svg>
+);
+
+const IconSliders = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+    <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+    <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
   </svg>
 );
 
 const IconSwords = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
     <line x1="13" y1="19" x2="19" y2="13" />
     <line x1="16" y1="16" x2="20" y2="20" />
@@ -46,87 +71,68 @@ const IconSwords = () => (
 );
 
 const IconTrophy = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
     <path d="M5 4h14a1 1 0 0 1 1 1v1a5 5 0 0 1-4 4.9 6 6 0 0 1-3 4.1V18h3a1 1 0 0 1 1 1v2H7v-2a1 1 0 0 1 1-1h3v-3a6 6 0 0 1-3-4.1A5 5 0 0 1 4 7V5a1 1 0 0 1 1-1zm-1 3a3 3 0 0 0 2 2.83V6H4v1zm16 0h-2v2.83A3 3 0 0 0 20 7z" />
   </svg>
 );
 
 const IconEquals = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
     <line x1="5" y1="9" x2="19" y2="9" />
     <line x1="5" y1="15" x2="19" y2="15" />
   </svg>
 );
 
 const IconArrowLeft = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="19" y1="12" x2="5" y2="12" />
     <polyline points="12 19 5 12 12 5" />
   </svg>
 );
 
-const IconRefresh = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 4 23 10 17 10" />
-    <polyline points="1 20 1 14 7 14" />
-    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-  </svg>
-);
-
-const IconWarning = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-  </svg>
-);
-
-const IconCheck = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
+const IconTrash = () => (
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
   </svg>
 );
 
 const IconScan = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
     <rect x="7" y="7" width="10" height="10" rx="1" />
   </svg>
 );
 
+const IconInfoCircle = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
+
+const IconBulb = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18h6" />
+    <path d="M10 22h4" />
+    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5" />
+  </svg>
+);
+
 const IconBarChart = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" />
   </svg>
 );
 
-const IconMonitor = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
-  </svg>
-);
-
-const IconSliders = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-    <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-    <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-    <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
-  </svg>
-);
-
-const IconZap = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-  </svg>
-);
-
-// Empty Rig State Factory
+// Empty Rig Factory
 const emptyRig = () => ({
   cpu: '', gpu: '', ram: '16', resolution: '1920x1080', settings: 'High',
 });
 
-// Single Rig Config Panel
-function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, savedRigs, panelId }) {
+// Single Rig Configuration Card
+function RigPanel({ label, rig, onChange, onClear, savedRigs }) {
   const handleSelectSavedRig = (e) => {
     const selectedId = e.target.value;
     if (!selectedId) return;
@@ -143,23 +149,29 @@ function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, savedRigs, p
   };
 
   return (
-    <div className={`cmp-panel cmp-panel--${panelId}`} style={{ '--accent': accent }}>
-      <div className="cmp-panel-header">
-        <span className="cmp-panel-accent-bar" />
-        <span className="cmp-panel-label">{label}</span>
+    <div className="cmp-rig-card">
+      
+      {/* Card Header */}
+      <div className="cmp-card-header">
+        <div className="cmp-card-title-wrap">
+          <span className="cmp-monitor-icon"><IconMonitor /></span>
+          <h2 className="cmp-card-title">{label}</h2>
+        </div>
+        <button className="cmp-clear-btn" onClick={onClear} type="button">
+          Clear All <IconTrash />
+        </button>
       </div>
 
       {/* Saved Rigs Quick Selector */}
       {savedRigs && savedRigs.length > 0 && (
-        <div className="cmp-form-group" style={{ marginBottom: '1rem' }}>
-          <label className="cmp-label" style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>
+        <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+          <label className="form-label" style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: '700' }}>
             ⚡ Load From Your Saved Rigs
           </label>
           <select 
-            className="cmp-select"
+            className="form-control cmp-select"
             defaultValue=""
             onChange={handleSelectSavedRig}
-            style={{ fontSize: '0.85rem' }}
           >
             <option value="" disabled>-- Select a saved build to populate --</option>
             {savedRigs.map((sr) => (
@@ -171,55 +183,42 @@ function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, savedRigs, p
         </div>
       )}
 
-      {/* CPU */}
-      <div className="cmp-form-group">
-        <label className="cmp-label">
-          <span className="cmp-label-icon"><IconCpu /></span>
+      {/* Processor (CPU) */}
+      <div className="form-group">
+        <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--text-sub)' }}>
           Processor (CPU)
         </label>
-        <input
-          type="text"
-          list={`cmp-cpu-${panelId}`}
-          className="cmp-input"
-          placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i5-12400F)..."
+        <HardwareSearch 
+          type="cpu" 
+          placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i5-12400F)..." 
           value={rig.cpu}
-          onChange={e => onChange({ ...rig, cpu: e.target.value })}
+          onSelect={(item) => onChange({ ...rig, cpu: item.cpuName })} 
         />
-        <datalist id={`cmp-cpu-${panelId}`}>
-          {cpuList.map((c, i) => (
-            <option key={i} value={c.cpuName || c.canonicalName} />
-          ))}
-        </datalist>
       </div>
 
-      {/* GPU */}
-      <div className="cmp-form-group">
-        <label className="cmp-label">
-          <span className="cmp-label-icon"><IconGpu /></span>
+      {/* Graphics Card (GPU) */}
+      <div className="form-group">
+        <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--text-sub)' }}>
           Graphics Card (GPU)
         </label>
-        <input
-          type="text"
-          list={`cmp-gpu-${panelId}`}
-          className="cmp-input"
-          placeholder="Type to search GPUs (e.g. RTX 4070, RX 7800 XT)..."
+        <HardwareSearch 
+          type="gpu" 
+          placeholder="Type to search GPUs (e.g. RTX 4070, RX 7800 XT)..." 
           value={rig.gpu}
-          onChange={e => onChange({ ...rig, gpu: e.target.value })}
+          onSelect={(item) => onChange({ ...rig, gpu: item.Device })} 
         />
-        <datalist id={`cmp-gpu-${panelId}`}>
-          {gpuList.map((g, i) => (
-            <option key={i} value={g.Device || g.canonicalName} />
-          ))}
-        </datalist>
       </div>
 
-      {/* RAM */}
-      <div className="cmp-form-group">
-        <label className="cmp-label">
-          <span className="cmp-label-icon"><IconRam /></span>
+      {/* System RAM */}
+      <div className="form-group">
+        <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--text-sub)' }}>
           System RAM
         </label>
-        <select className="cmp-select" value={rig.ram} onChange={e => onChange({ ...rig, ram: e.target.value })}>
+        <select 
+          className="form-control cmp-select" 
+          value={rig.ram} 
+          onChange={e => onChange({ ...rig, ram: e.target.value })}
+        >
           <option value="4">4 GB</option>
           <option value="8">8 GB</option>
           <option value="16">16 GB</option>
@@ -228,19 +227,31 @@ function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, savedRigs, p
         </select>
       </div>
 
-      {/* Resolution + Quality */}
-      <div className="cmp-form-row">
-        <div className="cmp-form-group">
-          <label className="cmp-label">Resolution</label>
-          <select className="cmp-select" value={rig.resolution} onChange={e => onChange({ ...rig, resolution: e.target.value })}>
+      {/* Resolution + Quality Row */}
+      <div className="form-row-2col">
+        <div className="form-group">
+          <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--text-sub)' }}>
+            Resolution
+          </label>
+          <select 
+            className="form-control cmp-select" 
+            value={rig.resolution} 
+            onChange={e => onChange({ ...rig, resolution: e.target.value })}
+          >
             <option value="1920x1080">1080p (FHD)</option>
             <option value="2560x1440">1440p (QHD)</option>
             <option value="3840x2160">4K (UHD)</option>
           </select>
         </div>
-        <div className="cmp-form-group">
-          <label className="cmp-label">Quality</label>
-          <select className="cmp-select" value={rig.settings} onChange={e => onChange({ ...rig, settings: e.target.value })}>
+        <div className="form-group">
+          <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--text-sub)' }}>
+            Graphics Quality Preset
+          </label>
+          <select 
+            className="form-control cmp-select" 
+            value={rig.settings} 
+            onChange={e => onChange({ ...rig, settings: e.target.value })}
+          >
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
             <option value="High">High</option>
@@ -248,13 +259,14 @@ function RigPanel({ label, accent, rig, onChange, cpuList, gpuList, savedRigs, p
           </select>
         </div>
       </div>
+
     </div>
   );
 }
 
 // Result Card - displayed once comparison runs
 function ResultCard({ label, accent, result, isWinner, isTied }) {
-  const { fps, bottleneck, confidence, rigName } = result;
+  const { fps, bottleneck, rigName } = result;
   const bottleneckColor = bottleneck?.color || '#10b981';
   const severity = bottleneck?.severity !== undefined ? bottleneck.severity : 0;
 
@@ -263,7 +275,6 @@ function ResultCard({ label, accent, result, isWinner, isTied }) {
       className={`cmp-result-card${isWinner ? ' cmp-result-card--winner' : ''}`}
       style={{ '--accent': accent }}
     >
-      {/* Winner / Tied Badge */}
       {isWinner && !isTied && (
         <div className="cmp-winner-badge">
           <span className="cmp-winner-badge-icon"><IconTrophy /></span>
@@ -285,7 +296,7 @@ function ResultCard({ label, accent, result, isWinner, isTied }) {
         <div className="cmp-fps-value" style={{ color: isWinner && !isTied ? '#fbbf24' : accent }}>
           {fps}<span className="cmp-fps-unit">FPS</span>
         </div>
-        <div className="cmp-fps-conf">AI Accuracy: {confidence}%</div>
+        <div className="cmp-fps-conf">Estimated Gaming Performance</div>
       </div>
 
       {/* Bottleneck Bar */}
@@ -295,8 +306,7 @@ function ResultCard({ label, accent, result, isWinner, isTied }) {
           <span className="cmp-bk-pct" style={{ color: bottleneckColor }}>{severity}%</span>
         </div>
         <div className="cmp-bar-track">
-          <div className="cmp-bar-fill"
-               style={{ width: `${severity}%`, background: bottleneckColor }} />
+          <div className="cmp-bar-fill" style={{ width: `${severity}%`, background: bottleneckColor }} />
         </div>
         <div className="cmp-bk-type" style={{ color: bottleneckColor }}>
           {bottleneck?.type
@@ -305,7 +315,6 @@ function ResultCard({ label, accent, result, isWinner, isTied }) {
         </div>
       </div>
 
-      {/* Short verdict text */}
       <div className="cmp-bk-msg">{bottleneck?.message || 'System performance calculated successfully.'}</div>
     </div>
   );
@@ -313,7 +322,6 @@ function ResultCard({ label, accent, result, isWinner, isTied }) {
 
 // Main Component
 export default function RigComparison({ cpuList, gpuList, onBack, initialRig, currentUser }) {
-  // Rig A pre-filled from Analyzer if provided
   const [rigA, setRigA] = useState(() => initialRig
     ? {
         cpu:        initialRig.cpu || '',
@@ -326,22 +334,19 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
   );
   const [rigB, setRigB] = useState(emptyRig);
 
-  const [results, setResults] = useState(null);   // { a, b }
+  const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
-  // Local copies of hardware lists
   const [localCpuList, setLocalCpuList] = useState(cpuList || []);
   const [localGpuList, setLocalGpuList] = useState(gpuList || []);
   const [savedRigs, setSavedRigs] = useState([]);
 
-  // Sync with incoming props
   useEffect(() => {
     if (cpuList && cpuList.length > 0) setLocalCpuList(cpuList);
     if (gpuList && gpuList.length > 0) setLocalGpuList(gpuList);
   }, [cpuList, gpuList]);
 
-  // Load hardware fallback and saved rigs
   useEffect(() => {
     let isMounted = true;
 
@@ -361,14 +366,13 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
         }
       }
 
-      // Fetch saved rigs if user is logged in
       try {
         const rigs = await fetchUserRigs();
         if (isMounted && Array.isArray(rigs)) {
           setSavedRigs(rigs);
         }
       } catch {
-        // user may not be logged in; safe to ignore
+        // user may not be logged in
       }
     }
 
@@ -379,7 +383,6 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
     };
   }, [cpuList, gpuList, currentUser]);
 
-  // Find CPU with flexible matching (exact -> case-insensitive -> backend search)
   const resolveCpu = async (cpuName) => {
     if (!cpuName) return null;
     const clean = cpuName.trim();
@@ -409,7 +412,6 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
     return null;
   };
 
-  // Find GPU with flexible matching (exact -> case-insensitive -> backend search)
   const resolveGpu = async (gpuName) => {
     if (!gpuName) return null;
     const clean = gpuName.trim();
@@ -439,7 +441,6 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
     return null;
   };
 
-  // Run Analysis for one rig: formats data and requests AI prediction
   const analyzeRig = async (rig) => {
     const fullCpu = await resolveCpu(rig.cpu);
     const fullGpu = await resolveGpu(rig.gpu);
@@ -451,7 +452,6 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       throw new Error(`GPU not found: "${rig.gpu}". Please choose from the autocomplete suggestions.`);
     }
 
-    // Safely parse CPU cores and specs
     let cores = 6;
     if (typeof fullCpu.cores === 'number') {
       cores = fullCpu.cores;
@@ -464,7 +464,6 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
     const threads = cores * 2;
     const cpuTDP = Math.min(cores * 10, 125);
 
-    // Safely parse GPU specs
     let cuda = 100000;
     if (typeof fullGpu.CUDA === 'number' && Number.isFinite(fullGpu.CUDA)) {
       cuda = fullGpu.CUDA;
@@ -488,7 +487,6 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }
     }
 
-    // Build payload for AI
     const payload = {
       'CPU': fullCpu.cpuName || fullCpu.canonicalName || rig.cpu,
       'CPU Cores': cores,
@@ -518,10 +516,6 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
     finalFps = Math.max(5, Math.min(900, finalFps));
     if (!Number.isFinite(finalFps)) finalFps = 60;
 
-    const baseConf = 99.2;
-    const confVal = baseConf - (analysis.severity / 100) * 8.5;
-    const conf = (Number.isFinite(confVal) ? confVal : 95.0).toFixed(1);
-
     const rigName =
       (rig.cpu || 'CPU').split(' ').slice(0, 3).join(' ') +
       ' + ' +
@@ -529,13 +523,11 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
 
     return { 
       fps: finalFps.toFixed(1), 
-      confidence: conf, 
       bottleneck: analysis, 
       rigName 
     };
   };
 
-  // Run Comparison
   const handleCompare = async () => {
     setError(null);
     if (!rigA.cpu || !rigA.gpu) { 
@@ -561,14 +553,12 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
 
   const handleReset = () => { setResults(null); setError(null); };
 
-  // Calculate winner safely
   const fpsA  = results ? (parseFloat(results.a.fps) || 0) : 0;
   const fpsB  = results ? (parseFloat(results.b.fps) || 0) : 0;
   const aWins = results && fpsA > fpsB;
   const bWins = results && fpsB > fpsA;
   const tied  = results && Math.abs(fpsA - fpsB) < 0.05;
 
-  // Build verdict text
   const buildVerdict = () => {
     if (!results) return '';
     if (tied) return 'Both rigs produce identical performance at these settings. Consider changing resolution or quality to see a difference.';
@@ -600,88 +590,121 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
   };
 
   return (
-    <div className="cmp-page">
+    <div className="cmp-page-container">
 
-      {/* Header */}
-      <div className="cmp-page-header">
-        <button className="cmp-back-btn" onClick={onBack}>
-          <IconArrowLeft />
-          Back to Analyzer
-        </button>
-        <div className="cmp-title-block">
-          <div className="cmp-title-icon"><IconSwords /></div>
-          <div>
-            <h1 className="cmp-title">Side-by-Side Rig Comparison</h1>
-            <p className="cmp-subtitle">Configure two PC builds and let Project Aura battle-test them head-to-head</p>
+      {/* Top Header Bar */}
+      <div className="cmp-header-layout">
+        
+        <div className="cmp-header-left-group">
+          <button className="cmp-back-btn" onClick={onBack}>
+            <IconArrowLeft />
+            Back to Analyzer
+          </button>
+          <div className="cmp-header-title-box">
+            <h1 className="cmp-main-title">Side-by-Side Rig Comparison</h1>
+            <p className="cmp-main-subtitle">
+              Configure two PC builds and let Project Aura battle-test them head-to-head.
+            </p>
           </div>
         </div>
+
+        {/* Right Info Box */}
+        <div className="cmp-header-info-box">
+          <span className="cmp-info-icon"><IconInfoCircle /></span>
+          <span className="cmp-info-text">
+            Select your components manually or load from your saved rigs to compare performance and bottlenecks.
+          </span>
+        </div>
+
       </div>
 
-      {/* Config Panels */}
+      {/* Main Configuration Form */}
       {!results && (
-        <>
-          <div className="cmp-config-grid">
+        <div className="cmp-content-section">
+          
+          <div className="cmp-battle-grid">
+            
+            {/* Rig A Card */}
             <RigPanel
               label="Rig A"
-              accent="var(--primary)"
               rig={rigA}
               onChange={setRigA}
-              cpuList={localCpuList}
-              gpuList={localGpuList}
+              onClear={() => setRigA(emptyRig())}
               savedRigs={savedRigs}
-              panelId="a"
             />
 
-            <div className="cmp-vs-divider">
-              <div className="cmp-vs-line" />
-              <div className="cmp-vs-circle">VS</div>
-              <div className="cmp-vs-line" />
+            {/* Central VS Divider */}
+            <div className="cmp-vs-column">
+              <div className="cmp-vs-dotted-line top" />
+              <div className="cmp-vs-badge">VS</div>
+              <div className="cmp-vs-dotted-line bottom" />
             </div>
 
+            {/* Rig B Card */}
             <RigPanel
               label="Rig B"
-              accent="#818cf8"
               rig={rigB}
               onChange={setRigB}
-              cpuList={localCpuList}
-              gpuList={localGpuList}
+              onClear={() => setRigB(emptyRig())}
               savedRigs={savedRigs}
-              panelId="b"
             />
+
           </div>
 
+          {/* Error Banner */}
           {error && (
-            <div className="cmp-error">
-              <IconWarning />
+            <div className="error-banner" style={{ marginTop: '1.25rem' }}>
+              <span className="error-icon">⚠️</span>
               <span>{error}</span>
             </div>
           )}
 
-          <div className="cmp-action-row">
+          {/* Tip Banner */}
+          <div className="cmp-tip-card">
+            <span className="cmp-tip-icon"><IconBulb /></span>
+            <span className="cmp-tip-text">
+              <strong>TIP</strong> Compare different CPUs, GPUs, resolutions, and settings to see which build delivers better performance for your games.
+            </span>
+          </div>
+
+          {/* Big Action Button */}
+          <div className="cmp-run-action-wrap">
             <button
-              className={`cmp-run-btn${loading ? ' loading' : ''}`}
+              className={`cmp-run-gradient-btn${loading ? ' loading' : ''}`}
               onClick={handleCompare}
               disabled={loading}
             >
-              {loading ? (
-                <>
-                  <span className="cmp-spinner" />
-                  Analyzing Both Rigs...
-                </>
-              ) : (
-                <>
-                  <IconScan />
-                  Run Comparison
-                </>
-              )}
+              <div className="btn-main-label">
+                <IconScan />
+                <span>{loading ? 'Analyzing Both Rigs…' : 'Run Comparison'}</span>
+              </div>
+              <div className="btn-sub-label">
+                See performance and bottleneck results
+              </div>
             </button>
           </div>
-        </>
+
+        </div>
       )}
 
-      {/* Results */}
+      {/* Results View */}
       {results && (
         <div className="cmp-results-section">
+          
+          <div className="cmp-results-action-bar">
+            <button className="btn-secondary-glass" onClick={handleReset}>
+              &larr; Edit Rig Configurations
+            </button>
+          </div>
+
+          {/* Verdict Banner */}
+          <div className="cmp-verdict-banner">
+            <div className="cmp-verdict-icon"><IconSwords /></div>
+            <div className="cmp-verdict-content">
+              <h3>Head-to-Head Result</h3>
+              <p>{buildVerdict()}</p>
+            </div>
+          </div>
 
           {/* Result cards */}
           <div className="cmp-results-grid">
@@ -749,80 +772,14 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
                     <td>{rigA.settings}</td>
                     <td>{rigB.settings}</td>
                   </tr>
-                  <tr className="cmp-table-fps-row">
-                    <td className="cmp-td-label"><span className="cmp-table-icon"><IconZap /></span>Predicted FPS</td>
-                    <td className={aWins ? 'cmp-cell-winner-fps' : ''}>
-                      {results.a.fps} FPS
-                      {aWins && (
-                        <span className="cmp-winner-inline-icon"><IconTrophy /></span>
-                      )}
-                    </td>
-                    <td className={bWins ? 'cmp-cell-winner-fps' : ''}>
-                      {results.b.fps} FPS
-                      {bWins && (
-                        <span className="cmp-winner-inline-icon"><IconTrophy /></span>
-                      )}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="cmp-td-label"><span className="cmp-table-icon"><IconWarning /></span>Bottleneck</td>
-                    <td style={{ color: results.a.bottleneck?.color || '#10b981' }}>{results.a.bottleneck?.message}</td>
-                    <td style={{ color: results.b.bottleneck?.color || '#10b981' }}>{results.b.bottleneck?.message}</td>
-                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
 
-          {/* Verdict */}
-          <div className={`cmp-verdict-card ${tied ? 'cmp-verdict-card--tied' : aWins ? 'cmp-verdict-card--a' : 'cmp-verdict-card--b'}`}>
-            <div className="cmp-verdict-icon-wrap">
-              <span className="cmp-verdict-svg-icon">
-                {tied ? <IconEquals /> : <IconTrophy />}
-              </span>
-            </div>
-            <div className="cmp-verdict-title">
-              {tied ? 'Dead Heat — Both Rigs Are Equal' : `${aWins ? 'Rig A' : 'Rig B'} Takes the Crown`}
-            </div>
-            <div className="cmp-verdict-text">{buildVerdict()}</div>
-
-            <div className="cmp-verdict-tips">
-              {!tied && (
-                <>
-                  <div className="cmp-verdict-tip">
-                    <span className="cmp-verdict-tip-icon"><IconCheck /></span>
-                    FPS difference: <strong>{Math.abs(fpsA - fpsB).toFixed(1)} FPS</strong>
-                  </div>
-                  <div className="cmp-verdict-tip">
-                    <span className="cmp-verdict-tip-icon"><IconCheck /></span>
-                    Performance gain: <strong>{((Math.abs(fpsA - fpsB) / Math.max(1, Math.min(fpsA, fpsB))) * 100).toFixed(0)}%</strong>
-                  </div>
-                </>
-              )}
-              <div className="cmp-verdict-tip">
-                <span className="cmp-verdict-tip-icon"><IconCheck /></span>
-                Rig A bottleneck: <strong style={{ color: results.a.bottleneck?.color || '#10b981' }}>{results.a.bottleneck?.severity}%</strong>
-              </div>
-              <div className="cmp-verdict-tip">
-                <span className="cmp-verdict-tip-icon"><IconCheck /></span>
-                Rig B bottleneck: <strong style={{ color: results.b.bottleneck?.color || '#10b981' }}>{results.b.bottleneck?.severity}%</strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="cmp-action-row" style={{ marginTop: '2rem' }}>
-            <button className="cmp-reset-btn" onClick={handleReset}>
-              <IconRefresh />
-              Compare Again
-            </button>
-            <button className="cmp-back-btn-secondary" onClick={onBack}>
-              <IconArrowLeft />
-              Back to Analyzer
-            </button>
-          </div>
         </div>
       )}
+
     </div>
   );
 }

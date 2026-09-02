@@ -59,8 +59,8 @@ export default function HomePage({ onNavigate }) {
           <div className="hero-preview-card">
             <div className="preview-header">
               <span className="preview-indicator" />
-              <span className="preview-title">Live Hardware Balance Simulation</span>
-              <span className="preview-tag">Random Forest Model</span>
+              <span className="preview-title">Sample Hardware Analysis</span>
+              <span className="preview-tag">ML Model</span>
             </div>
             <div className="preview-grid">
               <div className="preview-stat">
@@ -73,7 +73,7 @@ export default function HomePage({ onNavigate }) {
               </div>
               <div className="preview-stat">
                 <span className="stat-label">Bottleneck Status</span>
-                <span className="stat-value text-cyan">Balanced Build (99.2% match)</span>
+                <span className="stat-value text-emerald">Well Balanced</span>
               </div>
             </div>
           </div>

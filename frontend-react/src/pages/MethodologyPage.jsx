@@ -11,10 +11,9 @@ export default function MethodologyPage({ onNavigate }) {
         
         {/* Header */}
         <header className="info-header">
-          <span className="section-eyebrow">Technical Whitepaper</span>
-          <h1 className="info-headline">Machine Learning &amp; Methodology</h1>
+          <h1 className="info-headline">Methodology</h1>
           <p className="info-lead">
-            A comprehensive, transparent explanation of how Project Aura predicts gaming framerates and evaluates hardware bottlenecks.
+            How Project Aura predicts gaming framerates and evaluates hardware bottlenecks.
           </p>
         </header>
 

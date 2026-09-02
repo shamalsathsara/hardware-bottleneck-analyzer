@@ -45,17 +45,17 @@ export default function GamesPage({ onNavigate }) {
   };
 
   return (
-    <div className="content-page" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+    <div className="content-page">
       
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <div className="badge-pill" style={{ display: 'inline-block', marginBottom: '0.8rem' }}>
+      <div className="section-header-center">
+        <div className="badge-pill">
           🎮 Game Hardware Database
         </div>
-        <h1 style={{ fontSize: '2.5rem', margin: '0 0 0.8rem 0', color: 'var(--text-main, #f8fafc)' }}>
+        <h1 className="section-headline">
           PC Games Catalog
         </h1>
-        <p style={{ color: 'var(--text-sub, #94a3b8)', maxWidth: '680px', margin: '0 auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
+        <p className="section-subheadline">
           Browse verified PC system requirements, graphics technology support (DLSS, FSR, Ray Tracing), and hardware profiles.
         </p>
       </div>
@@ -72,9 +72,9 @@ export default function GamesPage({ onNavigate }) {
             key={genre}
             onClick={() => handleGenreChange(genre)}
             style={{
-              background: selectedGenre === genre ? 'var(--primary, #38bdf8)' : 'var(--surface, #0f172a)',
-              color: selectedGenre === genre ? '#000' : 'var(--text-sub, #94a3b8)',
-              border: `1px solid ${selectedGenre === genre ? 'var(--primary, #38bdf8)' : 'var(--border, #334155)'}`,
+              background: selectedGenre === genre ? 'var(--primary)' : 'var(--surface)',
+              color: selectedGenre === genre ? '#000' : 'var(--text-sub)',
+              border: `1px solid ${selectedGenre === genre ? 'var(--primary)' : 'var(--border)'}`,
               padding: '0.45rem 1rem',
               borderRadius: '20px',
               cursor: 'pointer',
@@ -90,20 +90,23 @@ export default function GamesPage({ onNavigate }) {
 
       {/* Error state */}
       {error && (
-        <div style={{ padding: '1.5rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#fca5a5', textAlign: 'center', marginBottom: '2rem' }}>
-          {error}
+        <div className="error-banner">
+          <span className="error-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </span>
+          <span>{error}</span>
         </div>
       )}
 
       {/* Loading state */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-sub, #94a3b8)' }}>
+        <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-sub)' }}>
           <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Loading game specifications...</div>
         </div>
       ) : games.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 0', background: 'var(--surface, #0f172a)', border: '1px solid var(--border, #334155)', borderRadius: '12px' }}>
-          <h3 style={{ color: 'var(--text-main, #f8fafc)', margin: '0 0 0.5rem 0' }}>No Games Found</h3>
-          <p style={{ color: 'var(--text-sub, #94a3b8)' }}>Try selecting another genre or searching for another title.</p>
+        <div className="info-card" style={{ textAlign: 'center', padding: '4rem 0' }}>
+          <h3 style={{ color: 'var(--text)', margin: '0 0 0.5rem 0' }}>No Games Found</h3>
+          <p style={{ color: 'var(--text-sub)' }}>Try selecting another genre or searching for another title.</p>
         </div>
       ) : (
         <div style={{
@@ -113,25 +116,10 @@ export default function GamesPage({ onNavigate }) {
           marginBottom: '2.5rem',
         }}>
           {games.map((game) => (
-            <div
-              key={game.slug}
-              className="game-card"
-              style={{
-                background: 'var(--surface, #0f172a)',
-                border: '1px solid var(--border, #334155)',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary, #38bdf8)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border, #334155)'; }}
-            >
+            <div key={game.slug} className="game-card" style={{ padding: '1.5rem' }}>
               <div>
                 {game.thumbnailUrl && (
-                  <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', marginBottom: '1rem', background: '#1e293b' }}>
+                  <div style={{ width: '100%', height: '140px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: '1rem', background: 'var(--surface-2)' }}>
                     <img
                       src={game.thumbnailUrl}
                       alt={game.name}
@@ -142,34 +130,24 @@ export default function GamesPage({ onNavigate }) {
                   </div>
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main, #f8fafc)', lineHeight: '1.3' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text)', lineHeight: '1.3' }}>
                     {game.name}
                   </h3>
                   {game.releaseYear && (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-sub, #94a3b8)', background: '#1e293b', padding: '2px 8px', borderRadius: '6px' }}>
+                    <span className="badge-pill">
                       {game.releaseYear}
                     </span>
                   )}
                 </div>
 
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-sub, #94a3b8)', marginBottom: '1rem' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-sub)', marginBottom: '1rem' }}>
                   {game.developer || game.publisher || 'PC'}
                 </div>
 
                 {/* Genre badges */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
                   {game.genres?.map((g) => (
-                    <span
-                      key={g}
-                      style={{
-                        fontSize: '0.72rem',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        background: '#1e293b',
-                        color: '#cbd5e1',
-                        border: '1px solid #334155',
-                      }}
-                    >
+                    <span key={g} className="badge-pill">
                       {g}
                     </span>
                   ))}
@@ -196,10 +174,10 @@ export default function GamesPage({ onNavigate }) {
               </div>
 
               {/* Card Footer & Link */}
-              <div style={{ borderTop: '1px solid #1e293b', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                 <span style={{
                   fontSize: '0.72rem',
-                  color: game.dataQuality === 'verified' ? '#4ade80' : '#fde047',
+                  color: game.dataQuality === 'verified' ? 'var(--green)' : 'var(--orange)',
                 }}>
                   {game.dataQuality === 'verified' ? '✓ Official Specs Verified' : 'Requirements Available'}
                 </span>
@@ -207,17 +185,17 @@ export default function GamesPage({ onNavigate }) {
                   onClick={() => onNavigate(`/games/${game.slug}`)}
                   style={{
                     background: 'transparent',
-                    border: '1px solid var(--primary, #38bdf8)',
-                    color: 'var(--primary, #38bdf8)',
+                    border: '1px solid var(--primary)',
+                    color: 'var(--primary)',
                     padding: '0.4rem 0.85rem',
-                    borderRadius: '6px',
+                    borderRadius: 'var(--radius-sm)',
                     cursor: 'pointer',
                     fontSize: '0.8rem',
                     fontWeight: '600',
                     transition: 'all 0.2s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--primary, #38bdf8)'; e.currentTarget.style.color = '#000'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--primary, #38bdf8)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = '#000'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--primary)'; }}
                 >
                   View Details &rarr;
                 </button>
@@ -233,31 +211,17 @@ export default function GamesPage({ onNavigate }) {
           <button
             onClick={() => handlePageChange(pagination.page - 1)}
             disabled={pagination.page <= 1}
-            style={{
-              padding: '0.5rem 1rem',
-              background: 'var(--surface, #0f172a)',
-              border: '1px solid var(--border, #334155)',
-              color: pagination.page <= 1 ? 'var(--text-muted, #64748b)' : 'var(--text-main, #f8fafc)',
-              borderRadius: '6px',
-              cursor: pagination.page <= 1 ? 'not-allowed' : 'pointer',
-            }}
+            className="btn-secondary-glass"
           >
             &larr; Previous
           </button>
-          <span style={{ color: 'var(--text-sub, #94a3b8)', fontSize: '0.9rem' }}>
+          <span style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>
             Page {pagination.page} of {pagination.pages} ({pagination.total} Games)
           </span>
           <button
             onClick={() => handlePageChange(pagination.page + 1)}
             disabled={pagination.page >= pagination.pages}
-            style={{
-              padding: '0.5rem 1rem',
-              background: 'var(--surface, #0f172a)',
-              border: '1px solid var(--border, #334155)',
-              color: pagination.page >= pagination.pages ? 'var(--text-muted, #64748b)' : 'var(--text-main, #f8fafc)',
-              borderRadius: '6px',
-              cursor: pagination.page >= pagination.pages ? 'not-allowed' : 'pointer',
-            }}
+            className="btn-secondary-glass"
           >
             Next &rarr;
           </button>

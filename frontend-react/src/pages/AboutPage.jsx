@@ -29,41 +29,18 @@ export default function AboutPage({ onNavigate }) {
           </p>
         </section>
 
-        {/* Technical Architecture */}
+        {/* Technology */}
         <section className="info-card">
-          <h2 className="info-section-title">Technology &amp; Architecture</h2>
+          <h2 className="info-section-title">How It Works</h2>
           <p>
-            Project Aura is engineered with a modern, high-performance microservices architecture:
+            Project Aura is built on a <strong>Random Forest ML regression model</strong> trained on hardware specifications and gaming benchmark data. When you enter your CPU, GPU, RAM, resolution, and quality preset, the model predicts framerate based on learned patterns from real hardware configurations.
           </p>
-          <div className="info-grid-2">
-            <div className="info-subcard">
-              <h3 className="subcard-title text-cyan">Frontend Interface</h3>
-              <p>
-                Built with <strong>React 19</strong> and <strong>Vite</strong>. Features a responsive, glassmorphic dark-theme UI with client-side routing, accessible touch targets, and dynamic SVG data visualizations.
-              </p>
-            </div>
-
-            <div className="info-subcard">
-              <h3 className="subcard-title text-cyan">API Gateway &amp; Auth</h3>
-              <p>
-                Powered by <strong>Node.js</strong> and <strong>Express 5</strong>. Manages rate limiting, JWT authentication, user profiles, hardware database indexing, and MongoDB Atlas data synchronization.
-              </p>
-            </div>
-
-            <div className="info-subcard">
-              <h3 className="subcard-title text-cyan">AI Inference Engine</h3>
-              <p>
-                Built in <strong>Python</strong> with <strong>Flask</strong> and <strong>scikit-learn</strong>. Houses our in-memory Random Forest regressor with continuous feature type safety and safe outlier bounding.
-              </p>
-            </div>
-
-            <div className="info-subcard">
-              <h3 className="subcard-title text-cyan">Database &amp; Hardware Index</h3>
-              <p>
-                Hosted on <strong>MongoDB Atlas</strong> with indexed CPU and GPU hardware metrics including PassMark scores, CUDA cores, TDP ratings, and memory bandwidth.
-              </p>
-            </div>
-          </div>
+          <p>
+            The platform runs as a full-stack application: a <strong>React frontend</strong> communicates with a <strong>Node.js API</strong> that handles authentication and hardware data, and a <strong>Python inference service</strong> serves the ML model predictions.
+          </p>
+          <p>
+            Our bottleneck calculation is based on comparing normalized CPU and GPU performance tiers derived from benchmark data — not arbitrary percentages.
+          </p>
         </section>
 
         {/* Key Objectives */}
@@ -71,16 +48,16 @@ export default function AboutPage({ onNavigate }) {
           <h2 className="info-section-title">What Makes Project Aura Different?</h2>
           <ul className="info-list">
             <li>
-              <strong>Data-Driven ML Modeling:</strong> We replace arbitrary mathematical guesswork with a trained Random Forest model that evaluates continuous hardware attributes (cores, threads, clock headroom, memory bandwidth, VRAM, and RAM).
+              <strong>Data-Driven ML Modeling:</strong> We replace arbitrary mathematical guesswork with a trained Random Forest model that evaluates continuous hardware attributes including cores, threads, memory bandwidth, VRAM, and RAM.
             </li>
             <li>
-              <strong>Multi-Resolution Awareness:</strong> CPU bottlenecks dominate at 1080p high-refresh gaming, whereas GPU memory bus saturation dominates at 4K. Our models reflect this dynamic behavior.
+              <strong>Multi-Resolution Awareness:</strong> CPU bottlenecks dominate at 1080p high-refresh gaming, whereas GPU memory bus saturation dominates at 4K. Our model reflects this behavior.
             </li>
             <li>
-              <strong>No Paywalls &amp; No Forced Accounts:</strong> The core Bottleneck Calculator and Rig Comparison tools are freely accessible to anyone on the web without requiring an account.
+              <strong>No Paywalls &amp; No Forced Accounts:</strong> The Bottleneck Calculator and Rig Comparison tools are freely accessible without requiring an account.
             </li>
             <li>
-              <strong>Zero Biased Recommendations:</strong> We do not skew recommendations towards specific hardware vendors. Our balance calculations are mathematically derived from benchmark databases.
+              <strong>Transparent Predictions:</strong> We clearly label all results as ML regression estimates and link to our Methodology page explaining the model in detail.
             </li>
           </ul>
         </section>
@@ -88,9 +65,9 @@ export default function AboutPage({ onNavigate }) {
         {/* Bottom CTA */}
         <div className="info-cta-bar">
           <div>
-            <h3 style={{ margin: '0 0 0.4rem 0', color: 'var(--text-main)' }}>Ready to test your hardware?</h3>
+            <h3 style={{ margin: '0 0 0.4rem 0', color: 'var(--text-main)' }}>Ready to analyze your hardware?</h3>
             <p style={{ margin: 0, color: 'var(--text-sub)', fontSize: '0.9rem' }}>
-              Run our Bottleneck Analyzer in seconds with your current setup.
+              Run the Bottleneck Analyzer in seconds with your current setup.
             </p>
           </div>
           <a 
@@ -98,7 +75,7 @@ export default function AboutPage({ onNavigate }) {
             className="btn-primary-glow"
             onClick={(e) => handleNav('/bottleneck-calculator', e)}
           >
-            Launch Calculator
+            Analyze My PC
           </a>
         </div>
 

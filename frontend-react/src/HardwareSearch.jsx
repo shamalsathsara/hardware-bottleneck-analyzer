@@ -56,7 +56,7 @@ export default function HardwareSearch({ type, onSelect, placeholder, value }) {
       />
       
       {loading && (
-        <div style={{ position: 'absolute', right: '10px', top: '12px', color: '#888', fontSize: '0.8rem' }}>
+        <div style={{ position: 'absolute', right: '12px', top: '13px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
           Searching...
         </div>
       )}
@@ -64,19 +64,19 @@ export default function HardwareSearch({ type, onSelect, placeholder, value }) {
       {isOpen && results.length > 0 && (
         <ul style={{
           position: 'absolute',
-          top: '100%',
+          top: 'calc(100% + 4px)',
           left: 0,
           right: 0,
-          backgroundColor: '#1e293b',
-          border: '1px solid #334155',
-          borderRadius: '5px',
+          backgroundColor: 'var(--surface-2, #0f172a)',
+          border: '1px solid var(--border-hover, #334155)',
+          borderRadius: 'var(--radius-sm, 8px)',
           listStyle: 'none',
-          padding: 0,
-          margin: '5px 0 0 0',
-          maxHeight: '200px',
+          padding: '4px 0',
+          margin: 0,
+          maxHeight: '220px',
           overflowY: 'auto',
           zIndex: 1000,
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)'
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)'
         }}>
           {results.map((item, idx) => (
             <li 
@@ -86,12 +86,13 @@ export default function HardwareSearch({ type, onSelect, placeholder, value }) {
                 handleSelect(item);
               }}
               style={{
-                padding: '10px',
+                padding: '9px 14px',
                 cursor: 'pointer',
-                borderBottom: idx !== results.length - 1 ? '1px solid #334155' : 'none',
-                color: '#e2e8f0'
+                fontSize: '0.875rem',
+                color: 'var(--text, #f8fafc)',
+                transition: 'background-color 0.15s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#334155'}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.12)'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
               {type === 'cpu' ? item.cpuName : item.Device}
