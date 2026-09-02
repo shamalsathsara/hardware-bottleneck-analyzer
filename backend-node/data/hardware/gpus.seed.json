@@ -1,0 +1,582 @@
+[
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_4090_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 4090",
+    "slug": "nvidia-geforce-rtx-4090",
+    "aliases": ["GeForce RTX 4090", "RTX 4090", "Nvidia RTX 4090", "4090", "NVIDIA RTX 4090"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 40",
+    "generation": "Ada Lovelace",
+    "architecture": "AD102",
+    "releaseYear": 2022,
+    "memory": { "vramGB": 24, "memoryType": "GDDR6X", "memoryBusBits": 384, "memoryBandwidthGBs": 1008 },
+    "cores": { "shaderUnits": 16384, "tensorCores": 512, "rayTracingCores": 128 },
+    "clocks": { "baseClockMHz": 2235, "boostClockMHz": 2520 },
+    "power": { "defaultTgpWatts": 450, "recommendedPsuWatts": 850 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 3, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4090/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_4080_super_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 4080 SUPER",
+    "slug": "nvidia-geforce-rtx-4080-super",
+    "aliases": ["GeForce RTX 4080 SUPER", "RTX 4080 SUPER", "Nvidia RTX 4080 SUPER", "4080 SUPER"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 40",
+    "generation": "Ada Lovelace",
+    "architecture": "AD103",
+    "releaseYear": 2024,
+    "memory": { "vramGB": 16, "memoryType": "GDDR6X", "memoryBusBits": 256, "memoryBandwidthGBs": 736 },
+    "cores": { "shaderUnits": 10240, "tensorCores": 320, "rayTracingCores": 80 },
+    "clocks": { "baseClockMHz": 2295, "boostClockMHz": 2550 },
+    "power": { "defaultTgpWatts": 320, "recommendedPsuWatts": 750 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 3, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4080-super/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_4080_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 4080",
+    "slug": "nvidia-geforce-rtx-4080",
+    "aliases": ["GeForce RTX 4080", "RTX 4080", "Nvidia RTX 4080", "4080"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 40",
+    "generation": "Ada Lovelace",
+    "architecture": "AD103",
+    "releaseYear": 2022,
+    "memory": { "vramGB": 16, "memoryType": "GDDR6X", "memoryBusBits": 256, "memoryBandwidthGBs": 716.8 },
+    "cores": { "shaderUnits": 9728, "tensorCores": 304, "rayTracingCores": 76 },
+    "clocks": { "baseClockMHz": 2205, "boostClockMHz": 2505 },
+    "power": { "defaultTgpWatts": 320, "recommendedPsuWatts": 750 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 3, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4080/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_4070_ti_super_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 4070 Ti SUPER",
+    "slug": "nvidia-geforce-rtx-4070-ti-super",
+    "aliases": ["GeForce RTX 4070 Ti SUPER", "RTX 4070 Ti SUPER", "Nvidia RTX 4070 Ti SUPER", "4070 Ti SUPER"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 40",
+    "generation": "Ada Lovelace",
+    "architecture": "AD103",
+    "releaseYear": 2024,
+    "memory": { "vramGB": 16, "memoryType": "GDDR6X", "memoryBusBits": 256, "memoryBandwidthGBs": 672 },
+    "cores": { "shaderUnits": 8448, "tensorCores": 264, "rayTracingCores": 66 },
+    "clocks": { "baseClockMHz": 2340, "boostClockMHz": 2610 },
+    "power": { "defaultTgpWatts": 285, "recommendedPsuWatts": 700 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 3, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4070-ti-super/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_4070_super_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 4070 SUPER",
+    "slug": "nvidia-geforce-rtx-4070-super",
+    "aliases": ["GeForce RTX 4070 SUPER", "RTX 4070 SUPER", "Nvidia RTX 4070 SUPER", "4070 SUPER"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 40",
+    "generation": "Ada Lovelace",
+    "architecture": "AD104",
+    "releaseYear": 2024,
+    "memory": { "vramGB": 12, "memoryType": "GDDR6X", "memoryBusBits": 192, "memoryBandwidthGBs": 504.2 },
+    "cores": { "shaderUnits": 7168, "tensorCores": 224, "rayTracingCores": 56 },
+    "clocks": { "baseClockMHz": 1980, "boostClockMHz": 2475 },
+    "power": { "defaultTgpWatts": 220, "recommendedPsuWatts": 650 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 3, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4070-super/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_4070_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 4070",
+    "slug": "nvidia-geforce-rtx-4070",
+    "aliases": ["GeForce RTX 4070", "RTX 4070", "Nvidia RTX 4070", "4070"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 40",
+    "generation": "Ada Lovelace",
+    "architecture": "AD104",
+    "releaseYear": 2023,
+    "memory": { "vramGB": 12, "memoryType": "GDDR6X", "memoryBusBits": 192, "memoryBandwidthGBs": 504.2 },
+    "cores": { "shaderUnits": 5888, "tensorCores": 184, "rayTracingCores": 46 },
+    "clocks": { "baseClockMHz": 1920, "boostClockMHz": 2475 },
+    "power": { "defaultTgpWatts": 200, "recommendedPsuWatts": 650 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 3, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4070/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_4060_ti_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 4060 Ti",
+    "slug": "nvidia-geforce-rtx-4060-ti",
+    "aliases": ["GeForce RTX 4060 Ti", "RTX 4060 Ti", "Nvidia RTX 4060 Ti", "4060 Ti"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 40",
+    "generation": "Ada Lovelace",
+    "architecture": "AD106",
+    "releaseYear": 2023,
+    "memory": { "vramGB": 8, "memoryType": "GDDR6", "memoryBusBits": 128, "memoryBandwidthGBs": 288 },
+    "cores": { "shaderUnits": 4352, "tensorCores": 136, "rayTracingCores": 34 },
+    "clocks": { "baseClockMHz": 2310, "boostClockMHz": 2535 },
+    "power": { "defaultTgpWatts": 160, "recommendedPsuWatts": 550 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 3, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_4060_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 4060",
+    "slug": "nvidia-geforce-rtx-4060",
+    "aliases": ["GeForce RTX 4060", "RTX 4060", "Nvidia RTX 4060", "4060"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 40",
+    "generation": "Ada Lovelace",
+    "architecture": "AD107",
+    "releaseYear": 2023,
+    "memory": { "vramGB": 8, "memoryType": "GDDR6", "memoryBusBits": 128, "memoryBandwidthGBs": 272 },
+    "cores": { "shaderUnits": 3072, "tensorCores": 96, "rayTracingCores": 24 },
+    "clocks": { "baseClockMHz": 1830, "boostClockMHz": 2460 },
+    "power": { "defaultTgpWatts": 115, "recommendedPsuWatts": 500 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 3, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_3090_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 3090",
+    "slug": "nvidia-geforce-rtx-3090",
+    "aliases": ["GeForce RTX 3090", "RTX 3090", "Nvidia RTX 3090", "3090"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 30",
+    "generation": "Ampere",
+    "architecture": "GA102",
+    "releaseYear": 2020,
+    "memory": { "vramGB": 24, "memoryType": "GDDR6X", "memoryBusBits": 384, "memoryBandwidthGBs": 936 },
+    "cores": { "shaderUnits": 10496, "tensorCores": 328, "rayTracingCores": 82 },
+    "clocks": { "baseClockMHz": 1395, "boostClockMHz": 1695 },
+    "power": { "defaultTgpWatts": 350, "recommendedPsuWatts": 750 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 2, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3090/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_3080_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 3080",
+    "slug": "nvidia-geforce-rtx-3080",
+    "aliases": ["GeForce RTX 3080", "RTX 3080", "Nvidia RTX 3080", "3080"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 30",
+    "generation": "Ampere",
+    "architecture": "GA102",
+    "releaseYear": 2020,
+    "memory": { "vramGB": 10, "memoryType": "GDDR6X", "memoryBusBits": 320, "memoryBandwidthGBs": 760 },
+    "cores": { "shaderUnits": 8704, "tensorCores": 272, "rayTracingCores": 68 },
+    "clocks": { "baseClockMHz": 1440, "boostClockMHz": 1710 },
+    "power": { "defaultTgpWatts": 320, "recommendedPsuWatts": 750 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 2, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3080/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_3070_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 3070",
+    "slug": "nvidia-geforce-rtx-3070",
+    "aliases": ["GeForce RTX 3070", "RTX 3070", "Nvidia RTX 3070", "3070"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 30",
+    "generation": "Ampere",
+    "architecture": "GA104",
+    "releaseYear": 2020,
+    "memory": { "vramGB": 8, "memoryType": "GDDR6", "memoryBusBits": 256, "memoryBandwidthGBs": 448 },
+    "cores": { "shaderUnits": 5888, "tensorCores": 184, "rayTracingCores": 46 },
+    "clocks": { "baseClockMHz": 1500, "boostClockMHz": 1725 },
+    "power": { "defaultTgpWatts": 220, "recommendedPsuWatts": 650 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 2, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3070/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_nvidia_geforce_rtx_3060_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 3060",
+    "slug": "nvidia-geforce-rtx-3060",
+    "aliases": ["GeForce RTX 3060", "RTX 3060", "Nvidia RTX 3060", "3060"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 30",
+    "generation": "Ampere",
+    "architecture": "GA106",
+    "releaseYear": 2021,
+    "memory": { "vramGB": 12, "memoryType": "GDDR6", "memoryBusBits": 192, "memoryBandwidthGBs": 360 },
+    "cores": { "shaderUnits": 3584, "tensorCores": 112, "rayTracingCores": 28 },
+    "clocks": { "baseClockMHz": 1320, "boostClockMHz": 1777 },
+    "power": { "defaultTgpWatts": 170, "recommendedPsuWatts": 550 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 2, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3060-3060ti/",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_amd_radeon_rx_7900_xtx_desktop",
+    "type": "gpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Radeon RX 7900 XTX",
+    "slug": "amd-radeon-rx-7900-xtx",
+    "aliases": ["Radeon RX 7900 XTX", "RX 7900 XTX", "AMD RX 7900 XTX", "7900 XTX"],
+    "marketSegment": "desktop",
+    "family": "Radeon RX 7000",
+    "generation": "RDNA 3",
+    "architecture": "Navi 31",
+    "releaseYear": 2022,
+    "memory": { "vramGB": 24, "memoryType": "GDDR6", "memoryBusBits": 384, "memoryBandwidthGBs": 960 },
+    "cores": { "shaderUnits": 6144, "tensorCores": 192, "rayTracingCores": 96 },
+    "clocks": { "baseClockMHz": 1900, "boostClockMHz": 2500 },
+    "power": { "defaultTgpWatts": 355, "recommendedPsuWatts": 800 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "FSR", "dlssGenerationSupport": null, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_amd_radeon_rx_7800_xt_desktop",
+    "type": "gpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Radeon RX 7800 XT",
+    "slug": "amd-radeon-rx-7800-xt",
+    "aliases": ["Radeon RX 7800 XT", "RX 7800 XT", "AMD RX 7800 XT", "7800 XT"],
+    "marketSegment": "desktop",
+    "family": "Radeon RX 7000",
+    "generation": "RDNA 3",
+    "architecture": "Navi 32",
+    "releaseYear": 2023,
+    "memory": { "vramGB": 16, "memoryType": "GDDR6", "memoryBusBits": 256, "memoryBandwidthGBs": 624 },
+    "cores": { "shaderUnits": 3840, "tensorCores": 120, "rayTracingCores": 60 },
+    "clocks": { "baseClockMHz": 1800, "boostClockMHz": 2430 },
+    "power": { "defaultTgpWatts": 263, "recommendedPsuWatts": 700 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "FSR", "dlssGenerationSupport": null, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7800xt.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_amd_radeon_rx_7700_xt_desktop",
+    "type": "gpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Radeon RX 7700 XT",
+    "slug": "amd-radeon-rx-7700-xt",
+    "aliases": ["Radeon RX 7700 XT", "RX 7700 XT", "AMD RX 7700 XT", "7700 XT"],
+    "marketSegment": "desktop",
+    "family": "Radeon RX 7000",
+    "generation": "RDNA 3",
+    "architecture": "Navi 32",
+    "releaseYear": 2023,
+    "memory": { "vramGB": 12, "memoryType": "GDDR6", "memoryBusBits": 192, "memoryBandwidthGBs": 432 },
+    "cores": { "shaderUnits": 3456, "tensorCores": 108, "rayTracingCores": 54 },
+    "clocks": { "baseClockMHz": 1900, "boostClockMHz": 2544 },
+    "power": { "defaultTgpWatts": 245, "recommendedPsuWatts": 700 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "FSR", "dlssGenerationSupport": null, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7700xt.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_amd_radeon_rx_7600_desktop",
+    "type": "gpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Radeon RX 7600",
+    "slug": "amd-radeon-rx-7600",
+    "aliases": ["Radeon RX 7600", "RX 7600", "AMD RX 7600", "7600"],
+    "marketSegment": "desktop",
+    "family": "Radeon RX 7000",
+    "generation": "RDNA 3",
+    "architecture": "Navi 33",
+    "releaseYear": 2023,
+    "memory": { "vramGB": 8, "memoryType": "GDDR6", "memoryBusBits": 128, "memoryBandwidthGBs": 288 },
+    "cores": { "shaderUnits": 2048, "tensorCores": 64, "rayTracingCores": 32 },
+    "clocks": { "baseClockMHz": 1720, "boostClockMHz": 2655 },
+    "power": { "defaultTgpWatts": 165, "recommendedPsuWatts": 550 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "FSR", "dlssGenerationSupport": null, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7600.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_amd_radeon_rx_6700_xt_desktop",
+    "type": "gpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Radeon RX 6700 XT",
+    "slug": "amd-radeon-rx-6700-xt",
+    "aliases": ["Radeon RX 6700 XT", "RX 6700 XT", "AMD RX 6700 XT", "6700 XT"],
+    "marketSegment": "desktop",
+    "family": "Radeon RX 6000",
+    "generation": "RDNA 2",
+    "architecture": "Navi 22",
+    "releaseYear": 2021,
+    "memory": { "vramGB": 12, "memoryType": "GDDR6", "memoryBusBits": 192, "memoryBandwidthGBs": 384 },
+    "cores": { "shaderUnits": 2560, "tensorCores": null, "rayTracingCores": 40 },
+    "clocks": { "baseClockMHz": 2321, "boostClockMHz": 2581 },
+    "power": { "defaultTgpWatts": 230, "recommendedPsuWatts": 650 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "FSR", "dlssGenerationSupport": null, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6700xt.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_amd_radeon_rx_6600_desktop",
+    "type": "gpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Radeon RX 6600",
+    "slug": "amd-radeon-rx-6600",
+    "aliases": ["Radeon RX 6600", "RX 6600", "AMD RX 6600", "6600"],
+    "marketSegment": "desktop",
+    "family": "Radeon RX 6000",
+    "generation": "RDNA 2",
+    "architecture": "Navi 23",
+    "releaseYear": 2021,
+    "memory": { "vramGB": 8, "memoryType": "GDDR6", "memoryBusBits": 128, "memoryBandwidthGBs": 224 },
+    "cores": { "shaderUnits": 1792, "tensorCores": null, "rayTracingCores": 28 },
+    "clocks": { "baseClockMHz": 1626, "boostClockMHz": 2491 },
+    "power": { "defaultTgpWatts": 132, "recommendedPsuWatts": 450 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "FSR", "dlssGenerationSupport": null, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6600.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_intel_arc_a770_desktop",
+    "type": "gpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Arc A770",
+    "slug": "intel-arc-a770",
+    "aliases": ["Arc A770", "Intel Arc A770 16GB", "A770", "Intel A770"],
+    "marketSegment": "desktop",
+    "family": "Arc Alchemist",
+    "generation": "Alchemist",
+    "architecture": "ACM-G10",
+    "releaseYear": 2022,
+    "memory": { "vramGB": 16, "memoryType": "GDDR6", "memoryBusBits": 256, "memoryBandwidthGBs": 560 },
+    "cores": { "shaderUnits": 4096, "tensorCores": 512, "rayTracingCores": 32 },
+    "clocks": { "baseClockMHz": 2100, "boostClockMHz": 2400 },
+    "power": { "defaultTgpWatts": 225, "recommendedPsuWatts": 600 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "XeSS", "dlssGenerationSupport": null, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/229151/intel-arc-a770-graphics-16gb/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "gpu_intel_arc_a750_desktop",
+    "type": "gpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Arc A750",
+    "slug": "intel-arc-a750",
+    "aliases": ["Arc A750", "Intel Arc A750 8GB", "A750", "Intel A750"],
+    "marketSegment": "desktop",
+    "family": "Arc Alchemist",
+    "generation": "Alchemist",
+    "architecture": "ACM-G10",
+    "releaseYear": 2022,
+    "memory": { "vramGB": 8, "memoryType": "GDDR6", "memoryBusBits": 256, "memoryBandwidthGBs": 512 },
+    "cores": { "shaderUnits": 3584, "tensorCores": 448, "rayTracingCores": 28 },
+    "clocks": { "baseClockMHz": 2050, "boostClockMHz": 2400 },
+    "power": { "defaultTgpWatts": 225, "recommendedPsuWatts": 600 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "XeSS", "dlssGenerationSupport": null, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/227954/intel-arc-a750-graphics/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  }
+]

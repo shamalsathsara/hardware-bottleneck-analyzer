@@ -1,0 +1,622 @@
+[
+  {
+    "hardwareId": "cpu_amd_ryzen_7_7800x3d_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 7 7800X3D",
+    "slug": "amd-ryzen-7-7800x3d",
+    "aliases": ["Ryzen 7 7800X3D", "Ryzen 7800X3D", "AMD 7800X3D", "7800X3D", "AMD Ryzen 7800X3D"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 7",
+    "generation": "Zen 4",
+    "architecture": "Zen 4 (Raphael)",
+    "releaseYear": 2023,
+    "cores": { "total": 8, "performanceCores": 8, "efficiencyCores": 0 },
+    "threads": 16,
+    "clocks": { "baseClockGHz": 4.2, "boostClockGHz": 5.0 },
+    "cache": { "l2CacheMB": 8, "l3CacheMB": 96 },
+    "power": { "defaultTdpWatts": 120, "maxTurboPowerWatts": 162 },
+    "socket": "AM5",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_9_7950x3d_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 9 7950X3D",
+    "slug": "amd-ryzen-9-7950x3d",
+    "aliases": ["Ryzen 9 7950X3D", "Ryzen 7950X3D", "AMD 7950X3D", "7950X3D"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 9",
+    "generation": "Zen 4",
+    "architecture": "Zen 4 (Raphael)",
+    "releaseYear": 2023,
+    "cores": { "total": 16, "performanceCores": 16, "efficiencyCores": 0 },
+    "threads": 32,
+    "clocks": { "baseClockGHz": 4.2, "boostClockGHz": 5.7 },
+    "cache": { "l2CacheMB": 16, "l3CacheMB": 128 },
+    "power": { "defaultTdpWatts": 120, "maxTurboPowerWatts": 162 },
+    "socket": "AM5",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-9-7950x3d.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_7_7700x_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 7 7700X",
+    "slug": "amd-ryzen-7-7700x",
+    "aliases": ["Ryzen 7 7700X", "Ryzen 7700X", "AMD 7700X", "7700X"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 7",
+    "generation": "Zen 4",
+    "architecture": "Zen 4 (Raphael)",
+    "releaseYear": 2022,
+    "cores": { "total": 8, "performanceCores": 8, "efficiencyCores": 0 },
+    "threads": 16,
+    "clocks": { "baseClockGHz": 4.5, "boostClockGHz": 5.4 },
+    "cache": { "l2CacheMB": 8, "l3CacheMB": 32 },
+    "power": { "defaultTdpWatts": 105, "maxTurboPowerWatts": 142 },
+    "socket": "AM5",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7700x.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_5_7600x_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 5 7600X",
+    "slug": "amd-ryzen-5-7600x",
+    "aliases": ["Ryzen 5 7600X", "Ryzen 7600X", "AMD 7600X", "7600X"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 5",
+    "generation": "Zen 4",
+    "architecture": "Zen 4 (Raphael)",
+    "releaseYear": 2022,
+    "cores": { "total": 6, "performanceCores": 6, "efficiencyCores": 0 },
+    "threads": 12,
+    "clocks": { "baseClockGHz": 4.7, "boostClockGHz": 5.3 },
+    "cache": { "l2CacheMB": 6, "l3CacheMB": 32 },
+    "power": { "defaultTdpWatts": 105, "maxTurboPowerWatts": 142 },
+    "socket": "AM5",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7600x.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_5_7600_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 5 7600",
+    "slug": "amd-ryzen-5-7600",
+    "aliases": ["Ryzen 5 7600", "Ryzen 7600", "AMD 7600", "7600"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 5",
+    "generation": "Zen 4",
+    "architecture": "Zen 4 (Raphael)",
+    "releaseYear": 2023,
+    "cores": { "total": 6, "performanceCores": 6, "efficiencyCores": 0 },
+    "threads": 12,
+    "clocks": { "baseClockGHz": 3.8, "boostClockGHz": 5.1 },
+    "cache": { "l2CacheMB": 6, "l3CacheMB": 32 },
+    "power": { "defaultTdpWatts": 65, "maxTurboPowerWatts": 88 },
+    "socket": "AM5",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-5-7600.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_7_5800x3d_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 7 5800X3D",
+    "slug": "amd-ryzen-7-5800x3d",
+    "aliases": ["Ryzen 7 5800X3D", "Ryzen 5800X3D", "AMD 5800X3D", "5800X3D"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 7",
+    "generation": "Zen 3",
+    "architecture": "Zen 3 (Vermeer)",
+    "releaseYear": 2022,
+    "cores": { "total": 8, "performanceCores": 8, "efficiencyCores": 0 },
+    "threads": 16,
+    "clocks": { "baseClockGHz": 3.4, "boostClockGHz": 4.5 },
+    "cache": { "l2CacheMB": 4, "l3CacheMB": 96 },
+    "power": { "defaultTdpWatts": 105, "maxTurboPowerWatts": 142 },
+    "socket": "AM4",
+    "features": { "integratedGpu": false, "pcieVersion": "4.0", "memorySupport": "DDR4-3200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-7-5800x3d.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_7_5700x_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 7 5700X",
+    "slug": "amd-ryzen-7-5700x",
+    "aliases": ["Ryzen 7 5700X", "Ryzen 5700X", "AMD 5700X", "5700X"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 7",
+    "generation": "Zen 3",
+    "architecture": "Zen 3 (Vermeer)",
+    "releaseYear": 2022,
+    "cores": { "total": 8, "performanceCores": 8, "efficiencyCores": 0 },
+    "threads": 16,
+    "clocks": { "baseClockGHz": 3.4, "boostClockGHz": 4.6 },
+    "cache": { "l2CacheMB": 4, "l3CacheMB": 32 },
+    "power": { "defaultTdpWatts": 65, "maxTurboPowerWatts": 88 },
+    "socket": "AM4",
+    "features": { "integratedGpu": false, "pcieVersion": "4.0", "memorySupport": "DDR4-3200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-7-5700x.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_5_5600x_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 5 5600X",
+    "slug": "amd-ryzen-5-5600x",
+    "aliases": ["Ryzen 5 5600X", "Ryzen 5600X", "AMD 5600X", "5600X"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 5",
+    "generation": "Zen 3",
+    "architecture": "Zen 3 (Vermeer)",
+    "releaseYear": 2020,
+    "cores": { "total": 6, "performanceCores": 6, "efficiencyCores": 0 },
+    "threads": 12,
+    "clocks": { "baseClockGHz": 3.7, "boostClockGHz": 4.6 },
+    "cache": { "l2CacheMB": 3, "l3CacheMB": 32 },
+    "power": { "defaultTdpWatts": 65, "maxTurboPowerWatts": 88 },
+    "socket": "AM4",
+    "features": { "integratedGpu": false, "pcieVersion": "4.0", "memorySupport": "DDR4-3200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_5_5600_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 5 5600",
+    "slug": "amd-ryzen-5-5600",
+    "aliases": ["Ryzen 5 5600", "Ryzen 5600", "AMD 5600", "5600"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 5",
+    "generation": "Zen 3",
+    "architecture": "Zen 3 (Vermeer)",
+    "releaseYear": 2022,
+    "cores": { "total": 6, "performanceCores": 6, "efficiencyCores": 0 },
+    "threads": 12,
+    "clocks": { "baseClockGHz": 3.5, "boostClockGHz": 4.4 },
+    "cache": { "l2CacheMB": 3, "l3CacheMB": 32 },
+    "power": { "defaultTdpWatts": 65, "maxTurboPowerWatts": 88 },
+    "socket": "AM4",
+    "features": { "integratedGpu": false, "pcieVersion": "4.0", "memorySupport": "DDR4-3200" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_amd_ryzen_7_9700x_desktop",
+    "type": "cpu",
+    "manufacturer": "AMD",
+    "canonicalName": "AMD Ryzen 7 9700X",
+    "slug": "amd-ryzen-7-9700x",
+    "aliases": ["Ryzen 7 9700X", "Ryzen 9700X", "AMD 9700X", "9700X"],
+    "marketSegment": "desktop",
+    "family": "Ryzen 7",
+    "generation": "Zen 5",
+    "architecture": "Zen 5 (Granite Ridge)",
+    "releaseYear": 2024,
+    "cores": { "total": 8, "performanceCores": 8, "efficiencyCores": 0 },
+    "threads": 16,
+    "clocks": { "baseClockGHz": 3.8, "boostClockGHz": 5.5 },
+    "cache": { "l2CacheMB": 8, "l3CacheMB": 32 },
+    "power": { "defaultTdpWatts": 65, "maxTurboPowerWatts": 88 },
+    "socket": "AM5",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5600" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "AMD Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-7-9700x.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i9_14900k_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i9-14900K",
+    "slug": "intel-core-i9-14900k",
+    "aliases": ["Core i9-14900K", "i9-14900K", "i9 14900K", "Intel i9-14900K", "14900K"],
+    "marketSegment": "desktop",
+    "family": "Core i9",
+    "generation": "14th Gen",
+    "architecture": "Raptor Lake Refresh",
+    "releaseYear": 2023,
+    "cores": { "total": 24, "performanceCores": 8, "efficiencyCores": 16 },
+    "threads": 32,
+    "clocks": { "baseClockGHz": 3.2, "boostClockGHz": 6.0 },
+    "cache": { "l2CacheMB": 32, "l3CacheMB": 36 },
+    "power": { "defaultTdpWatts": 125, "maxTurboPowerWatts": 253 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5600" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i7_14700k_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i7-14700K",
+    "slug": "intel-core-i7-14700k",
+    "aliases": ["Core i7-14700K", "i7-14700K", "i7 14700K", "Intel i7-14700K", "14700K"],
+    "marketSegment": "desktop",
+    "family": "Core i7",
+    "generation": "14th Gen",
+    "architecture": "Raptor Lake Refresh",
+    "releaseYear": 2023,
+    "cores": { "total": 20, "performanceCores": 8, "efficiencyCores": 12 },
+    "threads": 28,
+    "clocks": { "baseClockGHz": 3.4, "boostClockGHz": 5.6 },
+    "cache": { "l2CacheMB": 28, "l3CacheMB": 33 },
+    "power": { "defaultTdpWatts": 125, "maxTurboPowerWatts": 253 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5600" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i5_14600k_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i5-14600K",
+    "slug": "intel-core-i5-14600k",
+    "aliases": ["Core i5-14600K", "i5-14600K", "i5 14600K", "Intel i5-14600K", "14600K"],
+    "marketSegment": "desktop",
+    "family": "Core i5",
+    "generation": "14th Gen",
+    "architecture": "Raptor Lake Refresh",
+    "releaseYear": 2023,
+    "cores": { "total": 14, "performanceCores": 6, "efficiencyCores": 8 },
+    "threads": 20,
+    "clocks": { "baseClockGHz": 3.5, "boostClockGHz": 5.3 },
+    "cache": { "l2CacheMB": 20, "l3CacheMB": 24 },
+    "power": { "defaultTdpWatts": 125, "maxTurboPowerWatts": 181 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5600" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i5_14400f_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i5-14400F",
+    "slug": "intel-core-i5-14400f",
+    "aliases": ["Core i5-14400F", "i5-14400F", "i5 14400F", "Intel i5-14400F", "14400F"],
+    "marketSegment": "desktop",
+    "family": "Core i5",
+    "generation": "14th Gen",
+    "architecture": "Raptor Lake Refresh",
+    "releaseYear": 2024,
+    "cores": { "total": 10, "performanceCores": 6, "efficiencyCores": 4 },
+    "threads": 16,
+    "clocks": { "baseClockGHz": 2.5, "boostClockGHz": 4.7 },
+    "cache": { "l2CacheMB": 9.5, "l3CacheMB": 20 },
+    "power": { "defaultTdpWatts": 65, "maxTurboPowerWatts": 148 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": false, "pcieVersion": "5.0", "memorySupport": "DDR5-4800" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/236785/intel-core-i5-processor-14400f/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i7_13700k_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i7-13700K",
+    "slug": "intel-core-i7-13700k",
+    "aliases": ["Core i7-13700K", "i7-13700K", "i7 13700K", "Intel i7-13700K", "13700K"],
+    "marketSegment": "desktop",
+    "family": "Core i7",
+    "generation": "13th Gen",
+    "architecture": "Raptor Lake",
+    "releaseYear": 2022,
+    "cores": { "total": 16, "performanceCores": 8, "efficiencyCores": 8 },
+    "threads": 24,
+    "clocks": { "baseClockGHz": 3.4, "boostClockGHz": 5.4 },
+    "cache": { "l2CacheMB": 24, "l3CacheMB": 30 },
+    "power": { "defaultTdpWatts": 125, "maxTurboPowerWatts": 253 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5600" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i5_13600k_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i5-13600K",
+    "slug": "intel-core-i5-13600k",
+    "aliases": ["Core i5-13600K", "i5-13600K", "i5 13600K", "Intel i5-13600K", "13600K"],
+    "marketSegment": "desktop",
+    "family": "Core i5",
+    "generation": "13th Gen",
+    "architecture": "Raptor Lake",
+    "releaseYear": 2022,
+    "cores": { "total": 14, "performanceCores": 6, "efficiencyCores": 8 },
+    "threads": 20,
+    "clocks": { "baseClockGHz": 3.5, "boostClockGHz": 5.1 },
+    "cache": { "l2CacheMB": 20, "l3CacheMB": 24 },
+    "power": { "defaultTdpWatts": 125, "maxTurboPowerWatts": 181 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-5600" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/230493/intel-core-i513600k-processor-24m-cache-up-to-5-10-ghz/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i5_13400f_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i5-13400F",
+    "slug": "intel-core-i5-13400f",
+    "aliases": ["Core i5-13400F", "i5-13400F", "i5 13400F", "Intel i5-13400F", "13400F"],
+    "marketSegment": "desktop",
+    "family": "Core i5",
+    "generation": "13th Gen",
+    "architecture": "Raptor Lake",
+    "releaseYear": 2023,
+    "cores": { "total": 10, "performanceCores": 6, "efficiencyCores": 4 },
+    "threads": 16,
+    "clocks": { "baseClockGHz": 2.5, "boostClockGHz": 4.6 },
+    "cache": { "l2CacheMB": 9.5, "l3CacheMB": 20 },
+    "power": { "defaultTdpWatts": 65, "maxTurboPowerWatts": 148 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": false, "pcieVersion": "5.0", "memorySupport": "DDR5-4800" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i7_12700k_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i7-12700K",
+    "slug": "intel-core-i7-12700k",
+    "aliases": ["Core i7-12700K", "i7-12700K", "i7 12700K", "Intel i7-12700K", "12700K"],
+    "marketSegment": "desktop",
+    "family": "Core i7",
+    "generation": "12th Gen",
+    "architecture": "Alder Lake",
+    "releaseYear": 2021,
+    "cores": { "total": 12, "performanceCores": 8, "efficiencyCores": 4 },
+    "threads": 20,
+    "clocks": { "baseClockGHz": 3.6, "boostClockGHz": 5.0 },
+    "cache": { "l2CacheMB": 12, "l3CacheMB": 25 },
+    "power": { "defaultTdpWatts": 125, "maxTurboPowerWatts": 190 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-4800" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/134594/intel-core-i712700k-processor-25m-cache-up-to-5-00-ghz/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i5_12600k_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i5-12600K",
+    "slug": "intel-core-i5-12600k",
+    "aliases": ["Core i5-12600K", "i5-12600K", "i5 12600K", "Intel i5-12600K", "12600K"],
+    "marketSegment": "desktop",
+    "family": "Core i5",
+    "generation": "12th Gen",
+    "architecture": "Alder Lake",
+    "releaseYear": 2021,
+    "cores": { "total": 10, "performanceCores": 6, "efficiencyCores": 4 },
+    "threads": 16,
+    "clocks": { "baseClockGHz": 3.7, "boostClockGHz": 4.9 },
+    "cache": { "l2CacheMB": 9.5, "l3CacheMB": 20 },
+    "power": { "defaultTdpWatts": 125, "maxTurboPowerWatts": 150 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": true, "pcieVersion": "5.0", "memorySupport": "DDR5-4800" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/134589/intel-core-i512600k-processor-20m-cache-up-to-4-90-ghz/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  },
+  {
+    "hardwareId": "cpu_intel_core_i5_12400f_desktop",
+    "type": "cpu",
+    "manufacturer": "Intel",
+    "canonicalName": "Intel Core i5-12400F",
+    "slug": "intel-core-i5-12400f",
+    "aliases": ["Core i5-12400F", "i5-12400F", "i5 12400F", "Intel i5-12400F", "12400F"],
+    "marketSegment": "desktop",
+    "family": "Core i5",
+    "generation": "12th Gen",
+    "architecture": "Alder Lake",
+    "releaseYear": 2022,
+    "cores": { "total": 6, "performanceCores": 6, "efficiencyCores": 0 },
+    "threads": 12,
+    "clocks": { "baseClockGHz": 2.5, "boostClockGHz": 4.4 },
+    "cache": { "l2CacheMB": 7.5, "l3CacheMB": 18 },
+    "power": { "defaultTdpWatts": 65, "maxTurboPowerWatts": 117 },
+    "socket": "LGA1700",
+    "features": { "integratedGpu": false, "pcieVersion": "5.0", "memorySupport": "DDR5-4800" },
+    "performance": { "singleCoreScore": null, "multiCoreScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": false },
+    "provenance": {
+      "specifications": {
+        "sourceName": "Intel ARK Official Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html",
+        "verifiedAt": "2026-09-02T00:00:00.000Z",
+        "verificationMethod": "manual"
+      }
+    }
+  }
+]
