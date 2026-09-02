@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "games:sync": "node scripts/syncIgdbGames.js"
+    "games:sync": "node scripts/syncIgdbGames.js",
+    "benchmarks:ingest": "node scripts/ingestBenchmarks.js"
   },
   "keywords": [],
   "author": "",

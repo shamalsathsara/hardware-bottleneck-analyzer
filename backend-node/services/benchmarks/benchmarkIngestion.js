@@ -22,7 +22,6 @@ async function ingestBenchmarkObservation(rawObservation, options = {}) {
   });
 
   if (existingWithFingerprint) {
-    // If exact same source record and exact same FPS, treat as exact duplicate
     if (
       existingWithFingerprint.provenance?.sourceRecordId === normalizedData.provenance?.sourceRecordId &&
       Math.abs(existingWithFingerprint.performance.avgFps - normalizedData.performance.avgFps) < 0.01
@@ -34,6 +33,19 @@ async function ingestBenchmarkObservation(rawObservation, options = {}) {
       };
     }
   }
+
+  // Check if same hardware and game configuration exists (legitimate repeated run)
+  const existingConfig = await GameBenchmark.findOne({
+    gameId: normalizedData.gameId,
+    cpuHardwareId: normalizedData.cpuHardwareId,
+    gpuHardwareId: normalizedData.gpuHardwareId,
+    'display.width': normalizedData.display.width,
+    'display.height': normalizedData.display.height,
+    'graphics.normalizedPreset': normalizedData.graphics.normalizedPreset,
+    'rayTracing.enabled': normalizedData.rayTracing.enabled,
+    'upscaling.enabled': normalizedData.upscaling.enabled,
+    'frameGeneration.enabled': normalizedData.frameGeneration.enabled,
+  }).lean();
 
   // 4. Generate immutable Project Aura benchmark ID
   const benchmarkId = generateBenchmarkId();
@@ -49,7 +61,7 @@ async function ingestBenchmarkObservation(rawObservation, options = {}) {
 
   return {
     isDuplicate: false,
-    isRepeatedMeasurement: Boolean(existingWithFingerprint),
+    isRepeatedMeasurement: Boolean(existingConfig),
     benchmark: benchmarkDoc,
   };
 }
