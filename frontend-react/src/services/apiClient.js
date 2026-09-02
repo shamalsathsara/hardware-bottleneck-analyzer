@@ -11,12 +11,29 @@ export const apiClient = axios.create({
 });
 
 // Attach Authorization Bearer token automatically if available
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('aura_token') || localStorage.getItem('token');
-  if (token && token !== 'null' && token !== 'undefined') {
-    config.headers.Authorization = `Bearer ${token}`;
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('aura_token') || localStorage.getItem('token');
+    if (token && token !== 'null' && token !== 'undefined') {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Automatically clear stale sessions on 401 responses
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Clear invalid/expired session data
+      localStorage.removeItem('aura_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('aura_user');
+    }
+    return Promise.reject(error);
   }
-  return config;
-}, (error) => Promise.reject(error));
+);
 
 export default apiClient;

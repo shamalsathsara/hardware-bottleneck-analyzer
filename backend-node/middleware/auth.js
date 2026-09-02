@@ -24,7 +24,8 @@ const requireAuth = (req, res, next) => {
     }
 
     // 3. Verify the token using our secret key
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || 'aura_fallback_jwt_development_secret';
+    const decoded = jwt.verify(token, secret);
 
     // 4. Attach the decoded user information to the request
     // This allows the next function to know EXACTLY who is making the request

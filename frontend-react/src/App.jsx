@@ -257,6 +257,14 @@ function App() {
       setShowSaveRigModal(false);
       alert('PC Build saved successfully! You can view it in your "My Rigs" profile.');
     } catch (err) {
+      if (err.response?.status === 401) {
+        logout();
+        setShowSaveRigModal(false);
+        if (window.confirm('Your login session has expired. Would you like to sign in again to save this PC build?')) {
+          navigate(ROUTES.AUTH);
+        }
+        return;
+      }
       const msg = err.response?.data?.error || err.message || 'Failed to save PC.';
       setError(msg);
       setShowSaveRigModal(false);
