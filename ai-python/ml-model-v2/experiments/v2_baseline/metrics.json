@@ -1,0 +1,605 @@
+{
+  "experiment_name": "Project Aura Model V2 Baseline (1080p)",
+  "random_seed": 42,
+  "dataset": {
+    "path": "I:\\Projects\\Hardware-Bottleneck-Analyzer\\hardware-bottleneck-analyzer\\ai-python\\ml-model-v2\\data\\processed\\fps_dataset_v2_clean.csv",
+    "total_rows": 24624,
+    "features": [
+      "CpuNumberOfCores",
+      "CpuNumberOfThreads",
+      "CpuFrequency",
+      "CpuTurboClock",
+      "CpuCacheL3",
+      "CpuTDP",
+      "GpuMemorySize",
+      "GpuBandwidth",
+      "GpuMemoryBus",
+      "GpuNumberOfShadingUnits",
+      "GpuBaseClock",
+      "GpuBoostClock",
+      "GpuNumberOfROPs",
+      "GpuFP32Performance",
+      "GameSetting_Ordinal",
+      "GameName"
+    ],
+    "target": "FPS"
+  },
+  "standard_holdout": {
+    "train_rows": 19699,
+    "test_rows": 4925,
+    "models": {
+      "Dummy (Mean Baseline)": {
+        "train_mae": 42.715063358966425,
+        "train_rmse": 54.78931698868804,
+        "train_r2": 0.0,
+        "test_mae": 42.15801469888317,
+        "test_rmse": 53.88163591704613,
+        "test_r2": -8.378586462853832e-06,
+        "train_samples": 19699,
+        "test_samples": 4925
+      },
+      "RandomForestRegressor": {
+        "train_mae": 4.061779144168025,
+        "train_rmse": 6.256366401102749,
+        "train_r2": 0.9869607510502071,
+        "test_mae": 5.046865851404941,
+        "test_rmse": 7.142712964184287,
+        "test_r2": 0.9824268956159882,
+        "train_samples": 19699,
+        "test_samples": 4925
+      },
+      "HistGradientBoostingRegressor": {
+        "train_mae": 1.5937186401324417,
+        "train_rmse": 2.1485892077458906,
+        "train_r2": 0.9984621463528829,
+        "test_mae": 1.6866812019326858,
+        "test_rmse": 2.315921779463446,
+        "test_r2": 0.9981525620243575,
+        "train_samples": 19699,
+        "test_samples": 4925
+      },
+      "GradientBoostingRegressor": {
+        "train_mae": 1.6650928633926243,
+        "train_rmse": 2.2036447725501906,
+        "train_r2": 0.9983823245220487,
+        "test_mae": 1.9288711521957922,
+        "test_rmse": 2.6454954632325958,
+        "test_r2": 0.9975893390383926,
+        "train_samples": 19699,
+        "test_samples": 4925
+      }
+    }
+  },
+  "unseen_gpu_holdout": {
+    "held_out_gpus": [
+      "NVIDIA GeForce RTX 2070 SUPER",
+      "NVIDIA GeForce GTX 1070 Ti",
+      "AMD Radeon RX 5700 XT",
+      "NVIDIA GeForce GTX 1660",
+      "AMD Radeon RX 580"
+    ],
+    "train_rows": 20064,
+    "test_rows": 4560,
+    "models": {
+      "Dummy (Mean Baseline)": {
+        "train_mae": 42.83269936422746,
+        "train_rmse": 54.92607050278385,
+        "train_r2": 0.0,
+        "test_mae": 41.34344824412757,
+        "test_rmse": 53.19611261509235,
+        "test_r2": -0.000981455471469772,
+        "train_samples": 20064,
+        "test_samples": 4560
+      },
+      "RandomForestRegressor": {
+        "train_mae": 4.107503073069379,
+        "train_rmse": 6.728061881032217,
+        "train_r2": 0.984995452788088,
+        "test_mae": 12.068077941174684,
+        "test_rmse": 18.894132789677748,
+        "test_r2": 0.8737241894829084,
+        "train_samples": 20064,
+        "test_samples": 4560
+      },
+      "HistGradientBoostingRegressor": {
+        "train_mae": 1.5867289548889267,
+        "train_rmse": 2.109911276709202,
+        "train_r2": 0.9985243908942614,
+        "test_mae": 4.752037248084304,
+        "test_rmse": 6.008939638112095,
+        "test_r2": 0.9872279114471783,
+        "train_samples": 20064,
+        "test_samples": 4560
+      },
+      "GradientBoostingRegressor": {
+        "train_mae": 1.5577846577662273,
+        "train_rmse": 2.0312097696437763,
+        "train_r2": 0.9986324207793202,
+        "test_mae": 5.252345010203356,
+        "test_rmse": 6.806182346098844,
+        "test_r2": 0.9836139830942123,
+        "train_samples": 20064,
+        "test_samples": 4560
+      }
+    }
+  },
+  "unseen_cpu_holdout": {
+    "held_out_cpus": [
+      "AMD Ryzen 7 3700X",
+      "Intel Core i5-8600K",
+      "AMD Ryzen 5 2600X",
+      "Intel Core i7-7700K"
+    ],
+    "train_rows": 19440,
+    "test_rows": 5184,
+    "models": {
+      "Dummy (Mean Baseline)": {
+        "train_mae": 42.607150394164165,
+        "train_rmse": 54.67103507009026,
+        "train_r2": 0.0,
+        "test_mae": 42.207194015378114,
+        "test_rmse": 54.38942397003208,
+        "test_r2": -0.002419728643113128,
+        "train_samples": 19440,
+        "test_samples": 5184
+      },
+      "RandomForestRegressor": {
+        "train_mae": 4.104973953179572,
+        "train_rmse": 6.416399106196623,
+        "train_r2": 0.9862257441150407,
+        "test_mae": 4.377454425777926,
+        "test_rmse": 6.3928256284341725,
+        "test_r2": 0.9861513830069444,
+        "train_samples": 19440,
+        "test_samples": 5184
+      },
+      "HistGradientBoostingRegressor": {
+        "train_mae": 1.635682443610358,
+        "train_rmse": 2.2051606318997017,
+        "train_r2": 0.9983730812348304,
+        "test_mae": 2.4722525569623572,
+        "test_rmse": 3.1214502665703807,
+        "test_r2": 0.9966983310428885,
+        "train_samples": 19440,
+        "test_samples": 5184
+      },
+      "GradientBoostingRegressor": {
+        "train_mae": 1.6138973470611409,
+        "train_rmse": 2.106875249742876,
+        "train_r2": 0.9985148748593468,
+        "test_mae": 2.338602350543589,
+        "test_rmse": 2.9266737340121574,
+        "test_r2": 0.9970975195265394,
+        "train_samples": 19440,
+        "test_samples": 5184
+      }
+    }
+  },
+  "unseen_game_holdout": {
+    "held_out_games": [
+      "apexLegends",
+      "destiny2",
+      "frostpunk",
+      "grandTheftAuto5"
+    ],
+    "train_rows": 20520,
+    "test_rows": 4104,
+    "models": {
+      "Dummy (Mean Baseline)": {
+        "train_mae": 45.42277710378122,
+        "train_rmse": 57.42938586807319,
+        "train_r2": 0.0,
+        "test_mae": 31.857912351473775,
+        "test_rmse": 38.38593302783499,
+        "test_r2": -0.4092173491437685,
+        "train_samples": 20520,
+        "test_samples": 4104
+      },
+      "RandomForestRegressor": {
+        "train_mae": 2.974493971197629,
+        "train_rmse": 4.825693844795354,
+        "train_r2": 0.9929392442716204,
+        "test_mae": 21.988937854459227,
+        "test_rmse": 27.972765984099567,
+        "test_r2": 0.25165027580337684,
+        "train_samples": 20520,
+        "test_samples": 4104
+      },
+      "HistGradientBoostingRegressor": {
+        "train_mae": 1.5279870052367435,
+        "train_rmse": 2.0704878352004026,
+        "train_r2": 0.9987001985346122,
+        "test_mae": 16.57967627003167,
+        "test_rmse": 20.454982979078494,
+        "test_r2": 0.5998415210144692,
+        "train_samples": 20520,
+        "test_samples": 4104
+      },
+      "GradientBoostingRegressor": {
+        "train_mae": 1.3030821912113493,
+        "train_rmse": 1.7157156727843594,
+        "train_r2": 0.999107471088964,
+        "test_mae": 20.96056721793947,
+        "test_rmse": 27.61287832781925,
+        "test_r2": 0.27078240803893583,
+        "train_samples": 20520,
+        "test_samples": 4104
+      }
+    }
+  },
+  "grouped_feature_importance": {
+    "GPU_Physical": 0.21695231781427282,
+    "Game_Identity": 0.6493045005250904,
+    "CPU_Physical": 0.042660322591608416,
+    "Graphics_Preset": 0.09108285906902835
+  },
+  "best_candidate": {
+    "name": "HistGradientBoostingRegressor",
+    "artifact": "I:\\Projects\\Hardware-Bottleneck-Analyzer\\hardware-bottleneck-analyzer\\ai-python\\ml-model-v2\\experiments\\v2_baseline\\candidate_model_v2.joblib",
+    "median_abs_error": 1.3348287441761215,
+    "p90_abs_error": 3.4478251456057913,
+    "p95_abs_error": 4.368541591606227,
+    "game_error_breakdown": {
+      "aWayOut": {
+        "mean": 1.2767889000396861,
+        "median": 1.0132737905196336,
+        "std": 1.0878049954587248,
+        "max": 4.879303944196806
+      },
+      "airMechStrike": {
+        "mean": 1.4182682140734797,
+        "median": 1.1515336040739896,
+        "std": 1.1013073417160877,
+        "max": 4.927163926429699
+      },
+      "apexLegends": {
+        "mean": 1.2333933933870844,
+        "median": 1.153484241324115,
+        "std": 0.8837204849476801,
+        "max": 3.850482526072284
+      },
+      "battlefield4": {
+        "mean": 1.904406594781998,
+        "median": 1.6242844620843115,
+        "std": 1.735210885815855,
+        "max": 12.45845602658315
+      },
+      "battletech": {
+        "mean": 1.329395994443996,
+        "median": 1.1952173881461796,
+        "std": 1.031949635054043,
+        "max": 5.290838842967119
+      },
+      "callOfDutyWW2": {
+        "mean": 1.2022728670955871,
+        "median": 0.9127046258686704,
+        "std": 1.0609527825833678,
+        "max": 6.241548911270343
+      },
+      "counterStrikeGlobalOffensive": {
+        "mean": 3.627569731848284,
+        "median": 2.6703123349838904,
+        "std": 3.336515720094905,
+        "max": 22.864674086587343
+      },
+      "destiny2": {
+        "mean": 1.3166047294828884,
+        "median": 1.2305880177458448,
+        "std": 1.0248479609419918,
+        "max": 7.062058050006044
+      },
+      "dota2": {
+        "mean": 1.8015172275627904,
+        "median": 1.5214173016750578,
+        "std": 1.353667067332599,
+        "max": 6.428704650063111
+      },
+      "farCry5": {
+        "mean": 1.482082265010271,
+        "median": 1.2102894509771716,
+        "std": 1.1573779134402744,
+        "max": 7.3925593420545965
+      },
+      "fortnite": {
+        "mean": 1.5754878382152233,
+        "median": 1.3348287441761215,
+        "std": 1.1723223481424117,
+        "max": 5.437268502304278
+      },
+      "frostpunk": {
+        "mean": 1.5648651962312232,
+        "median": 1.323339642165223,
+        "std": 1.121925541397317,
+        "max": 5.4854904164701
+      },
+      "grandTheftAuto5": {
+        "mean": 1.4790415187191102,
+        "median": 1.3053992738242677,
+        "std": 1.1773316792680004,
+        "max": 5.823843601043535
+      },
+      "leagueOfLegends": {
+        "mean": 2.5124930372657803,
+        "median": 1.7674595131769024,
+        "std": 2.3565589945787195,
+        "max": 13.950163498110498
+      },
+      "overwatch": {
+        "mean": 1.806434568931075,
+        "median": 1.4171466459926592,
+        "std": 1.4936293295019534,
+        "max": 9.234614204041463
+      },
+      "pathOfExile": {
+        "mean": 1.8802581296275045,
+        "median": 1.4657831823180416,
+        "std": 1.517670925531355,
+        "max": 7.533123668618117
+      },
+      "playerUnknownsBattlegrounds": {
+        "mean": 1.4928679604710473,
+        "median": 1.221846111598424,
+        "std": 1.1935398276901579,
+        "max": 5.625452289584146
+      },
+      "radicalHeights": {
+        "mean": 1.241132863413434,
+        "median": 1.0275479255480207,
+        "std": 1.0447799812564875,
+        "max": 5.718218893662936
+      },
+      "rainbowSixSiege": {
+        "mean": 1.518732590689045,
+        "median": 1.382877729575167,
+        "std": 1.1155732969795438,
+        "max": 5.281531709091325
+      },
+      "seaOfThieves": {
+        "mean": 1.4662928548360308,
+        "median": 1.258265723329103,
+        "std": 1.0649979043035287,
+        "max": 5.083938529195336
+      },
+      "starcraft2": {
+        "mean": 1.2528998865887853,
+        "median": 0.9800698116791153,
+        "std": 1.0802444019691904,
+        "max": 6.559874495962987
+      },
+      "totalWar3Kingdoms": {
+        "mean": 1.7577752956375121,
+        "median": 1.4367930182472257,
+        "std": 1.5026176231360915,
+        "max": 9.90882727013387
+      },
+      "warframe": {
+        "mean": 2.3307726601113696,
+        "median": 2.0026159092306557,
+        "std": 1.9041209470516376,
+        "max": 11.649508042319894
+      },
+      "worldOfTanks": {
+        "mean": 2.1923540665794583,
+        "median": 1.705973877898174,
+        "std": 2.191161455796319,
+        "max": 14.346515551447723
+      }
+    },
+    "setting_error_breakdown": {
+      "max": {
+        "mean": 1.6751062957381857,
+        "median": 1.3016981147141742,
+        "std": 1.719691005559371,
+        "max": 22.864674086587343
+      },
+      "med": {
+        "mean": 1.697917985617303,
+        "median": 1.3740227419021949,
+        "std": 1.4472196465079825,
+        "max": 12.941985952286302
+      }
+    },
+    "worst_20_predictions": [
+      {
+        "GameName": "counterStrikeGlobalOffensive",
+        "CpuName": "Intel Core i7-9700K",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 380.7,
+        "y_pred": 357.83532591341265,
+        "abs_error": 22.864674086587343,
+        "pct_error": 6.005955893508627
+      },
+      {
+        "GameName": "counterStrikeGlobalOffensive",
+        "CpuName": "AMD Ryzen 5 2600",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 311.3,
+        "y_pred": 288.6741363638804,
+        "abs_error": 22.625863636119618,
+        "pct_error": 7.268186198560751
+      },
+      {
+        "GameName": "counterStrikeGlobalOffensive",
+        "CpuName": "Intel Core i5-8400",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 328.4,
+        "y_pred": 310.4539287303097,
+        "abs_error": 17.946071269690265,
+        "pct_error": 5.464698924997036
+      },
+      {
+        "GameName": "worldOfTanks",
+        "CpuName": "Intel Core i9-9900K",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 107.7,
+        "y_pred": 122.04651555144773,
+        "abs_error": 14.346515551447723,
+        "pct_error": 13.320812953990458
+      },
+      {
+        "GameName": "leagueOfLegends",
+        "CpuName": "AMD Ryzen 5 1600X",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 284.5,
+        "y_pred": 270.5498365018895,
+        "abs_error": 13.950163498110498,
+        "pct_error": 4.903396660144288
+      },
+      {
+        "GameName": "worldOfTanks",
+        "CpuName": "Intel Core i7-9700K",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 106.7,
+        "y_pred": 120.4319139447518,
+        "abs_error": 13.731913944751795,
+        "pct_error": 12.869647558342825
+      },
+      {
+        "GameName": "worldOfTanks",
+        "CpuName": "AMD Ryzen 7 3700X",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 100.5,
+        "y_pred": 114.07379806446914,
+        "abs_error": 13.573798064469145,
+        "pct_error": 13.506266730815069
+      },
+      {
+        "GameName": "counterStrikeGlobalOffensive",
+        "CpuName": "Intel Core i7-9700K",
+        "GpuName": "AMD Radeon RX 590",
+        "GameSetting": "med",
+        "y_true": 298.5,
+        "y_pred": 285.5580140477137,
+        "abs_error": 12.941985952286302,
+        "pct_error": 4.335673685858057
+      },
+      {
+        "GameName": "battlefield4",
+        "CpuName": "Intel Core i3-7100",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 69.3,
+        "y_pred": 81.75845602658315,
+        "abs_error": 12.45845602658315,
+        "pct_error": 17.97757002392951
+      },
+      {
+        "GameName": "worldOfTanks",
+        "CpuName": "AMD Ryzen 5 3600",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 97.1,
+        "y_pred": 109.20402200699107,
+        "abs_error": 12.104022006991073,
+        "pct_error": 12.465522149321394
+      },
+      {
+        "GameName": "worldOfTanks",
+        "CpuName": "Intel Core i7-7700K",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 96.3,
+        "y_pred": 108.20608902934671,
+        "abs_error": 11.906089029346717,
+        "pct_error": 12.363540009705833
+      },
+      {
+        "GameName": "counterStrikeGlobalOffensive",
+        "CpuName": "Intel Core i5-9400F",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 339.6,
+        "y_pred": 327.7926183712969,
+        "abs_error": 11.807381628703126,
+        "pct_error": 3.476849713987964
+      },
+      {
+        "GameName": "warframe",
+        "CpuName": "AMD Ryzen 9 3900X",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 252.9,
+        "y_pred": 241.2504919576801,
+        "abs_error": 11.649508042319894,
+        "pct_error": 4.606369332668997
+      },
+      {
+        "GameName": "worldOfTanks",
+        "CpuName": "Intel Core i5-8400",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 92.5,
+        "y_pred": 103.1964207959706,
+        "abs_error": 10.696420795970596,
+        "pct_error": 11.56369815780605
+      },
+      {
+        "GameName": "counterStrikeGlobalOffensive",
+        "CpuName": "Intel Core i7-9700K",
+        "GpuName": "NVIDIA GeForce RTX 2070 SUPER",
+        "GameSetting": "med",
+        "y_true": 353.3,
+        "y_pred": 342.82904494379017,
+        "abs_error": 10.470955056209846,
+        "pct_error": 2.963757445856169
+      },
+      {
+        "GameName": "leagueOfLegends",
+        "CpuName": "Intel Core i3-7100",
+        "GpuName": "NVIDIA GeForce GTX 1060 6 GB GDDR5X",
+        "GameSetting": "max",
+        "y_true": 132.8,
+        "y_pred": 122.33637231197352,
+        "abs_error": 10.463627688026492,
+        "pct_error": 7.879237716887418
+      },
+      {
+        "GameName": "counterStrikeGlobalOffensive",
+        "CpuName": "AMD Ryzen 7 3800X",
+        "GpuName": "AMD Radeon RX 590",
+        "GameSetting": "med",
+        "y_true": 285.0,
+        "y_pred": 274.6846885735395,
+        "abs_error": 10.315311426460482,
+        "pct_error": 3.6194075180563097
+      },
+      {
+        "GameName": "worldOfTanks",
+        "CpuName": "AMD Ryzen 5 2600",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 87.6,
+        "y_pred": 97.84849204775048,
+        "abs_error": 10.248492047750489,
+        "pct_error": 11.69919183533161
+      },
+      {
+        "GameName": "leagueOfLegends",
+        "CpuName": "Intel Core i3-7100",
+        "GpuName": "NVIDIA GeForce RTX 2070",
+        "GameSetting": "max",
+        "y_true": 170.3,
+        "y_pred": 180.51346250635743,
+        "abs_error": 10.213462506357416,
+        "pct_error": 5.997335587996134
+      },
+      {
+        "GameName": "warframe",
+        "CpuName": "Intel Core i5-8400",
+        "GpuName": "NVIDIA GeForce RTX 2080 Ti",
+        "GameSetting": "max",
+        "y_true": 226.4,
+        "y_pred": 216.3411986740243,
+        "abs_error": 10.058801325975708,
+        "pct_error": 4.4429334478691285
+      }
+    ]
+  }
+}

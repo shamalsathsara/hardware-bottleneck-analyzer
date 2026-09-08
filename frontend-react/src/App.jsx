@@ -78,6 +78,7 @@ function App() {
   // ── PREDICTION & ANALYSIS RESULTS ──
   const [isThinking, setIsThinking] = useState(false);
   const [prediction, setPrediction] = useState(null);
+  const [predictionMetadata, setPredictionMetadata] = useState(null);
   const [bottleneckData, setBottleneckData] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
   const [smartRec, setSmartRec] = useState(null);
@@ -142,7 +143,7 @@ function App() {
 
       const analysis = analyzeBottleneck(fullCpu, fullGpu, maxStats);
       const cpuScore = parseInt(fullCpu.cpuMark) || 8000;
-      let finalFps = data.predicted_fps;
+      let finalFps = data.predicted_fps ?? data.predictedFps;
 
       if (cpuScore < 3000) {
         finalFps = (cpuScore / 100) + 5;
@@ -152,6 +153,12 @@ function App() {
       finalFps = Math.max(5, Math.min(900, finalFps));
 
       setPrediction(Math.round(finalFps));
+      setPredictionMetadata({
+        modelVersion: data.modelVersion || 'v2',
+        gameCoverage: data.gameCoverage || 'known',
+        preset: data.preset,
+        game: data.game,
+      });
       setBottleneckData(analysis);
 
       // Upgrade Recommendation
@@ -184,6 +191,7 @@ function App() {
 
   const handleResetAnalysis = () => {
     setPrediction(null);
+    setPredictionMetadata(null);
     setBottleneckData(null);
     setRecommendation(null);
     setSmartRec(null);
@@ -315,6 +323,7 @@ function App() {
               handleConsultAura={handleConsultAura}
               handleResetAnalysis={handleResetAnalysis}
               prediction={prediction}
+              predictionMetadata={predictionMetadata}
               bottleneckData={bottleneckData}
               recommendation={recommendation}
               smartRec={smartRec}

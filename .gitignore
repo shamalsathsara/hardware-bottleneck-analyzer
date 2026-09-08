@@ -13,6 +13,7 @@ backend-node/data/generated/
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
 venv/
 env/
 .Python

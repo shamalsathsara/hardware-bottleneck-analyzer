@@ -113,6 +113,7 @@ export default function BottleneckCalculatorPage({
   handleConsultAura,
   handleResetAnalysis,
   prediction,
+  predictionMetadata,
   bottleneckData,
   recommendation,
   smartRec,
@@ -425,6 +426,11 @@ export default function BottleneckCalculatorPage({
                     </div>
                   </div>
                   <div className="gauge-fps-label">Estimated Average FPS</div>
+                  {predictionMetadata?.gameCoverage === 'unseen' && (
+                    <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
+                      ⚠️ Estimated for an untested game
+                    </div>
+                  )}
                 </div>
 
                 {/* Bottleneck Status Details */}
