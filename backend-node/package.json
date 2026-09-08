@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "games:sync": "node scripts/syncIgdbGames.js",
-    "benchmarks:ingest": "node scripts/ingestBenchmarks.js"
+    "benchmarks:ingest": "node scripts/ingestBenchmarks.js",
+    "dataset:v2:build": "node scripts/buildDatasetV2.js"
   },
   "keywords": [],
   "author": "",

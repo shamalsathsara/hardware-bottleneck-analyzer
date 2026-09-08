@@ -109,11 +109,11 @@ const gameSchema = new mongoose.Schema({
   externalIds: {
     igdb: {
       type: Number,
-      default: null,
+      default: undefined,
     },
     steam: {
       type: Number,
-      default: null,
+      default: undefined,
     },
   },
   metadataSource: {

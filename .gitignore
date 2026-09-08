@@ -8,6 +8,7 @@ npm-debug.log
 yarn-error.log
 backend-node/data/igdb_sync_checkpoint*.json
 backend-node/data/*.tmp
+backend-node/data/generated/
 
 # Python
 __pycache__/
