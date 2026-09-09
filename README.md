@@ -31,13 +31,13 @@ Trained on **24,624 empirical benchmark measurements**, Project Aura Model V2 pr
 
 | PC Bottleneck Analyzer | Performance Result & Bottleneck Gauge |
 | :---: | :---: |
-| ![Analyzer Configuration](docs/screenshots/analyzer.png)<br><sub>*Interactive component configuration with CPU/GPU autocomplete search*</sub> | ![Performance Result](docs/screenshots/result.png)<br><sub>*Estimated Average FPS gauge, component status metrics, and upgrade advice*</sub> |
+| <img src="./docs/screenshots/analyzer.png" alt="Analyzer Configuration" width="100%" /><br><sub>*Interactive component configuration with CPU/GPU autocomplete search*</sub> | <img src="./docs/screenshots/result.png" alt="Performance Result" width="100%" /><br><sub>*Estimated Average FPS gauge, component status metrics, and upgrade advice*</sub> |
 
 | Side-by-Side Rig Comparison | Game Requirements Catalog |
 | :---: | :---: |
-| ![Rig Comparison](docs/screenshots/compare-rigs.png)<br><sub>*Dual-system performance comparison with delta metrics*</sub> | ![Games Catalog](docs/screenshots/games.png)<br><sub>*IGDB-synchronized game catalog with system requirements*</sub> |
+| <img src="./docs/screenshots/compare-rigs.png" alt="Rig Comparison" width="100%" /><br><sub>*Dual-system performance comparison with delta metrics*</sub> | <img src="./docs/screenshots/games.png" alt="Games Catalog" width="100%" /><br><sub>*IGDB-synchronized game catalog with system requirements*</sub> |
 
-> *Note: Place full-resolution UI screenshots into [`docs/screenshots/`](docs/screenshots/) to update visual previews.*
+> *Note: Full-resolution UI screenshots are located in [`docs/screenshots/`](./docs/screenshots/).*
 
 ---
 
@@ -441,8 +441,8 @@ VITE_API_URL=http://localhost:4000
 
 ---
 
-## 📄 License & Attribution
+## 📄 License & Data Attribution
 
-- **Repository License**: Not yet selected (reserved for project owner).
-- **FPS Benchmark Dataset**: Kaggle — *FPS Benchmark* by Ulrik Thyge Pedersen (`License Status: NEEDS_VERIFICATION`). Used exclusively for educational, non-commercial research and portfolio demonstration.
-- **Game Metadata**: Provided via the [Internet Game Database (IGDB)](https://www.igdb.com/) API under Twitch OAuth developer terms.
+- **Project Source Code:** Developed for educational and portfolio purposes. All rights reserved unless otherwise stated.
+- **FPS Benchmark Data:** Based on the *FPS Benchmark* dataset by Ulrik Thyge Pedersen on Kaggle. Dataset usage remains subject to the original dataset's licensing terms.
+- **Game Metadata:** Game information is retrieved through the IGDB API using Twitch OAuth.
