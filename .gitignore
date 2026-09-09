@@ -6,6 +6,7 @@
 node_modules/
 npm-debug.log
 yarn-error.log
+frontend-react/dist/
 backend-node/data/igdb_sync_checkpoint*.json
 backend-node/data/*.tmp
 backend-node/data/generated/
@@ -14,6 +15,7 @@ backend-node/data/generated/
 __pycache__/
 *.pyc
 .pytest_cache/
+.ipynb_checkpoints/
 venv/
 env/
 .Python
