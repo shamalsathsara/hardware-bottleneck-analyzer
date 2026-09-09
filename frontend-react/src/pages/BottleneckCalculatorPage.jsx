@@ -344,6 +344,7 @@ export default function BottleneckCalculatorPage({
               )}
             </div>
             <GameSearch 
+              value={selectedGame}
               placeholder="All PC Games (or type e.g. Apex Legends, GTA V, CS:GO)..."
               onSelectGame={(game) => {
                 setSelectedGame(game.name);
@@ -359,11 +360,18 @@ export default function BottleneckCalculatorPage({
 
           <div className="form-row-2col">
             <div className="form-group">
-              <label htmlFor="resolution-select">Target Resolution</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <label htmlFor="resolution-select" style={{ marginBottom: 0 }}>Target Resolution</label>
+                {resolution === '1920x1080' ? (
+                  <span className="badge-status-pill badge-status-supported">Supported</span>
+                ) : (
+                  <span className="badge-status-pill badge-status-developing">Still Developing</span>
+                )}
+              </div>
               <select id="resolution-select" value={resolution} onChange={e => setResolution(e.target.value)}>
-                <option value="1920x1080">1080p (FHD - 1920 &times; 1080)</option>
-                <option value="2560x1440">1440p (QHD - 2560 &times; 1440)</option>
-                <option value="3840x2160">4K (UHD - 3840 &times; 2160)</option>
+                <option value="1920x1080">1080p (FHD) &mdash; Supported</option>
+                <option value="2560x1440">1440p (QHD) &mdash; Still Developing</option>
+                <option value="3840x2160">4K (UHD) &mdash; Still Developing</option>
               </select>
             </div>
             <div className="form-group">
@@ -465,11 +473,24 @@ export default function BottleneckCalculatorPage({
           {!isThinking && hasActiveResult && (
             <div className="result-active-content">
               
-              {/* Optional Notice: Incomplete V2 Physical Specs */}
+              {/* Optional Notice: Incomplete V2 Physical Specs or Developing Resolution */}
               {incompleteV2Notice && (
                 <div className="incomplete-v2-notice-banner">
                   <span className="notice-icon">ℹ️</span>
-                  <span>{incompleteV2Notice}</span>
+                  <div className="notice-text-content">
+                    {typeof incompleteV2Notice === 'object' && incompleteV2Notice?.title ? (
+                      <>
+                        <div style={{ fontWeight: 700, color: '#38bdf8', fontSize: '0.9rem' }}>
+                          {incompleteV2Notice.title}
+                        </div>
+                        <div style={{ color: '#cbd5e1', fontSize: '0.84rem' }}>
+                          {incompleteV2Notice.message}
+                        </div>
+                      </>
+                    ) : (
+                      <span>{incompleteV2Notice}</span>
+                    )}
+                  </div>
                 </div>
               )}
 

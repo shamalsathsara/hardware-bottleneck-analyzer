@@ -230,17 +230,24 @@ function RigPanel({ label, rig, onChange, onClear, savedRigs }) {
       {/* Resolution + Quality Row */}
       <div className="form-row-2col">
         <div className="form-group">
-          <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--text-sub)' }}>
-            Resolution
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <label className="form-label" style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--text-sub)', marginBottom: 0 }}>
+              Resolution
+            </label>
+            {rig.resolution === '1920x1080' ? (
+              <span className="badge-status-pill badge-status-supported">Supported</span>
+            ) : (
+              <span className="badge-status-pill badge-status-developing">Still Developing</span>
+            )}
+          </div>
           <select 
             className="form-control cmp-select" 
             value={rig.resolution} 
             onChange={e => onChange({ ...rig, resolution: e.target.value })}
           >
-            <option value="1920x1080">1080p (FHD)</option>
-            <option value="2560x1440">1440p (QHD)</option>
-            <option value="3840x2160">4K (UHD)</option>
+            <option value="1920x1080">1080p (FHD) &mdash; Supported</option>
+            <option value="2560x1440">1440p (QHD) &mdash; Still Developing</option>
+            <option value="3840x2160">4K (UHD) &mdash; Still Developing</option>
           </select>
         </div>
         <div className="form-group">
@@ -293,10 +300,18 @@ function FpsSummaryCard({ label, accent, result, isWinner, isTied }) {
       <div className="cmp-fps-card-label">{label}</div>
       <div className="cmp-fps-card-rigname">{rigName}</div>
 
-      <div className="cmp-fps-card-number" style={{ color: isWinner && !isTied ? '#fbbf24' : accent }}>
-        {fpsInt}
-        <span className="cmp-fps-card-unit">FPS</span>
-      </div>
+      {fps !== null && !isNaN(parseFloat(fps)) ? (
+        <div className="cmp-fps-card-number" style={{ color: isWinner && !isTied ? '#fbbf24' : accent }}>
+          {fpsInt}
+          <span className="cmp-fps-card-unit">FPS</span>
+        </div>
+      ) : (
+        <div className="cmp-fps-card-number" style={{ margin: '0.75rem 0', display: 'flex', alignItems: 'center' }}>
+          <span className="badge-status-pill badge-status-developing" style={{ textTransform: 'none', fontSize: '0.82rem', padding: '4px 10px' }}>
+            FPS Still Developing
+          </span>
+        </div>
+      )}
 
       <div className="cmp-fps-bk-row">
         <div className="cmp-fps-bk-bar-track">
@@ -523,12 +538,14 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       'gpuFp32': gpuFP32,
     };
 
-    const data = await predictFps(payload);
+    let finalFps = null;
+    if (rig.resolution === '1920x1080') {
+      const data = await predictFps(payload);
+      finalFps = Number(data?.predicted_fps ?? data?.predictedFps) || 60;
+      finalFps = Math.max(5, Math.min(900, finalFps));
+      if (!Number.isFinite(finalFps)) finalFps = 60;
+    }
     const analysis = analyzeBottleneck(fullCpu, fullGpu);
-    const cpuScore = parseInt(fullCpu.cpuMark, 10) || 8000;
-    let finalFps = Number(data?.predicted_fps ?? data?.predictedFps) || 60;
-    finalFps = Math.max(5, Math.min(900, finalFps));
-    if (!Number.isFinite(finalFps)) finalFps = 60;
 
     const rigName =
       (rig.cpu || 'CPU').split(' ').slice(0, 3).join(' ') +
@@ -536,7 +553,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       (rig.gpu || 'GPU').split(' ').slice(0, 3).join(' ');
 
     return { 
-      fps: finalFps.toFixed(1), 
+      fps: finalFps !== null ? finalFps.toFixed(1) : null, 
       bottleneck: analysis, 
       rigName 
     };
@@ -567,14 +584,26 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
 
   const handleReset = () => { setResults(null); setError(null); };
 
-  const fpsA  = results ? (parseFloat(results.a.fps) || 0) : 0;
-  const fpsB  = results ? (parseFloat(results.b.fps) || 0) : 0;
-  const aWins = results && fpsA > fpsB;
-  const bWins = results && fpsB > fpsA;
-  const tied  = results && Math.abs(fpsA - fpsB) < 0.05;
+  const hasFpsA = results?.a?.fps !== null && !isNaN(parseFloat(results?.a?.fps));
+  const hasFpsB = results?.b?.fps !== null && !isNaN(parseFloat(results?.b?.fps));
+  const fpsA  = hasFpsA ? (parseFloat(results.a.fps) || 0) : null;
+  const fpsB  = hasFpsB ? (parseFloat(results.b.fps) || 0) : null;
+  const aWins = results && hasFpsA && hasFpsB && fpsA > fpsB;
+  const bWins = results && hasFpsA && hasFpsB && fpsB > fpsA;
+  const tied  = results && hasFpsA && hasFpsB && Math.abs(fpsA - fpsB) < 0.05;
 
   const buildVerdict = () => {
     if (!results) return '';
+    if (!hasFpsA || !hasFpsB) {
+      const wBk = results.a.bottleneck;
+      const lBk = results.b.bottleneck;
+      if (wBk.severity < lBk.severity) {
+        return `Rig A has lower bottleneck severity (${wBk.severity}% vs ${lBk.severity}%), giving it better architectural balance. (Game FPS prediction for 1440p/4K is still developing).`;
+      } else if (lBk.severity < wBk.severity) {
+        return `Rig B has lower bottleneck severity (${lBk.severity}% vs ${wBk.severity}%), giving it better architectural balance. (Game FPS prediction for 1440p/4K is still developing).`;
+      }
+      return 'Both configurations have balanced component allocations. (Game FPS prediction for 1440p/4K is still developing).';
+    }
     if (tied) return 'Both rigs produce identical performance at these settings. Consider changing resolution or quality to see a difference.';
 
     const winner    = aWins ? 'Rig A' : 'Rig B';
@@ -725,6 +754,15 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
             {/* Center Verdict Pill */}
             <div className="cmp-center-verdict">
               {(() => {
+                if (!hasFpsA || !hasFpsB) {
+                  return (
+                    <>
+                      <div className="cmp-cv-icon" style={{ color: '#38bdf8' }}>ℹ️</div>
+                      <div className="cmp-cv-label" style={{ color: '#38bdf8', fontSize: '0.78rem' }}>Resolution Developing</div>
+                      <div className="cmp-cv-diff" style={{ fontSize: '0.72rem', color: '#94a3b8' }}>See bottleneck below</div>
+                    </>
+                  );
+                }
                 const fpsAv = parseFloat(results.a.fps) || 0;
                 const fpsBv = parseFloat(results.b.fps) || 0;
                 const absDiff = Math.abs(fpsAv - fpsBv);

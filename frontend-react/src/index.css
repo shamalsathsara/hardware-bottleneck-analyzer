@@ -554,7 +554,7 @@ select:-webkit-autofill:focus {
 
 .incomplete-v2-notice-banner {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   padding: 0.85rem 1.2rem;
   background: rgba(56, 189, 248, 0.08);
@@ -568,6 +568,34 @@ select:-webkit-autofill:focus {
 .incomplete-v2-notice-banner .notice-icon {
   font-size: 1.15rem;
   flex-shrink: 0;
+  margin-top: 1px;
+}
+.incomplete-v2-notice-banner .notice-text-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Status Badges */
+.badge-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.badge-status-supported {
+  background: rgba(74, 222, 128, 0.1);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+.badge-status-developing {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 /* General Mode Hero Bottleneck Card */

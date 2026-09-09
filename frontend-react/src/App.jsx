@@ -165,7 +165,39 @@ function App() {
         return;
       }
 
-      // MODE B: GAME PERFORMANCE MODE (Game selected)
+      // Check if resolution is 1440p or 4K (Game FPS prediction is currently validated for 1080p)
+      if (resolution !== '1920x1080') {
+        setAnalysisMode('general');
+        setPrediction(null);
+        setPredictionMetadata(null);
+        setIncompleteV2Notice({
+          title: 'Resolution Support in Development',
+          message: 'Game FPS prediction is currently validated for 1080p. 1440p and 4K prediction support is still being developed.',
+        });
+        setBottleneckData(analysis);
+
+        if (analysis.type === 'gpu') {
+          const higherGpu = gpuList.find(g => (parseInt(g.CUDA, 10) || 0) > cuda + 20000);
+          setRecommendation({
+            title: 'Upgrade Recommendation: Graphics Card',
+            hardware: higherGpu ? (higherGpu.canonicalName || higherGpu.Device) : 'RTX 4070 / RX 7800 XT',
+          });
+        } else if (analysis.type === 'cpu') {
+          const higherCpu = cpuList.find(c => (parseInt(c.cpuMark, 10) || 0) > cpuScore + 3000);
+          setRecommendation({
+            title: 'Upgrade Recommendation: Processor',
+            hardware: higherCpu ? (higherCpu.canonicalName || higherCpu.cpuName) : 'Ryzen 7 7800X3D / Core i7-14700K',
+          });
+        } else {
+          setRecommendation(null);
+        }
+
+        setSmartRec(null);
+        setSelectedUpgradeComponent('GPU');
+        return;
+      }
+
+      // MODE B: GAME PERFORMANCE MODE (Game selected + 1080p validated)
       setAnalysisMode('game');
 
       const payload = {

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { searchGames } from '../../services/gameService';
 
-export default function GameSearch({ onSelectGame, placeholder = 'Search supported PC games (e.g. Cyberpunk, GTA, CS2)...' }) {
-  const [query, setQuery] = useState('');
+export default function GameSearch({ value = '', onSelectGame, placeholder = 'Search supported PC games (e.g. Cyberpunk, GTA, CS2)...' }) {
+  const [query, setQuery] = useState(value);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setQuery(value || '');
+  }, [value]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -40,6 +44,7 @@ export default function GameSearch({ onSelectGame, placeholder = 'Search support
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <input
+        id="game-search-input"
         type="text"
         className="form-control"
         placeholder={placeholder}

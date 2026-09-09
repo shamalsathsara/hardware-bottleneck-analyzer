@@ -1,7 +1,7 @@
 export const RESOLUTIONS = [
-  { value: '1920x1080', label: '1080p (FHD - 1920 × 1080)' },
-  { value: '2560x1440', label: '1440p (QHD - 2560 × 1440)' },
-  { value: '3840x2160', label: '4K (UHD - 3840 × 2160)' },
+  { value: '1920x1080', label: '1080p (FHD) — Supported' },
+  { value: '2560x1440', label: '1440p (QHD) — Still Developing' },
+  { value: '3840x2160', label: '4K (UHD) — Still Developing' },
 ];
 
 export const QUALITY_PRESETS = [
