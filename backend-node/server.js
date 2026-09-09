@@ -1,6 +1,3 @@
-// --------------------------------------------------------------------------
-// EXPRESS.JS SERVER (THE API BRIDGE)
-// --------------------------------------------------------------------------
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -18,18 +15,11 @@ const benchmarksRouter = require('./routes/benchmarks');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// --------------------------------------------------------------------------
-// MIDDLEWARE CONFIGURATION
-// --------------------------------------------------------------------------
 app.use(cors());
 app.use(express.json({ limit: '100kb' }));
 
-// Connect to MongoDB Atlas
 connectDB();
 
-// --------------------------------------------------------------------------
-// MOUNT API ROUTERS
-// --------------------------------------------------------------------------
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/pricing', pricingRouter);
@@ -39,20 +29,14 @@ app.use('/api/benchmarks', benchmarksRouter);
 app.use('/api', hardwareRouter);
 app.use('/api', predictRouter);
 
-// Global Error Handler
 app.use((err, req, res, _next) => {
   console.error('Unhandled server error:', err.message);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// --------------------------------------------------------------------------
-// START SERVER
-// --------------------------------------------------------------------------
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log('----------------------------------------------');
-    console.log(`✅ Node.js Backend is running on port ${PORT}`);
-    console.log('----------------------------------------------');
+    console.log(`Project Aura API listening on port ${PORT}`);
   });
 }
 

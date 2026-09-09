@@ -1,9 +1,3 @@
-/**
- * This file contains the core logic for calculating bottlenecks and hardware recommendations.
- * By extracting this from App.jsx, we make the main component much cleaner and easier to read!
- */
-
-// 1. Analyzes the bottleneck severity based on dynamic max scores from the database
 export const analyzeBottleneck = (cpu, gpu, maxStats) => {
     if (!cpu || !gpu) {
       return { 
@@ -15,7 +9,7 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
       };
     }
 
-    // Safely extract CPU benchmark score or calculate from physical features
+    // Resolve CPU score or estimate from core count
     let cpuMark = 8000;
     if (typeof cpu.cpuMark === 'number' && Number.isFinite(cpu.cpuMark)) {
       cpuMark = cpu.cpuMark;
@@ -28,7 +22,7 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
       cpuMark = cores * 3000;
     }
 
-    // Safely extract GPU benchmark score or calculate from physical features
+    // Resolve GPU score or estimate from VRAM tier
     let gpuCUDA = 100000;
     if (typeof gpu.CUDA === 'number' && Number.isFinite(gpu.CUDA)) {
       gpuCUDA = gpu.CUDA;
@@ -45,28 +39,24 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
       else gpuCUDA = 50000;
     }
   
-    // Check if the database stores raw G3DMark (max ~40,000) or CUDA scores (max ~400,000)
+    // Distinguish between G3DMark and CUDA baseline scales
     const isRawG3D = (maxStats?.maxGpuCuda || 400000) < 50000;
     const gpuAnchor = isRawG3D ? 40000 : 400000;
-    const cpuAnchor = 60000; // Anchor to typical flagship CPU (e.g. i9-13900K)
+    const cpuAnchor = 60000;
 
-    // Calculate a 0-100 performance index using a square root curve (to model real-world scaling)
     const cpuRatio = Math.max(0, cpuMark) / cpuAnchor;
     const gpuRatio = Math.max(0, gpuCUDA) / gpuAnchor;
 
     const cpuIndex = Math.min(Math.sqrt(cpuRatio) * 100, 100) || 1;
     const gpuIndex = Math.min(Math.sqrt(gpuRatio) * 100, 100) || 1;
 
-    // Convert the 0-100 index into 1-10 tiers for the severity calculation
     const cpuTier = Math.ceil(cpuIndex / 10);
     const gpuTier = Math.ceil(gpuIndex / 10);
   
-    // positive diff → CPU stronger (GPU is bottleneck)
-    // negative diff → GPU stronger (CPU is bottleneck)
-    const diff    = cpuTier - gpuTier;
+    // Positive diff indicates CPU is ahead (GPU bottleneck)
+    const diff = cpuTier - gpuTier;
     const absDiff = Math.abs(diff);
   
-    // Maps the tier gap to a severity percentage — bigger gap means more severe bottleneck
     const SEVERITY_TABLE = [0, 5, 15, 30, 50, 70, 85];
     const severity = SEVERITY_TABLE[Math.min(absDiff, 6)] || 0;
   
@@ -113,7 +103,6 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
     return { severity, message, color, cardClass, type };
   };
   
-// 2. Returns an explanation of the bottleneck based on user selection
 export const getExplanation = (data, style) => {
     if (!data) return '';
 
@@ -140,7 +129,6 @@ export const getExplanation = (data, style) => {
     }
 };
 
-// 3. Generates Q&A items dynamically based on the bottleneck
 export const generateQA = (data) => {
     if (!data) {
       return [

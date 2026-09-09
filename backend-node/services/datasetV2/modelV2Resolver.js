@@ -1,9 +1,6 @@
 /**
- * Project Aura V2 — Milestone V2.4
- * Model V2 Hardware & Feature Resolver
- *
- * Resolves physical hardware specifications from Hardware Master records,
- * validates the strict 16-feature contract, and builds the Model V2 inference payload.
+ * Resolves physical hardware specifications from Hardware Master records
+ * and constructs the 16-feature payload for Model V2 inference.
  */
 
 const { resolveCanonicalCpu, resolveCanonicalGpu, resolveCanonicalGame } = require('../benchmarks/canonicalResolver');

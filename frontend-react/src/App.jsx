@@ -31,7 +31,6 @@ function updatePageMetadata(route) {
 }
 
 function App() {
-  // ── ROUTING STATE ──
   const [currentRoute, setCurrentRoute] = useState(() => getNormalizedRoute(window.location.pathname));
 
   const navigate = useCallback((route) => {
@@ -41,7 +40,7 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Listen to browser Back / Forward buttons
+  // Sync route on popstate events
   useEffect(() => {
     const onPopState = () => {
       const route = getNormalizedRoute(window.location.pathname);
@@ -53,7 +52,6 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [currentRoute]);
 
-  // ── USER AUTHENTICATION HOOK ──
   const { currentUser, login, logout } = useAuth();
 
   const handleLogout = useCallback(() => {
@@ -63,10 +61,8 @@ function App() {
     }
   }, [currentRoute, logout, navigate]);
 
-  // ── HARDWARE DATA HOOK ──
   const { cpuList, gpuList, maxStats, loading: loadingData } = useHardwareData();
 
-  // ── ANALYZER CONFIGURATION STATE ──
   const [selectedCpu, setSelectedCpu] = useState('');
   const [selectedGpu, setSelectedGpu] = useState('');
   const [selectedCpuData, setSelectedCpuData] = useState(null);
@@ -75,7 +71,6 @@ function App() {
   const [resolution, setResolution] = useState('1920x1080');
   const [settings, setSettings] = useState('High');
 
-  // ── PREDICTION & ANALYSIS RESULTS ──
   const [isThinking, setIsThinking] = useState(false);
   const [prediction, setPrediction] = useState(null);
   const [predictionMetadata, setPredictionMetadata] = useState(null);
@@ -86,10 +81,8 @@ function App() {
   const [explanationType, setExplanationType] = useState(null);
   const [error, setError] = useState(null);
 
-  // ── SAVE RIG MODAL STATE ──
   const [showSaveRigModal, setShowSaveRigModal] = useState(false);
 
-  // ── RUN ANALYSIS HANDLER ──
   const handleConsultAura = async () => {
     if (!selectedCpu || !selectedGpu) {
       setError('Please select both a CPU and a GPU to analyze.');
@@ -161,7 +154,6 @@ function App() {
       });
       setBottleneckData(analysis);
 
-      // Upgrade Recommendation
       if (analysis.type === 'gpu') {
         const higherGpu = gpuList.find(g => (parseInt(g.CUDA) || 0) > cuda + 20000);
         setRecommendation({
@@ -245,7 +237,6 @@ function App() {
     setSmartRec(result);
   };
 
-  // ── SAVE RIG HANDLER ──
   const handleSaveRigSubmit = async (rigName) => {
     try {
       await saveUserRig({ 
@@ -273,7 +264,6 @@ function App() {
     }
   };
 
-  // ── LOAD RIG FROM PROFILE ──
   const handleLoadRig = (rig) => {
     setSelectedCpu(rig.cpu);
     setSelectedGpu(rig.gpu);
@@ -289,7 +279,6 @@ function App() {
     <ErrorBoundary>
       <div className="site-root-layout">
         
-        {/* Global Responsive Public Navbar */}
         <Navbar 
           currentRoute={currentRoute}
           onNavigate={navigate}
@@ -297,7 +286,6 @@ function App() {
           onLogout={handleLogout}
         />
 
-        {/* Dynamic Route Content */}
         <main className="site-main-content">
           
           {currentRoute === ROUTES.HOME && (
@@ -407,10 +395,8 @@ function App() {
 
         </main>
 
-        {/* Global Footer */}
         <Footer onNavigate={navigate} />
 
-        {/* Save Rig Modal */}
         <SaveRigModal 
           isOpen={showSaveRigModal}
           onClose={() => setShowSaveRigModal(false)}

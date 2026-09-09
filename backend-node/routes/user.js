@@ -1,14 +1,10 @@
 const express = require('express');
 const User = require('../models/User');
-const requireAuth = require('../middleware/auth'); // Our security checkpoint
+const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
 
-// --------------------------------------------------------------------------
-// GET ALL SAVED RIGS
-// --------------------------------------------------------------------------
-// Route: GET /api/user/rigs
-// Purpose: Fetch the saved PC profiles for the currently logged-in user.
+// GET /api/user/rigs
 router.get('/rigs', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -16,7 +12,7 @@ router.get('/rigs', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'User not found.' });
     }
 
-    // Read-time normalization: ensure all rigs have expected fields
+    // Support legacy rigs saved without hardware IDs
     const normalizedRigs = (user.savedRigs || []).map((rig) => {
       const doc = rig.toObject ? rig.toObject() : rig;
       return {
@@ -42,11 +38,7 @@ router.get('/rigs', requireAuth, async (req, res) => {
   }
 });
 
-// --------------------------------------------------------------------------
-// SAVE A NEW RIG
-// --------------------------------------------------------------------------
-// Route: POST /api/user/rigs
-// Purpose: Add a new PC profile to the user's saved list.
+// POST /api/user/rigs
 router.post('/rigs', requireAuth, async (req, res) => {
   try {
     const { 
@@ -62,7 +54,6 @@ router.post('/rigs', requireAuth, async (req, res) => {
       gpuDisplayName,
     } = req.body;
 
-    // Basic validation
     if (!name || !cpu || !gpu || !ram || !resolution) {
       return res.status(400).json({ error: 'All fields (name, cpu, gpu, ram, resolution) are required to save a PC.' });
     }
@@ -87,12 +78,10 @@ router.post('/rigs', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'User not found.' });
     }
 
-    // Limit maximum saved rigs per user to protect database storage
     if (user.savedRigs && user.savedRigs.length >= 50) {
       return res.status(400).json({ error: 'Maximum limit of 50 saved PCs reached. Please delete an older rig first.' });
     }
 
-    // Add the new rig to the list
     const newRig = { 
       name: cleanName, 
       cpu: cleanCpu, 
@@ -109,7 +98,6 @@ router.post('/rigs', requireAuth, async (req, res) => {
     
     await user.save();
 
-    // Send back the newly updated list of rigs
     res.status(201).json(user.savedRigs);
   } catch (err) {
     console.error('Error saving rig:', err.message);
@@ -117,11 +105,7 @@ router.post('/rigs', requireAuth, async (req, res) => {
   }
 });
 
-// --------------------------------------------------------------------------
-// DELETE A SAVED RIG
-// --------------------------------------------------------------------------
-// Route: DELETE /api/user/rigs/:rigId
-// Purpose: Remove a saved PC profile from the user's account.
+// DELETE /api/user/rigs/:rigId
 router.delete('/rigs/:rigId', requireAuth, async (req, res) => {
   try {
     const { rigId } = req.params;
@@ -134,13 +118,10 @@ router.delete('/rigs/:rigId', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'User not found.' });
     }
 
-    // Filter out the rig with the matching ID
-    // We use .toString() because MongoDB IDs are special objects
     user.savedRigs = user.savedRigs.filter(rig => rig._id && rig._id.toString() !== rigId);
     
     await user.save();
 
-    // Send back the updated list of rigs
     res.json(user.savedRigs);
   } catch (err) {
     console.error('Error deleting rig:', err.message);

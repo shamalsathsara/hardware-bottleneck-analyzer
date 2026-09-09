@@ -4,14 +4,13 @@ const { resolveModelV2Payload } = require('../services/datasetV2/modelV2Resolver
 
 const router = express.Router();
 
-// POST /api/predict -> The ML Prediction Bridge endpoint (Supports V1 & V2)
+// POST /api/predict
 router.post('/predict', async (req, res) => {
   try {
     if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
       return res.status(400).json({ error: 'Invalid payload format. Expected a JSON object.' });
     }
 
-    // Check for direct V2 feature signature
     const hasV2Signature = (
       req.body.CpuNumberOfCores !== undefined ||
       req.body.GpuNumberOfShadingUnits !== undefined ||
@@ -19,7 +18,6 @@ router.post('/predict', async (req, res) => {
       req.body.GameSetting_Ordinal !== undefined
     );
 
-    // Determine target model version
     let requestedVersion = (
       req.body.modelVersion ||
       req.query.modelVersion ||
@@ -42,9 +40,7 @@ router.post('/predict', async (req, res) => {
 
     const pythonAiUrl = process.env.AURA_AI_URL || 'http://127.0.0.1:5000';
 
-    // ==============================================================
-    // MODEL V2 FLOW
-    // ==============================================================
+    // Model V2: Physical specifications pipeline
     if (requestedVersion === 'v2') {
       const { valid, missingFields, v2Payload } = await resolveModelV2Payload(req.body);
 
@@ -56,26 +52,22 @@ router.post('/predict', async (req, res) => {
         });
       }
 
-      console.log(`Sending Model V2 payload to Aura AI (${v2Payload.GameName}, Setting: ${v2Payload.GameSetting_Ordinal})...`);
       const auraResponse = await axios.post(`${pythonAiUrl}/predict`, v2Payload, { timeout: 10000 });
       return res.json(auraResponse.data);
     }
 
-    // ==============================================================
-    // MODEL V1 FLOW (ROLLBACK / LEGACY)
-    // ==============================================================
+    // Model V1: Legacy categorical rollback
     const { CPU } = req.body;
     if (!CPU && !req.body.CPU_Model && !req.body.CPU_Make) {
       return res.status(400).json({ error: 'CPU information is required for prediction.' });
     }
 
-    console.log('Sending Model V1 payload to Aura AI...');
     const legacyPayload = { ...req.body, modelVersion: 'v1' };
     const auraResponse = await axios.post(`${pythonAiUrl}/predict`, legacyPayload, { timeout: 10000 });
 
     return res.json(auraResponse.data);
   } catch (error) {
-    console.error('Have an Error with Aura AI!', error.message);
+    console.error('Prediction proxy error:', error.message);
     if (error.response && error.response.data && error.response.data.error) {
       return res.status(error.response.status || 500).json(error.response.data);
     }
@@ -84,4 +76,3 @@ router.post('/predict', async (req, res) => {
 });
 
 module.exports = router;
-
