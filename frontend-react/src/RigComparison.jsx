@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { analyzeBottleneck } from './utils/BottleneckLogic';
 import { fetchAllCpusLightweight, fetchAllGpusLightweight, searchCpus, searchGpus } from './services/hardwareService';
 import { fetchUserRigs } from './services/rigService';
-import { predictFps } from './services/analysisService';
 import HardwareSearch from './HardwareSearch';
 
 // SVG Icons
@@ -455,96 +454,8 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       throw new Error(`GPU not found: "${rig.gpu}". Please choose from the autocomplete suggestions.`);
     }
 
-    let cores = 6;
-    if (typeof fullCpu.cores === 'number') {
-      cores = fullCpu.cores;
-    } else if (typeof fullCpu.cores === 'object' && fullCpu.cores !== null) {
-      cores = fullCpu.cores.total || fullCpu.cores.performanceCores || 6;
-    } else if (typeof fullCpu.cores === 'string') {
-      cores = parseInt(fullCpu.cores, 10) || 6;
-    }
-
-    const threads = cores * 2;
-    const cpuTDP = Math.min(cores * 10, 125);
-
-    let cuda = 100000;
-    if (typeof fullGpu.CUDA === 'number' && Number.isFinite(fullGpu.CUDA)) {
-      cuda = fullGpu.CUDA;
-    } else if (typeof fullGpu.CUDA === 'string') {
-      cuda = parseInt(fullGpu.CUDA, 10) || 100000;
-    }
-
-    let vram = 4;
-    let gpuTdp = 75;
-    let bandwidth = 128;
-
-    let gpuBaseClock = 1200, gpuBoostClock = 1500, gpuMemoryBus = 128, gpuROPs = 32;
-    if (fullGpu.memory?.vramGB) {
-      vram = fullGpu.memory.vramGB;
-      gpuTdp = fullGpu.power?.defaultTgpWatts || 200;
-      bandwidth = fullGpu.memory.memoryBandwidthGBs || 448;
-      gpuBaseClock = fullGpu.clocks?.baseClockMHz || 1800;
-      gpuBoostClock = fullGpu.clocks?.boostClockMHz || 2100;
-      gpuMemoryBus = fullGpu.memory?.busWidthBits || 192;
-      gpuROPs = fullGpu.renderUnits?.rops || 80;
-    } else {
-      if (cuda > 250000) {
-        vram = 24; gpuTdp = 350; bandwidth = 1008;
-        gpuBaseClock = 2235; gpuBoostClock = 2520; gpuMemoryBus = 384; gpuROPs = 176;
-      } else if (cuda > 175000) {
-        vram = 16; gpuTdp = 280; bandwidth = 760;
-        gpuBaseClock = 2100; gpuBoostClock = 2400; gpuMemoryBus = 256; gpuROPs = 112;
-      } else if (cuda > 100000) {
-        vram = 12; gpuTdp = 200; bandwidth = 448;
-        gpuBaseClock = 1800; gpuBoostClock = 2100; gpuMemoryBus = 192; gpuROPs = 80;
-      } else if (cuda > 75000) {
-        vram = 8;  gpuTdp = 130; bandwidth = 256;
-        gpuBaseClock = 1700; gpuBoostClock = 1950; gpuMemoryBus = 128; gpuROPs = 64;
-      } else if (cuda > 45000) {
-        vram = 6;  gpuTdp = 90;  bandwidth = 192;
-        gpuBaseClock = 1530; gpuBoostClock = 1785; gpuMemoryBus = 192; gpuROPs = 48;
-      } else {
-        vram = 4;  gpuTdp = 75;  bandwidth = 112;
-        gpuBaseClock = 1300; gpuBoostClock = 1550; gpuMemoryBus = 128; gpuROPs = 32;
-      }
-    }
-
-    const gpuFP32 = Math.round((2 * cuda * gpuBoostClock) / 1e6 * 10) / 10;
-    const cpuBaseFreqMHz = 2800 + Math.min(cores, 16) * 50;
-    const cpuTurboFreqMHz = cpuBaseFreqMHz + 1200;
-    const cpuCacheL3MB = Math.max(6, Math.min(cores * 2, 64));
-
-    const payload = {
-      'CPU': fullCpu.cpuName || fullCpu.canonicalName || rig.cpu,
-      'CPU Cores': cores,
-      'CPU Threads': threads,
-      'CPU TDP (W)': cpuTDP,
-      'GPU': fullGpu.Device || fullGpu.canonicalName || rig.gpu,
-      'GPU Series': fullGpu.Manufacturer || 'Nvidia',
-      'GPU VRAM (GB)': vram,
-      'GPU Bandwidth (GB/s)': bandwidth,
-      'GPU TDP (W)': gpuTdp,
-      'RAM (GB)': parseInt(rig.ram, 10) || 16,
-      'Resolution': rig.resolution || '1920x1080',
-      'Graphics Settings': rig.settings || 'High',
-      'cpuFrequency': cpuBaseFreqMHz,
-      'cpuTurboClock': cpuTurboFreqMHz,
-      'cpuCacheL3': cpuCacheL3MB,
-      'gpuShaders': cuda,
-      'gpuBaseClock': gpuBaseClock,
-      'gpuBoostClock': gpuBoostClock,
-      'gpuMemoryBus': gpuMemoryBus,
-      'gpuRops': gpuROPs,
-      'gpuFp32': gpuFP32,
-    };
-
-    let finalFps = null;
-    if (rig.resolution === '1920x1080') {
-      const data = await predictFps(payload);
-      finalFps = Number(data?.predicted_fps ?? data?.predictedFps) || 60;
-      finalFps = Math.max(5, Math.min(900, finalFps));
-      if (!Number.isFinite(finalFps)) finalFps = 60;
-    }
+    // RigComparison has no target game — FPS prediction requires a specific game via Model V2.
+    // General bottleneck analysis is performed instead (same as no-game mode in the Analyzer).
     const analysis = analyzeBottleneck(fullCpu, fullGpu);
 
     const rigName =
@@ -553,7 +464,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       (rig.gpu || 'GPU').split(' ').slice(0, 3).join(' ');
 
     return { 
-      fps: finalFps !== null ? finalFps.toFixed(1) : null, 
+      fps: null, 
       bottleneck: analysis, 
       rigName 
     };
@@ -598,11 +509,11 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       const wBk = results.a.bottleneck;
       const lBk = results.b.bottleneck;
       if (wBk.severity < lBk.severity) {
-        return `Rig A has lower bottleneck severity (${wBk.severity}% vs ${lBk.severity}%), giving it better architectural balance. (Game FPS prediction for 1440p/4K is still developing).`;
+        return `Rig A has lower bottleneck severity (${wBk.severity}% vs ${lBk.severity}%), giving it better architectural balance. Game-specific FPS is available in the Analyzer when a game is selected.`;
       } else if (lBk.severity < wBk.severity) {
-        return `Rig B has lower bottleneck severity (${lBk.severity}% vs ${wBk.severity}%), giving it better architectural balance. (Game FPS prediction for 1440p/4K is still developing).`;
+        return `Rig B has lower bottleneck severity (${lBk.severity}% vs ${wBk.severity}%), giving it better architectural balance. Game-specific FPS is available in the Analyzer when a game is selected.`;
       }
-      return 'Both configurations have balanced component allocations. (Game FPS prediction for 1440p/4K is still developing).';
+      return 'Both configurations have balanced component allocations. Game-specific FPS is available in the Analyzer when a game is selected.';
     }
     if (tied) return 'Both rigs produce identical performance at these settings. Consider changing resolution or quality to see a difference.';
 
