@@ -264,58 +264,46 @@ function RigPanel({ label, rig, onChange, onClear, savedRigs }) {
   );
 }
 
-// Result Card - displayed once comparison runs
-function ResultCard({ label, accent, result, isWinner, isTied }) {
+// FPS Summary Card (top row)
+function FpsSummaryCard({ label, accent, result, isWinner, isTied }) {
   const { fps, bottleneck, rigName } = result;
-  const bottleneckColor = bottleneck?.color || '#10b981';
+  const fpsInt = Math.round(parseFloat(fps));
   const severity = bottleneck?.severity !== undefined ? bottleneck.severity : 0;
+  const bkColor = bottleneck?.color || '#10b981';
+  const bkType = bottleneck?.type
+    ? bottleneck.type.charAt(0).toUpperCase() + bottleneck.type.slice(1) + ' Bottleneck'
+    : 'Balanced';
 
   return (
     <div
-      className={`cmp-result-card${isWinner ? ' cmp-result-card--winner' : ''}`}
-      style={{ '--accent': accent }}
+      className={`cmp-fps-summary-card${isWinner && !isTied ? ' cmp-fps-summary-card--winner' : ''}`}
+      style={{ '--card-accent': accent }}
     >
       {isWinner && !isTied && (
-        <div className="cmp-winner-badge">
-          <span className="cmp-winner-badge-icon"><IconTrophy /></span>
-          Winner
+        <div className="cmp-fps-badge-winner">
+          <IconTrophy /> Winner
         </div>
       )}
       {isTied && (
-        <div className="cmp-winner-badge cmp-winner-badge--tied">
-          <span className="cmp-winner-badge-icon"><IconEquals /></span>
-          Tied
+        <div className="cmp-fps-badge-tied">
+          <IconEquals /> Tied
         </div>
       )}
 
-      <div className="cmp-result-label">{label}</div>
-      <div className="cmp-result-rig-name">{rigName}</div>
+      <div className="cmp-fps-card-label">{label}</div>
+      <div className="cmp-fps-card-rigname">{rigName}</div>
 
-      {/* FPS Display */}
-      <div className="cmp-fps-block">
-        <div className="cmp-fps-value" style={{ color: isWinner && !isTied ? '#fbbf24' : accent }}>
-          {fps}<span className="cmp-fps-unit">FPS</span>
-        </div>
-        <div className="cmp-fps-conf">Estimated Gaming Performance</div>
+      <div className="cmp-fps-card-number" style={{ color: isWinner && !isTied ? '#fbbf24' : accent }}>
+        {fpsInt}
+        <span className="cmp-fps-card-unit">FPS</span>
       </div>
 
-      {/* Bottleneck Bar */}
-      <div className="cmp-bk-section">
-        <div className="cmp-bk-header">
-          <span className="cmp-bk-label">Bottleneck Severity</span>
-          <span className="cmp-bk-pct" style={{ color: bottleneckColor }}>{severity}%</span>
+      <div className="cmp-fps-bk-row">
+        <div className="cmp-fps-bk-bar-track">
+          <div className="cmp-fps-bk-bar-fill" style={{ width: `${severity}%`, background: bkColor }} />
         </div>
-        <div className="cmp-bar-track">
-          <div className="cmp-bar-fill" style={{ width: `${severity}%`, background: bottleneckColor }} />
-        </div>
-        <div className="cmp-bk-type" style={{ color: bottleneckColor }}>
-          {bottleneck?.type
-            ? bottleneck.type.charAt(0).toUpperCase() + bottleneck.type.slice(1) + ' Bottleneck'
-            : 'Balanced Build'}
-        </div>
+        <span className="cmp-fps-bk-tag" style={{ color: bkColor }}>{bkType}</span>
       </div>
-
-      <div className="cmp-bk-msg">{bottleneck?.message || 'System performance calculated successfully.'}</div>
     </div>
   );
 }
@@ -690,90 +678,139 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       {/* Results View */}
       {results && (
         <div className="cmp-results-section">
-          
+
+          {/* Action Bar */}
           <div className="cmp-results-action-bar">
-            <button className="btn-secondary-glass" onClick={handleReset}>
-              &larr; Edit Rig Configurations
+            <button className="cmp-back-btn" onClick={handleReset}>
+              <IconArrowLeft /> Edit Configurations
             </button>
           </div>
 
-          {/* Verdict Banner */}
-          <div className="cmp-verdict-banner">
-            <div className="cmp-verdict-icon"><IconSwords /></div>
-            <div className="cmp-verdict-content">
-              <h3>Head-to-Head Result</h3>
-              <p>{buildVerdict()}</p>
-            </div>
-          </div>
-
-          {/* Result cards */}
-          <div className="cmp-results-grid">
-            <ResultCard
+          {/* ── 1. FPS Summary Row ── */}
+          <div className="cmp-fps-summary-row">
+            <FpsSummaryCard
               label="Rig A"
               accent="var(--primary)"
               result={results.a}
-              isWinner={aWins || tied}
+              isWinner={aWins}
               isTied={tied}
             />
 
-            <div className="cmp-results-vs">
-              <div className="cmp-results-vs-badge">
-                <IconSwords />
-              </div>
+            {/* Center Verdict Pill */}
+            <div className="cmp-center-verdict">
+              {(() => {
+                const fpsAv = parseFloat(results.a.fps) || 0;
+                const fpsBv = parseFloat(results.b.fps) || 0;
+                const absDiff = Math.abs(fpsAv - fpsBv);
+                const pctRaw = (absDiff / Math.max(1, Math.min(fpsAv, fpsBv))) * 100;
+                const pct = Number.isFinite(pctRaw) ? Math.round(pctRaw) : 0;
+                const isTooClose = absDiff < 2 || pct < 3;
+
+                if (isTooClose) {
+                  return (
+                    <>
+                      <div className="cmp-cv-icon cmp-cv-icon--tied"><IconEquals /></div>
+                      <div className="cmp-cv-label">Essentially Tied</div>
+                      <div className="cmp-cv-diff">≈ 0%</div>
+                    </>
+                  );
+                }
+                return (
+                  <>
+                    <div className="cmp-cv-icon"><IconSwords /></div>
+                    <div className="cmp-cv-label">{aWins ? 'Rig A Wins' : 'Rig B Wins'}</div>
+                    <div className="cmp-cv-diff">{pct}% faster</div>
+                  </>
+                );
+              })()}
             </div>
 
-            <ResultCard
+            <FpsSummaryCard
               label="Rig B"
               accent="#818cf8"
               result={results.b}
-              isWinner={bWins || tied}
+              isWinner={bWins}
               isTied={tied}
             />
           </div>
 
-          {/* Spec Comparison Table */}
-          <div className="cmp-table-card">
-            <div className="cmp-table-title">
-              <span className="cmp-table-title-icon"><IconBarChart /></span>
-              Spec Comparison
+          {/* ── 2. Spec Comparison Table ── */}
+          <div className="cmp-spec-table-card">
+            <div className="cmp-spec-table-header">
+              <span className="cmp-spec-table-header-icon"><IconBarChart /></span>
+              <span>Component Breakdown</span>
             </div>
-            <div className="cmp-table-wrap">
-              <table className="cmp-table">
+            <div className="cmp-spec-table-wrap">
+              <table className="cmp-spec-table">
                 <thead>
                   <tr>
-                    <th>Component</th>
-                    <th style={{ color: 'var(--primary)' }}>Rig A</th>
-                    <th style={{ color: '#818cf8' }}>Rig B</th>
+                    <th className="cmp-spec-th-label">Component</th>
+                    <th className="cmp-spec-th-a">Rig A</th>
+                    <th className="cmp-spec-th-b">Rig B</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="cmp-td-label"><span className="cmp-table-icon"><IconCpu /></span>CPU</td>
-                    <td className={aWins || tied ? 'cmp-cell-highlight-a' : ''}>{rigA.cpu}</td>
-                    <td className={bWins || tied ? 'cmp-cell-highlight-b' : ''}>{rigB.cpu}</td>
+                    <td className="cmp-spec-td-label">
+                      <span className="cmp-spec-icon"><IconCpu /></span>CPU
+                    </td>
+                    <td className={`cmp-spec-td${aWins || tied ? ' cmp-spec-td--highlight-a' : ''}`}>{rigA.cpu || '—'}</td>
+                    <td className={`cmp-spec-td${bWins || tied ? ' cmp-spec-td--highlight-b' : ''}`}>{rigB.cpu || '—'}</td>
                   </tr>
                   <tr>
-                    <td className="cmp-td-label"><span className="cmp-table-icon"><IconGpu /></span>GPU</td>
-                    <td className={aWins || tied ? 'cmp-cell-highlight-a' : ''}>{rigA.gpu}</td>
-                    <td className={bWins || tied ? 'cmp-cell-highlight-b' : ''}>{rigB.gpu}</td>
+                    <td className="cmp-spec-td-label">
+                      <span className="cmp-spec-icon"><IconGpu /></span>GPU
+                    </td>
+                    <td className={`cmp-spec-td${aWins || tied ? ' cmp-spec-td--highlight-a' : ''}`}>{rigA.gpu || '—'}</td>
+                    <td className={`cmp-spec-td${bWins || tied ? ' cmp-spec-td--highlight-b' : ''}`}>{rigB.gpu || '—'}</td>
                   </tr>
                   <tr>
-                    <td className="cmp-td-label"><span className="cmp-table-icon"><IconRam /></span>RAM</td>
-                    <td>{rigA.ram} GB</td>
-                    <td>{rigB.ram} GB</td>
+                    <td className="cmp-spec-td-label">
+                      <span className="cmp-spec-icon"><IconRam /></span>RAM
+                    </td>
+                    <td className="cmp-spec-td">{rigA.ram} GB</td>
+                    <td className="cmp-spec-td">{rigB.ram} GB</td>
                   </tr>
                   <tr>
-                    <td className="cmp-td-label"><span className="cmp-table-icon"><IconMonitor /></span>Resolution</td>
-                    <td>{rigA.resolution}</td>
-                    <td>{rigB.resolution}</td>
+                    <td className="cmp-spec-td-label">
+                      <span className="cmp-spec-icon"><IconMonitor /></span>Resolution
+                    </td>
+                    <td className="cmp-spec-td">{rigA.resolution}</td>
+                    <td className="cmp-spec-td">{rigB.resolution}</td>
                   </tr>
                   <tr>
-                    <td className="cmp-td-label"><span className="cmp-table-icon"><IconSliders /></span>Quality</td>
-                    <td>{rigA.settings}</td>
-                    <td>{rigB.settings}</td>
+                    <td className="cmp-spec-td-label">
+                      <span className="cmp-spec-icon"><IconSliders /></span>Quality
+                    </td>
+                    <td className="cmp-spec-td">{rigA.settings}</td>
+                    <td className="cmp-spec-td">{rigB.settings}</td>
+                  </tr>
+                  <tr>
+                    <td className="cmp-spec-td-label">Bottleneck</td>
+                    <td className="cmp-spec-td" style={{ color: results.a.bottleneck?.color || '#10b981', fontWeight: 600 }}>
+                      {results.a.bottleneck?.type
+                        ? results.a.bottleneck.type.charAt(0).toUpperCase() + results.a.bottleneck.type.slice(1)
+                        : 'Balanced'}
+                      {' '}({results.a.bottleneck?.severity ?? 0}%)
+                    </td>
+                    <td className="cmp-spec-td" style={{ color: results.b.bottleneck?.color || '#10b981', fontWeight: 600 }}>
+                      {results.b.bottleneck?.type
+                        ? results.b.bottleneck.type.charAt(0).toUpperCase() + results.b.bottleneck.type.slice(1)
+                        : 'Balanced'}
+                      {' '}({results.b.bottleneck?.severity ?? 0}%)
+                    </td>
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* ── 3. Takeaway Banner ── */}
+          <div className="cmp-takeaway-banner">
+            <div className="cmp-takeaway-icon"><IconBulb /></div>
+            <div className="cmp-takeaway-text">
+              <span className="cmp-takeaway-label">Takeaway</span>
+              <span className="cmp-takeaway-body">{buildVerdict()}</span>
             </div>
           </div>
 

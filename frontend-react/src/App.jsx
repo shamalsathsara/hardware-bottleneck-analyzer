@@ -112,14 +112,39 @@ function App() {
       const cpuTDP = Math.min(cores * 10, 125);
       const cuda = parseInt(fullGpu.CUDA) || 5000;
 
+      // Estimate GPU physical tier properties from CUDA shader count
       let vram = 4, gpuTdp = 75, bandwidth = 128;
-      if (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }
-      else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760; }
-      else if (cuda > 100000) { vram = 12; gpuTdp = 200; bandwidth = 448; }
-      else if (cuda > 75000) { vram = 8; gpuTdp = 130; bandwidth = 256; }
-      else if (cuda > 45000) { vram = 6; gpuTdp = 90; bandwidth = 192; }
+      let gpuBaseClock = 1200, gpuBoostClock = 1500, gpuMemoryBus = 128, gpuROPs = 32;
+      if (cuda > 250000) {
+        vram = 24; gpuTdp = 350; bandwidth = 1008;
+        gpuBaseClock = 2235; gpuBoostClock = 2520; gpuMemoryBus = 384; gpuROPs = 176;
+      } else if (cuda > 175000) {
+        vram = 16; gpuTdp = 280; bandwidth = 760;
+        gpuBaseClock = 2100; gpuBoostClock = 2400; gpuMemoryBus = 256; gpuROPs = 112;
+      } else if (cuda > 100000) {
+        vram = 12; gpuTdp = 200; bandwidth = 448;
+        gpuBaseClock = 1800; gpuBoostClock = 2100; gpuMemoryBus = 192; gpuROPs = 80;
+      } else if (cuda > 75000) {
+        vram = 8; gpuTdp = 130; bandwidth = 256;
+        gpuBaseClock = 1700; gpuBoostClock = 1950; gpuMemoryBus = 128; gpuROPs = 64;
+      } else if (cuda > 45000) {
+        vram = 6; gpuTdp = 90; bandwidth = 192;
+        gpuBaseClock = 1530; gpuBoostClock = 1785; gpuMemoryBus = 192; gpuROPs = 48;
+      } else {
+        vram = 4; gpuTdp = 75; bandwidth = 112;
+        gpuBaseClock = 1300; gpuBoostClock = 1550; gpuMemoryBus = 128; gpuROPs = 32;
+      }
+
+      // FP32 Performance in GFLOPS: 2 * shaders * boost_clock_GHz
+      const gpuFP32 = Math.round((2 * cuda * gpuBoostClock) / 1e6 * 10) / 10;
+
+      // CPU frequency estimates from core count (rough tier heuristic)
+      const cpuBaseFreqMHz = 2800 + Math.min(cores, 16) * 50;
+      const cpuTurboFreqMHz = cpuBaseFreqMHz + 1200;
+      const cpuCacheL3MB = Math.max(6, Math.min(cores * 2, 64));
 
       const payload = {
+        // Legacy V1-style display fields (kept for backward compat)
         'CPU': fullCpu.cpuName,
         'CPU Cores': cores,
         'CPU Threads': threads,
@@ -132,9 +157,24 @@ function App() {
         'RAM (GB)': parseInt(ram),
         'Resolution': resolution,
         'Graphics Settings': settings,
+        // Game identification — send both slug and name for robust resolution
         'game': selectedGame || '',
-        'gameSlug': selectedGameData?.slug || selectedGame || '',
+        'gameSlug': selectedGameData?.slug || '',
+        // V2 physical CPU specs — allows resolver to build a valid V2 payload
+        // without requiring the CPU to exist in the 20-record HardwareMaster
+        'cpuFrequency': cpuBaseFreqMHz,
+        'cpuTurboClock': cpuTurboFreqMHz,
+        'cpuCacheL3': cpuCacheL3MB,
+        // V2 physical GPU specs — allows resolver to build valid V2 payload
+        // without requiring the GPU to exist in the HardwareMaster
+        'gpuShaders': cuda,
+        'gpuBaseClock': gpuBaseClock,
+        'gpuBoostClock': gpuBoostClock,
+        'gpuMemoryBus': gpuMemoryBus,
+        'gpuRops': gpuROPs,
+        'gpuFp32': gpuFP32,
       };
+
 
       const data = await predictFps(payload);
 
@@ -151,10 +191,10 @@ function App() {
 
       setPrediction(Math.round(finalFps));
       setPredictionMetadata({
-        modelVersion: data.modelVersion || 'v2',
-        gameCoverage: data.gameCoverage || 'known',
+        modelVersion: data.modelVersion || 'unknown',
+        gameCoverage: data.gameCoverage || 'unseen',
         preset: data.preset,
-        game: data.game || selectedGame || 'General Gaming Baseline',
+        game: data.game || selectedGame || 'General Gaming',
       });
       setBottleneckData(analysis);
 

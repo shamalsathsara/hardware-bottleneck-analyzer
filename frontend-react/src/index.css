@@ -1153,6 +1153,275 @@ select:-webkit-autofill:focus {
   margin: 0;
 }
 
+/* ═══════ COMPARE RESULT — REDESIGNED ═══════ */
+
+/* FPS Summary Row (the three-column top section) */
+.cmp-fps-summary-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 720px) {
+  .cmp-fps-summary-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Individual FPS card */
+.cmp-fps-summary-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: border-color 0.2s;
+}
+.cmp-fps-summary-card--winner {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: linear-gradient(160deg, var(--surface) 0%, rgba(251, 191, 36, 0.04) 100%);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.15), 0 8px 30px -4px rgba(0, 0, 0, 0.35);
+}
+
+/* Winner / Tied badge */
+.cmp-fps-badge-winner,
+.cmp-fps-badge-tied {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  width: fit-content;
+}
+.cmp-fps-badge-winner {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+.cmp-fps-badge-tied {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+}
+
+.cmp-fps-card-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+.cmp-fps-card-rigname {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  line-height: 1.4;
+  min-height: 2.4em;
+}
+
+.cmp-fps-card-number {
+  font-size: clamp(3rem, 7vw, 4.5rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 0.35rem 0 0.1rem;
+}
+.cmp-fps-card-unit {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-left: 0.25rem;
+  opacity: 0.75;
+}
+
+/* Bottleneck mini-bar inside FPS card */
+.cmp-fps-bk-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+.cmp-fps-bk-bar-track {
+  height: 4px;
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cmp-fps-bk-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cmp-fps-bk-tag {
+  font-size: 0.775rem;
+  font-weight: 600;
+}
+
+/* Center verdict pill */
+.cmp-center-verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.25rem 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-width: 110px;
+  text-align: center;
+}
+@media (max-width: 720px) {
+  .cmp-center-verdict { flex-direction: row; padding: 0.85rem 1.5rem; }
+}
+.cmp-cv-icon {
+  display: flex;
+  color: var(--primary);
+}
+.cmp-cv-icon--tied {
+  color: var(--text-muted);
+}
+.cmp-cv-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  text-transform: uppercase;
+}
+.cmp-cv-diff {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+/* Spec Comparison Table */
+.cmp-spec-table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+.cmp-spec-table-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface-2);
+}
+.cmp-spec-table-header-icon {
+  display: flex;
+  color: var(--primary);
+}
+.cmp-spec-table-wrap {
+  overflow-x: auto;
+}
+.cmp-spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.cmp-spec-table thead th {
+  padding: 0.65rem 1.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.cmp-spec-th-label { color: var(--text-muted) !important; }
+.cmp-spec-th-a { color: var(--primary) !important; }
+.cmp-spec-th-b { color: #818cf8 !important; }
+
+.cmp-spec-td-label {
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.1);
+}
+.cmp-spec-table tbody tr:last-child .cmp-spec-td-label,
+.cmp-spec-table tbody tr:last-child .cmp-spec-td {
+  border-bottom: none;
+}
+.cmp-spec-icon {
+  display: flex;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.cmp-spec-td {
+  padding: 0.75rem 1.25rem;
+  color: var(--text-sub);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+.cmp-spec-td--highlight-a {
+  color: var(--primary);
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.05);
+}
+.cmp-spec-td--highlight-b {
+  color: #818cf8;
+  font-weight: 600;
+  background: rgba(129, 140, 248, 0.05);
+}
+
+/* Takeaway banner */
+.cmp-takeaway-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem;
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+}
+.cmp-takeaway-icon {
+  display: flex;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.cmp-takeaway-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.cmp-takeaway-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.cmp-takeaway-body {
+  font-size: 0.875rem;
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+
 /* ═══════ GAMES PAGE ═══════ */
 .content-page { max-width:1200px; margin:0 auto; padding:2.5rem 1.5rem 4rem; }
 .badge-pill { font-size:0.72rem; padding:2px 8px; border-radius:4px; background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border); display:inline-block; }

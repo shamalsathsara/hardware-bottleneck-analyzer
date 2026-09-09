@@ -140,6 +140,9 @@ export default function BottleneckCalculatorPage({
   const isGpuBottleneck = bottleneckData?.type === 'gpu';
   const severity = bottleneckData?.severity || 0;
 
+  // FPS color tier: green = smooth, yellow = playable, red = poor
+  const fpsTierColor = fpsNumber >= 60 ? '#4ade80' : fpsNumber >= 30 ? '#f59e0b' : '#ef4444';
+
   let cpuStatus = 'Good';
   let cpuSubtext = 'No significant bottleneck';
   let cpuColor = 'var(--green)';
@@ -449,11 +452,11 @@ export default function BottleneckCalculatorPage({
                         strokeWidth="11"
                         strokeLinecap="round"
                       />
-                      {/* Active colored arc */}
+                      {/* Active colored arc — color reflects FPS tier, not bottleneck */}
                       <path
                         d="M 25 75 A 55 55 0 0 1 135 75"
                         fill="none"
-                        stroke={bottleneckBadgeColor}
+                        stroke={fpsTierColor}
                         strokeWidth="11"
                         strokeDasharray={arcLength}
                         strokeDashoffset={strokeDashoffset}
@@ -463,8 +466,8 @@ export default function BottleneckCalculatorPage({
                     </svg>
 
                     <div className="gauge-center-text">
-                      <div className="gauge-fps-value">{prediction}</div>
-                      <div className="gauge-fps-unit">FPS</div>
+                      <div className="gauge-fps-value" style={{ color: fpsTierColor }}>{prediction}</div>
+                      <div className="gauge-fps-unit" style={{ color: fpsTierColor }}>FPS</div>
                     </div>
                   </div>
                   <div className="gauge-fps-label">
@@ -472,12 +475,12 @@ export default function BottleneckCalculatorPage({
                   </div>
                   {predictionMetadata?.gameCoverage === 'known' && selectedGame && (
                     <div style={{ fontSize: '0.75rem', color: '#4ade80', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
-                      ✓ Verified Game Benchmark Profile
+                      ✓ Trained Game Profile
                     </div>
                   )}
-                  {predictionMetadata?.gameCoverage === 'unseen' && (
+                  {(!selectedGame || predictionMetadata?.gameCoverage === 'unseen') && selectedGame && (
                     <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
-                      ⚠️ Estimated for an untested game
+                      ⚠ Estimated for an untested game
                     </div>
                   )}
                 </div>
