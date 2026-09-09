@@ -1,41 +1,31 @@
 const express = require('express');
 const { CPU, GPU } = require('../models/Hardware');
-const escapeRegex = require('../utils/escapeRegex');
+const { searchUnifiedCpus, searchUnifiedGpus } = require('../services/hardware/hardwareSearchService');
 
 const router = express.Router();
 
-// 1. GET /api/cpus/search -> Searches CPUs by name (limits to 20 to save bandwidth)
+// 1. GET /api/cpus/search -> Searches CPUs by name (Unified Hardware Master + Legacy with Master priority)
 router.get('/cpus/search', async (req, res) => {
   try {
     const searchQuery = (req.query.q || '').trim();
-    const safeQuery = escapeRegex(searchQuery);
-
-    const cpus = await CPU.find({ cpuName: { $regex: safeQuery, $options: 'i' } })
-      .select('cpuName cpuMark cores')
-      .sort({ cpuName: 1 })
-      .limit(20)
-      .lean();
-
+    const limit = req.query.limit;
+    const cpus = await searchUnifiedCpus(searchQuery, { limit });
     res.json(cpus);
   } catch (error) {
+    console.error('CPU search error:', error.message);
     res.status(500).json({ error: 'Failed to fetch CPUs' });
   }
 });
 
-// 2. GET /api/gpus/search -> Searches GPUs by name (limits to 20 to save bandwidth)
+// 2. GET /api/gpus/search -> Searches GPUs by name (Unified Hardware Master + Legacy with Master priority)
 router.get('/gpus/search', async (req, res) => {
   try {
     const searchQuery = (req.query.q || '').trim();
-    const safeQuery = escapeRegex(searchQuery);
-
-    const gpus = await GPU.find({ Device: { $regex: safeQuery, $options: 'i' } })
-      .select('Device Manufacturer CUDA')
-      .sort({ Device: 1 })
-      .limit(20)
-      .lean();
-
+    const limit = req.query.limit;
+    const gpus = await searchUnifiedGpus(searchQuery, { limit });
     res.json(gpus);
   } catch (error) {
+    console.error('GPU search error:', error.message);
     res.status(500).json({ error: 'Failed to fetch GPUs' });
   }
 });

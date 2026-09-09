@@ -20,7 +20,7 @@ describe('Project Aura V2.4 — Model V2 Backend Integration & Prediction Bridge
       expect(normalizeV2GameName('Grand Theft Auto V')).toBe('grandTheftAuto5');
       expect(normalizeV2GameName('cs:go')).toBe('counterStrikeGlobalOffensive');
       expect(normalizeV2GameName('Forza Horizon 5')).toBe('Forza Horizon 5');
-      expect(normalizeV2GameName(null)).toBe('apexLegends');
+      expect(normalizeV2GameName(null)).toBeNull();
     });
 
     test('normalizeSettingOrdinal maps UI preset strings to numeric ordinals', () => {

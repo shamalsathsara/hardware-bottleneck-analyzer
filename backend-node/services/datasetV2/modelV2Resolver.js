@@ -144,7 +144,7 @@ const V2_REQUIRED_FIELDS = Object.freeze([
  * Normalizes game name to Model V2 canonical name if known, or returns formatted string.
  */
 function normalizeV2GameName(rawGame) {
-  if (!rawGame) return 'apexLegends';
+  if (!rawGame || typeof rawGame !== 'string' || !rawGame.trim()) return null;
   const clean = String(rawGame).trim().toLowerCase();
   if (KNOWN_V2_GAMES_MAP[clean]) {
     return KNOWN_V2_GAMES_MAP[clean];

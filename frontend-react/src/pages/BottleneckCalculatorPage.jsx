@@ -119,6 +119,8 @@ export default function BottleneckCalculatorPage({
   prediction,
   predictionMetadata,
   bottleneckData,
+  analysisMode,
+  incompleteV2Notice,
   recommendation,
   smartRec,
   selectedUpgradeComponent,
@@ -134,6 +136,15 @@ export default function BottleneckCalculatorPage({
   const clampedFpsRatio = Math.min(Math.max(fpsNumber / maxScaleFps, 0.05), 1);
   const arcLength = 172.78; // PI * 55
   const strokeDashoffset = arcLength * (1 - (Number.isFinite(clampedFpsRatio) ? clampedFpsRatio : 0.05));
+
+  // Mode resolution
+  const hasActiveResult = !isThinking && Boolean(bottleneckData) && (
+    analysisMode === 'general' ||
+    (analysisMode === 'game' && prediction != null) ||
+    prediction != null ||
+    (!selectedGame && bottleneckData)
+  );
+  const isGeneralMode = !selectedGame || analysisMode === 'general' || prediction == null;
 
   // Derived metric cards data
   const isCpuBottleneck = bottleneckData?.type === 'cpu';
@@ -186,11 +197,11 @@ export default function BottleneckCalculatorPage({
   const ramSubtext = ramGB >= 16 ? 'Meets recommended requirements' : '8GB may cause frame stutters';
   const ramColor = ramGB >= 16 ? 'var(--green)' : 'var(--amber)';
 
-  let overallRating = 'Great';
-  let overallSubtext = 'This setup should deliver smooth gameplay';
+  let overallRating = 'Balanced';
+  let overallSubtext = 'This setup operates with good component harmony';
   let overallColor = 'var(--green)';
   if (severity > 40) {
-    overallRating = 'Imbalanced';
+    overallRating = 'Upgrade Recommended';
     overallSubtext = 'Significant component mismatch present';
     overallColor = 'var(--red)';
   } else if (severity > 20) {
@@ -205,20 +216,33 @@ export default function BottleneckCalculatorPage({
 
   // Dynamic explanation text
   const resLabel = resolution === '3840x2160' ? '4K' : resolution === '2560x1440' ? '1440p' : '1080p';
-  let meaningText = `You can expect smooth gaming performance at ${resLabel} ${settings} settings in most modern titles.`;
-  if (severity <= 10) {
-    meaningText += ` Your CPU and GPU are well balanced with no significant bottleneck restrictions.`;
-  } else if (isCpuBottleneck) {
-    meaningText += ` In CPU-intensive titles, your processor may restrict peak framerates before your graphics card is fully saturated.`;
-  } else if (isGpuBottleneck) {
-    meaningText += ` At higher graphics fidelity, your graphics card is the primary hardware limiter.`;
+  let meaningText = '';
+  if (isGeneralMode) {
+    if (severity <= 10) {
+      meaningText = 'Your CPU and GPU are well balanced with no significant bottleneck restrictions across general workloads.';
+    } else if (isCpuBottleneck) {
+      meaningText = 'In CPU-heavy workloads and high frame rate scenarios, your processor may restrict peak graphics card output.';
+    } else if (isGpuBottleneck) {
+      meaningText = 'At higher graphics resolutions and visual fidelity settings, your graphics card is the primary hardware limiter.';
+    } else {
+      meaningText = 'Your system components are operating with balanced compute throughput.';
+    }
+  } else {
+    meaningText = `You can expect smooth gaming performance at ${resLabel} ${settings} settings in ${selectedGame}.`;
+    if (severity <= 10) {
+      meaningText += ` Your CPU and GPU are well balanced with no significant bottleneck restrictions.`;
+    } else if (isCpuBottleneck) {
+      meaningText += ` In CPU-intensive titles, your processor may restrict peak framerates before your graphics card is fully saturated.`;
+    } else if (isGpuBottleneck) {
+      meaningText += ` At higher graphics fidelity, your graphics card is the primary hardware limiter.`;
+    }
   }
 
   // Bottleneck status banner text
-  let bottleneckTitle = 'Well Balanced';
-  let bottleneckIcon = '✓';
-  let bottleneckDesc = 'Your system components are well matched for this workload.';
-  let bottleneckBadgeColor = 'var(--green)';
+  let bottleneckTitle = bottleneckData?.classification?.title || 'Well Balanced';
+  let bottleneckIcon = bottleneckData?.classification?.icon || '✓';
+  let bottleneckDesc = bottleneckData?.classification?.shortExplanation || bottleneckData?.message || 'Your system components are well matched for this workload.';
+  let bottleneckBadgeColor = bottleneckData?.classification?.badgeColor || 'var(--green)';
 
   if (isCpuBottleneck) {
     bottleneckTitle = severity >= 30 ? 'CPU Bottleneck' : 'Mild CPU Limit';
@@ -383,7 +407,7 @@ export default function BottleneckCalculatorPage({
               Compare Rigs
             </button>
 
-            {prediction && (
+            {(prediction || bottleneckData) && (
               <button
                 className="btn-ghost-action"
                 onClick={handleResetAnalysis}
@@ -408,7 +432,9 @@ export default function BottleneckCalculatorPage({
             <span className="card-icon-wrap text-cyan">
               <IconGauge />
             </span>
-            <h2 id="result-card-title" className="card-title-text">Performance Result</h2>
+            <h2 id="result-card-title" className="card-title-text">
+              {isGeneralMode ? 'Bottleneck Analysis Result' : 'Game Performance Result'}
+            </h2>
           </div>
 
           {/* STATE A: THINKING / LOADING */}
@@ -416,90 +442,123 @@ export default function BottleneckCalculatorPage({
             <div className="result-loading-state">
               <div className="loading-spinner" />
               <h3 className="loading-title">Analyzing your configuration…</h3>
-              <p className="loading-subtext">Evaluating hardware compute tiers and calculating frame delivery estimates.</p>
+              <p className="loading-subtext">Evaluating hardware compute tiers and calculating performance metrics.</p>
             </div>
           )}
 
           {/* STATE B: EMPTY STATE (Before running analysis) */}
-          {!isThinking && !prediction && (
+          {!isThinking && !hasActiveResult && (
             <div className="result-empty-state">
               <div className="empty-state-icon-box">
                 <IconChart />
               </div>
               <h3 className="empty-state-title">Ready to analyze</h3>
               <p className="empty-state-desc">
-                Select your PC components on the left and click <strong>&quot;Run Analysis&quot;</strong> to see your estimated gaming performance and hardware bottleneck evaluation.
+                Select your PC components on the left and click <strong>&quot;Run Analysis&quot;</strong> to see your hardware bottleneck evaluation.
               </p>
             </div>
           )}
 
           {/* STATE C: ACTIVE RESULT STATE */}
-          {!isThinking && prediction && bottleneckData && (
+          {!isThinking && hasActiveResult && (
             <div className="result-active-content">
               
-              {/* Top Hero Section: Semicircle Gauge + Bottleneck Summary */}
-              <div className="result-hero-row">
-                
-                {/* Gauge Area */}
-                <div className="fps-gauge-container">
-                  <div className="gauge-svg-wrap">
-                    <svg viewBox="0 0 160 90" className="gauge-svg">
-                      {/* Background track */}
-                      <path
-                        d="M 25 75 A 55 55 0 0 1 135 75"
-                        fill="none"
-                        stroke="rgba(255, 255, 255, 0.08)"
-                        strokeWidth="11"
-                        strokeLinecap="round"
-                      />
-                      {/* Active colored arc — color reflects FPS tier, not bottleneck */}
-                      <path
-                        d="M 25 75 A 55 55 0 0 1 135 75"
-                        fill="none"
-                        stroke={fpsTierColor}
-                        strokeWidth="11"
-                        strokeDasharray={arcLength}
-                        strokeDashoffset={strokeDashoffset}
-                        strokeLinecap="round"
-                        className="gauge-arc-active"
-                      />
-                    </svg>
-
-                    <div className="gauge-center-text">
-                      <div className="gauge-fps-value" style={{ color: fpsTierColor }}>{prediction}</div>
-                      <div className="gauge-fps-unit" style={{ color: fpsTierColor }}>FPS</div>
-                    </div>
-                  </div>
-                  <div className="gauge-fps-label">
-                    Estimated Average FPS{selectedGame ? ` in ${selectedGame}` : ''}
-                  </div>
-                  {predictionMetadata?.gameCoverage === 'known' && selectedGame && (
-                    <div style={{ fontSize: '0.75rem', color: '#4ade80', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
-                      ✓ Trained Game Profile
-                    </div>
-                  )}
-                  {(!selectedGame || predictionMetadata?.gameCoverage === 'unseen') && selectedGame && (
-                    <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
-                      ⚠ Estimated for an untested game
-                    </div>
-                  )}
+              {/* Optional Notice: Incomplete V2 Physical Specs */}
+              {incompleteV2Notice && (
+                <div className="incomplete-v2-notice-banner">
+                  <span className="notice-icon">ℹ️</span>
+                  <span>{incompleteV2Notice}</span>
                 </div>
+              )}
 
-                {/* Bottleneck Status Details */}
-                <div className="bottleneck-status-block">
-                  <span className="section-micro-label">Bottleneck</span>
+              {/* MODE A: GENERAL PC ANALYSIS (No game selected) */}
+              {isGeneralMode ? (
+                <div className="general-bottleneck-hero-card">
+                  <div className="general-bottleneck-pct-wrap">
+                    <div className="general-bottleneck-number" style={{ color: bottleneckBadgeColor }}>
+                      {severity}%
+                    </div>
+                    <div className="general-bottleneck-label">
+                      Bottleneck
+                    </div>
+                  </div>
+
+                  <div className="general-bottleneck-details">
+                    <div className="bottleneck-status-badge" style={{ color: bottleneckBadgeColor }}>
+                      <span className="badge-icon-bullet">{bottleneckIcon}</span>
+                      <span className="badge-title-text">{bottleneckTitle}</span>
+                    </div>
+
+                    <p className="general-bottleneck-desc">
+                      {bottleneckData?.classification?.shortExplanation || bottleneckDesc}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* MODE B: GAME PERFORMANCE MODE (Game selected with FPS prediction) */
+                <div className="result-hero-row">
                   
-                  <div className="bottleneck-status-badge" style={{ color: bottleneckBadgeColor }}>
-                    <span className="badge-icon-bullet">{bottleneckIcon}</span>
-                    <span className="badge-title-text">{bottleneckTitle}</span>
+                  {/* Gauge Area */}
+                  <div className="fps-gauge-container">
+                    <div className="gauge-svg-wrap">
+                      <svg viewBox="0 0 160 90" className="gauge-svg">
+                        {/* Background track */}
+                        <path
+                          d="M 25 75 A 55 55 0 0 1 135 75"
+                          fill="none"
+                          stroke="rgba(255, 255, 255, 0.08)"
+                          strokeWidth="11"
+                          strokeLinecap="round"
+                        />
+                        {/* Active colored arc */}
+                        <path
+                          d="M 25 75 A 55 55 0 0 1 135 75"
+                          fill="none"
+                          stroke={fpsTierColor}
+                          strokeWidth="11"
+                          strokeDasharray={arcLength}
+                          strokeDashoffset={strokeDashoffset}
+                          strokeLinecap="round"
+                          className="gauge-arc-active"
+                        />
+                      </svg>
+
+                      <div className="gauge-center-text">
+                        <div className="gauge-fps-value" style={{ color: fpsTierColor }}>{prediction}</div>
+                        <div className="gauge-fps-unit" style={{ color: fpsTierColor }}>FPS</div>
+                      </div>
+                    </div>
+                    <div className="gauge-fps-label">
+                      Estimated Average FPS in {selectedGame}
+                    </div>
+                    {predictionMetadata?.gameCoverage === 'known' && (
+                      <div style={{ fontSize: '0.75rem', color: '#4ade80', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
+                        ✓ Trained Game Profile
+                      </div>
+                    )}
+                    {predictionMetadata?.gameCoverage === 'unseen' && (
+                      <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
+                        ⚠ Estimated for an untested game
+                      </div>
+                    )}
                   </div>
 
-                  <p className="bottleneck-summary-desc">
-                    {bottleneckDesc}
-                  </p>
-                </div>
+                  {/* Bottleneck Status Details */}
+                  <div className="bottleneck-status-block">
+                    <span className="section-micro-label">Bottleneck</span>
+                    
+                    <div className="bottleneck-status-badge" style={{ color: bottleneckBadgeColor }}>
+                      <span className="badge-icon-bullet">{bottleneckIcon}</span>
+                      <span className="badge-title-text">{bottleneckTitle}</span>
+                    </div>
 
-              </div>
+                    <p className="bottleneck-summary-desc">
+                      {bottleneckDesc}
+                    </p>
+                  </div>
+
+                </div>
+              )}
 
               {/* 4 Performance Metric Cards */}
               <div className="metrics-quad-grid">

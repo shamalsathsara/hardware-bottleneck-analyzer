@@ -77,6 +77,8 @@ function App() {
   const [prediction, setPrediction] = useState(null);
   const [predictionMetadata, setPredictionMetadata] = useState(null);
   const [bottleneckData, setBottleneckData] = useState(null);
+  const [analysisMode, setAnalysisMode] = useState(null); // 'general' | 'game'
+  const [incompleteV2Notice, setIncompleteV2Notice] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
   const [smartRec, setSmartRec] = useState(null);
   const [selectedUpgradeComponent, setSelectedUpgradeComponent] = useState('GPU');
@@ -91,14 +93,15 @@ function App() {
       return;
     }
     setError(null);
+    setIncompleteV2Notice(null);
     setIsThinking(true);
 
     try {
       let fullCpu = selectedCpuData;
       let fullGpu = selectedGpuData;
 
-      if (!fullCpu) fullCpu = cpuList.find(c => c.cpuName === selectedCpu);
-      if (!fullGpu) fullGpu = gpuList.find(g => g.Device === selectedGpu);
+      if (!fullCpu) fullCpu = cpuList.find(c => c.cpuName === selectedCpu || c.canonicalName === selectedCpu);
+      if (!fullGpu) fullGpu = gpuList.find(g => g.Device === selectedGpu || g.canonicalName === selectedGpu);
 
       if (!fullCpu) {
         throw new Error(`CPU not found: "${selectedCpu}". Please choose from the autocomplete list.`);
@@ -107,108 +110,101 @@ function App() {
         throw new Error(`GPU not found: "${selectedGpu}". Please choose from the autocomplete list.`);
       }
 
-      const cores = parseInt(fullCpu.cores) || 6;
-      const threads = cores * 2;
-      const cpuTDP = Math.min(cores * 10, 125);
-      const cuda = parseInt(fullGpu.CUDA) || 5000;
+      // Calculate standard bottleneck analysis using verified bottleneck engine
+      const analysis = analyzeBottleneck(fullCpu, fullGpu, maxStats);
+      const cpuScore = parseInt(fullCpu.cpuMark, 10) || 8000;
+      const cuda = parseInt(fullGpu.CUDA, 10) || 5000;
 
-      // Estimate GPU physical tier properties from CUDA shader count
-      let vram = 4, gpuTdp = 75, bandwidth = 128;
-      let gpuBaseClock = 1200, gpuBoostClock = 1500, gpuMemoryBus = 128, gpuROPs = 32;
-      if (cuda > 250000) {
-        vram = 24; gpuTdp = 350; bandwidth = 1008;
-        gpuBaseClock = 2235; gpuBoostClock = 2520; gpuMemoryBus = 384; gpuROPs = 176;
-      } else if (cuda > 175000) {
-        vram = 16; gpuTdp = 280; bandwidth = 760;
-        gpuBaseClock = 2100; gpuBoostClock = 2400; gpuMemoryBus = 256; gpuROPs = 112;
-      } else if (cuda > 100000) {
-        vram = 12; gpuTdp = 200; bandwidth = 448;
-        gpuBaseClock = 1800; gpuBoostClock = 2100; gpuMemoryBus = 192; gpuROPs = 80;
-      } else if (cuda > 75000) {
-        vram = 8; gpuTdp = 130; bandwidth = 256;
-        gpuBaseClock = 1700; gpuBoostClock = 1950; gpuMemoryBus = 128; gpuROPs = 64;
-      } else if (cuda > 45000) {
-        vram = 6; gpuTdp = 90; bandwidth = 192;
-        gpuBaseClock = 1530; gpuBoostClock = 1785; gpuMemoryBus = 192; gpuROPs = 48;
-      } else {
-        vram = 4; gpuTdp = 75; bandwidth = 112;
-        gpuBaseClock = 1300; gpuBoostClock = 1550; gpuMemoryBus = 128; gpuROPs = 32;
+      // MODE A: GENERAL PC ANALYSIS (No game selected)
+      if (!selectedGame || selectedGame.trim() === '') {
+        setAnalysisMode('general');
+        setPrediction(null);
+        setPredictionMetadata(null);
+        setBottleneckData(analysis);
+
+        // Update recommendations based on bottleneck type
+        if (analysis.type === 'gpu') {
+          const higherGpu = gpuList.find(g => (parseInt(g.CUDA, 10) || 0) > cuda + 20000);
+          setRecommendation({
+            title: 'Upgrade Recommendation: Graphics Card',
+            hardware: higherGpu ? (higherGpu.canonicalName || higherGpu.Device) : 'RTX 4070 / RX 7800 XT',
+          });
+        } else if (analysis.type === 'cpu') {
+          const higherCpu = cpuList.find(c => (parseInt(c.cpuMark, 10) || 0) > cpuScore + 3000);
+          setRecommendation({
+            title: 'Upgrade Recommendation: Processor',
+            hardware: higherCpu ? (higherCpu.canonicalName || higherCpu.cpuName) : 'Ryzen 7 7800X3D / Core i7-14700K',
+          });
+        } else {
+          setRecommendation(null);
+        }
+
+        setSmartRec(null);
+        setSelectedUpgradeComponent('GPU');
+        return;
       }
 
-      // FP32 Performance in GFLOPS: 2 * shaders * boost_clock_GHz
-      const gpuFP32 = Math.round((2 * cuda * gpuBoostClock) / 1e6 * 10) / 10;
-
-      // CPU frequency estimates from core count (rough tier heuristic)
-      const cpuBaseFreqMHz = 2800 + Math.min(cores, 16) * 50;
-      const cpuTurboFreqMHz = cpuBaseFreqMHz + 1200;
-      const cpuCacheL3MB = Math.max(6, Math.min(cores * 2, 64));
+      // MODE B: GAME PERFORMANCE MODE (Game selected)
+      setAnalysisMode('game');
 
       const payload = {
-        // Legacy V1-style display fields (kept for backward compat)
-        'CPU': fullCpu.cpuName,
-        'CPU Cores': cores,
-        'CPU Threads': threads,
-        'CPU TDP (W)': cpuTDP,
-        'GPU': fullGpu.Device,
-        'GPU Series': fullGpu.Manufacturer || 'Nvidia',
-        'GPU VRAM (GB)': vram,
-        'GPU Bandwidth (GB/s)': bandwidth,
-        'GPU TDP (W)': gpuTdp,
-        'RAM (GB)': parseInt(ram),
-        'Resolution': resolution,
+        cpuHardwareId: fullCpu.hardwareId,
+        CPU: fullCpu.canonicalName || fullCpu.cpuName,
+        gpuHardwareId: fullGpu.hardwareId,
+        GPU: fullGpu.canonicalName || fullGpu.Device,
+        'RAM (GB)': parseInt(ram, 10) || 16,
+        Resolution: resolution,
         'Graphics Settings': settings,
-        // Game identification — send both slug and name for robust resolution
-        'game': selectedGame || '',
-        'gameSlug': selectedGameData?.slug || '',
-        // V2 physical CPU specs — allows resolver to build a valid V2 payload
-        // without requiring the CPU to exist in the 20-record HardwareMaster
-        'cpuFrequency': cpuBaseFreqMHz,
-        'cpuTurboClock': cpuTurboFreqMHz,
-        'cpuCacheL3': cpuCacheL3MB,
-        // V2 physical GPU specs — allows resolver to build valid V2 payload
-        // without requiring the GPU to exist in the HardwareMaster
-        'gpuShaders': cuda,
-        'gpuBaseClock': gpuBaseClock,
-        'gpuBoostClock': gpuBoostClock,
-        'gpuMemoryBus': gpuMemoryBus,
-        'gpuRops': gpuROPs,
-        'gpuFp32': gpuFP32,
+        game: selectedGame,
+        gameSlug: selectedGameData?.slug || '',
       };
 
+      try {
+        const data = await predictFps(payload);
 
-      const data = await predictFps(payload);
+        let finalFps = data.predicted_fps ?? data.predictedFps;
+        if (cpuScore < 3000) {
+          finalFps = (cpuScore / 100) + 5;
+        } else if (analysis.severity > 10) {
+          finalFps = finalFps - finalFps * (analysis.severity / 100) * 0.70;
+        }
+        finalFps = Math.max(5, Math.min(900, finalFps));
 
-      const analysis = analyzeBottleneck(fullCpu, fullGpu, maxStats);
-      const cpuScore = parseInt(fullCpu.cpuMark) || 8000;
-      let finalFps = data.predicted_fps ?? data.predictedFps;
-
-      if (cpuScore < 3000) {
-        finalFps = (cpuScore / 100) + 5;
-      } else if (analysis.severity > 10) {
-        finalFps = finalFps - finalFps * (analysis.severity / 100) * 0.70;
+        setPrediction(Math.round(finalFps));
+        setPredictionMetadata({
+          modelVersion: data.modelVersion || 'v2',
+          gameCoverage: data.gameCoverage || 'unseen',
+          preset: data.preset || settings,
+          game: data.game || selectedGame,
+        });
+      } catch (predictErr) {
+        // If Model V2 hardware specs are incomplete for this hardware
+        const errData = predictErr.response?.data;
+        if (errData?.error === 'MODEL_V2_HARDWARE_DATA_INCOMPLETE' || predictErr.response?.status === 400) {
+          setIncompleteV2Notice(
+            'Game-specific FPS prediction is not available for this hardware yet, but bottleneck analysis is still available.'
+          );
+          setAnalysisMode('general');
+          setPrediction(null);
+          setPredictionMetadata(null);
+        } else {
+          throw predictErr;
+        }
       }
-      finalFps = Math.max(5, Math.min(900, finalFps));
 
-      setPrediction(Math.round(finalFps));
-      setPredictionMetadata({
-        modelVersion: data.modelVersion || 'unknown',
-        gameCoverage: data.gameCoverage || 'unseen',
-        preset: data.preset,
-        game: data.game || selectedGame || 'General Gaming',
-      });
       setBottleneckData(analysis);
 
       if (analysis.type === 'gpu') {
-        const higherGpu = gpuList.find(g => (parseInt(g.CUDA) || 0) > cuda + 20000);
+        const higherGpu = gpuList.find(g => (parseInt(g.CUDA, 10) || 0) > cuda + 20000);
         setRecommendation({
           title: 'Upgrade Recommendation: Graphics Card',
-          hardware: higherGpu ? higherGpu.Device : 'RTX 4070 / RX 7800 XT',
+          hardware: higherGpu ? (higherGpu.canonicalName || higherGpu.Device) : 'RTX 4070 / RX 7800 XT',
         });
       } else if (analysis.type === 'cpu') {
-        const higherCpu = cpuList.find(c => (parseInt(c.cpuMark) || 0) > cpuScore + 3000);
+        const higherCpu = cpuList.find(c => (parseInt(c.cpuMark, 10) || 0) > cpuScore + 3000);
         setRecommendation({
           title: 'Upgrade Recommendation: Processor',
-          hardware: higherCpu ? higherCpu.cpuName : 'Ryzen 7 7800X3D / Core i7-14700K',
+          hardware: higherCpu ? (higherCpu.canonicalName || higherCpu.cpuName) : 'Ryzen 7 7800X3D / Core i7-14700K',
         });
       } else {
         setRecommendation(null);
@@ -218,7 +214,7 @@ function App() {
       setSelectedUpgradeComponent('GPU');
     } catch (err) {
       console.error('Analysis error:', err.message);
-      const msg = err.response?.data?.error || err.message || 'Failed to connect to Aura AI.';
+      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to connect to Aura AI.';
       setError(msg);
     } finally {
       setIsThinking(false);
@@ -226,6 +222,8 @@ function App() {
   };
 
   const handleResetAnalysis = () => {
+    setAnalysisMode(null);
+    setIncompleteV2Notice(null);
     setPrediction(null);
     setPredictionMetadata(null);
     setBottleneckData(null);
@@ -361,6 +359,8 @@ function App() {
               prediction={prediction}
               predictionMetadata={predictionMetadata}
               bottleneckData={bottleneckData}
+              analysisMode={analysisMode}
+              incompleteV2Notice={incompleteV2Notice}
               recommendation={recommendation}
               smartRec={smartRec}
               selectedUpgradeComponent={selectedUpgradeComponent}

@@ -2,10 +2,12 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
     if (!cpu || !gpu) {
       return { 
         severity: 0, 
+        percentage: 0,
         message: 'Please select both CPU and GPU to analyze bottleneck.', 
         color: '#10b981', 
         cardClass: 'has-bottleneck-ok', 
-        type: null 
+        type: null,
+        classification: getBottleneckClassification(0, null)
       };
     }
 
@@ -58,7 +60,8 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
     const absDiff = Math.abs(diff);
   
     const SEVERITY_TABLE = [0, 5, 15, 30, 50, 70, 85];
-    const severity = SEVERITY_TABLE[Math.min(absDiff, 6)] || 0;
+    const rawSeverity = SEVERITY_TABLE[Math.min(absDiff, 6)] || 0;
+    const severity = Math.max(0, Math.min(100, Number.isFinite(rawSeverity) ? rawSeverity : 0));
   
     let message, color, cardClass, type;
   
@@ -99,9 +102,105 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
         message = 'Mild CPU Bottleneck: Your GPU is a couple tiers ahead of your CPU. A CPU upgrade would help unlock more performance in CPU-heavy games.';
       }
     }
+
+    const classification = getBottleneckClassification(severity, type);
   
-    return { severity, message, color, cardClass, type };
+    return { severity, percentage: severity, message, color, cardClass, type, classification };
   };
+
+/**
+ * Canonical Bottleneck Classification
+ * Centralized severity and status mapping.
+ *
+ * 0–5%: Well Balanced
+ * >5–10%: Minor Bottleneck
+ * >10–20%: Mild Bottleneck
+ * >20–35%: Moderate Bottleneck
+ * >35%: Significant Bottleneck
+ */
+export const getBottleneckClassification = (severity, type) => {
+  const numericSeverity = Number.isFinite(Number(severity)) ? Number(severity) : 0;
+  const clampedSeverity = Math.max(0, Math.min(100, numericSeverity));
+
+  if (clampedSeverity <= 5 || !type) {
+    return {
+      severity: clampedSeverity,
+      title: 'Well Balanced',
+      status: 'Well Balanced',
+      level: 'balanced',
+      color: '#4ade80',
+      badgeColor: 'var(--green, #4ade80)',
+      icon: '✓',
+      shortExplanation: 'CPU and GPU are reasonably balanced. Your system operates with good component harmony.',
+      type: null,
+    };
+  }
+
+  const isCpu = type === 'cpu';
+  const component = isCpu ? 'CPU' : 'GPU';
+
+  if (clampedSeverity <= 10) {
+    return {
+      severity: clampedSeverity,
+      title: `Minor ${component} Limit`,
+      status: 'Minor Bottleneck',
+      level: 'minor',
+      color: '#4ade80',
+      badgeColor: 'var(--green, #4ade80)',
+      icon: '✓',
+      shortExplanation: isCpu
+        ? 'Your CPU is slightly limiting your GPU in CPU-heavy workloads.'
+        : 'Your GPU is slightly limiting overall performance at higher resolutions.',
+      type,
+    };
+  }
+
+  if (clampedSeverity <= 20) {
+    return {
+      severity: clampedSeverity,
+      title: `Mild ${component} Limit`,
+      status: 'Mild Bottleneck',
+      level: 'mild',
+      color: '#f59e0b',
+      badgeColor: 'var(--amber, #f59e0b)',
+      icon: '⚠️',
+      shortExplanation: isCpu
+        ? 'CPU and GPU are reasonably balanced. Your CPU may slightly limit performance in CPU-heavy workloads.'
+        : 'CPU and GPU are reasonably balanced. Your GPU may slightly limit performance at higher graphics settings.',
+      type,
+    };
+  }
+
+  if (clampedSeverity <= 35) {
+    return {
+      severity: clampedSeverity,
+      title: `Moderate ${component} Bottleneck`,
+      status: 'Moderate Bottleneck',
+      level: 'moderate',
+      color: '#f59e0b',
+      badgeColor: 'var(--amber, #f59e0b)',
+      icon: '⚠️',
+      shortExplanation: isCpu
+        ? 'Your CPU is noticeably restricting your GPU throughput.'
+        : 'Your graphics card is running at full capacity and limiting framerates.',
+      type,
+    };
+  }
+
+  return {
+    severity: clampedSeverity,
+    title: `Significant ${component} Bottleneck`,
+    status: 'Significant Bottleneck',
+    level: 'significant',
+    color: '#ef4444',
+    badgeColor: 'var(--red, #ef4444)',
+    icon: '⚠️',
+    shortExplanation: isCpu
+      ? 'Your processor is significantly holding back your graphics card potential.'
+      : 'Your graphics card is severely underpowered compared to your processor.',
+    type,
+  };
+};
   
 export const getExplanation = (data, style) => {
     if (!data) return '';
