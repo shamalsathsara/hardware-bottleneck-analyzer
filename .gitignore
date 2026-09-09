@@ -33,4 +33,5 @@ Final_Report_Project_Aura.md
 ML_DATASET_V2_AUDIT.md
 PROJECT_AURA_V2_ARCHITECTURE_SPEC.md
 # Documentation
-docs/
+docs/*
+!docs/screenshots/
