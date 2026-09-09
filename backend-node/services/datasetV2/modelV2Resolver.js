@@ -4,7 +4,7 @@
  */
 
 const { resolveCanonicalCpu, resolveCanonicalGpu, resolveCanonicalGame } = require('../benchmarks/canonicalResolver');
-const { findDatasetCpu, findDatasetGpu } = require('./datasetHardwareCatalog');
+const { resolveCpuSpecs, resolveGpuSpecs, normalizeHardwareSku } = require('./hardwareCatalogIndex');
 
 const KNOWN_V2_GAMES_MAP = Object.freeze({
   'a way out': 'aWayOut',
@@ -180,6 +180,7 @@ async function resolveModelV2Payload(reqBody) {
 
   let cpuSpecs = {};
   let gpuSpecs = {};
+  let provenance = { cpu: {}, gpu: {} };
 
   if (hasDirectV2Features) {
     cpuSpecs = {
@@ -190,6 +191,9 @@ async function resolveModelV2Payload(reqBody) {
       CpuCacheL3: reqBody.CpuCacheL3,
       CpuTDP: reqBody.CpuTDP,
     };
+    for (const [k, v] of Object.entries(cpuSpecs)) {
+      provenance.cpu[k] = { value: v, source: 'direct_payload' };
+    }
     gpuSpecs = {
       GpuMemorySize: reqBody.GpuMemorySize,
       GpuBandwidth: reqBody.GpuBandwidth,
@@ -200,169 +204,139 @@ async function resolveModelV2Payload(reqBody) {
       GpuNumberOfROPs: reqBody.GpuNumberOfROPs,
       GpuFP32Performance: reqBody.GpuFP32Performance,
     };
+    for (const [k, v] of Object.entries(gpuSpecs)) {
+      provenance.gpu[k] = { value: v, source: 'direct_payload' };
+    }
   } else {
-    // 2. Resolve CPU from Master Catalog
-    const cpuQuery = reqBody.cpuHardwareId || reqBody.cpuId || reqBody.CPU || reqBody.cpuName || reqBody.CPU_Model;
-    if (cpuQuery) {
-      const cpuRes = await resolveCanonicalCpu(cpuQuery);
-      if (cpuRes.resolved) {
-        const c = cpuRes.resolved;
-        cpuSpecs = {
-          CpuNumberOfCores: c.cores?.total ?? null,
-          CpuNumberOfThreads: c.threads ?? null,
-          CpuFrequency: c.clocks?.baseClockGHz ? c.clocks.baseClockGHz * 1000 : null,
-          CpuTurboClock: c.clocks?.boostClockGHz ? c.clocks.boostClockGHz * 1000 : null,
-          CpuCacheL3: c.cache?.l3CacheMB ?? null,
-          CpuTDP: c.power?.defaultTdpWatts ?? null,
-        };
-      }
-    }
+    // 2. Generic CPU Resolution with Field-Level Provenance
+    const cpuQuery = reqBody.cpuHardwareId || reqBody.cpuId || reqBody.CPU || reqBody.cpuName || reqBody.CPU_Model || (reqBody.rawCpu && (reqBody.rawCpu.name || reqBody.rawCpu.model));
+    const rawCpu = reqBody.rawCpu || reqBody;
+    const cpuResolved = resolveCpuSpecs(cpuQuery, rawCpu);
+    cpuSpecs = { ...cpuResolved.specs };
+    provenance.cpu = { ...cpuResolved.provenance };
 
-    // Fallback tier 2A: Resolve CPU from verified project dataset catalog
-    if (!cpuSpecs.CpuNumberOfCores || !cpuSpecs.CpuCacheL3 || !cpuSpecs.CpuFrequency) {
-      const datasetCpu = findDatasetCpu(cpuQuery);
-      if (datasetCpu) {
-        if (cpuSpecs.CpuNumberOfCores == null) cpuSpecs.CpuNumberOfCores = datasetCpu.CpuNumberOfCores;
-        if (cpuSpecs.CpuNumberOfThreads == null) cpuSpecs.CpuNumberOfThreads = datasetCpu.CpuNumberOfThreads;
-        if (cpuSpecs.CpuFrequency == null) cpuSpecs.CpuFrequency = datasetCpu.CpuFrequency;
-        if (cpuSpecs.CpuTurboClock == null) cpuSpecs.CpuTurboClock = datasetCpu.CpuTurboClock;
-        if (cpuSpecs.CpuCacheL3 == null) cpuSpecs.CpuCacheL3 = datasetCpu.CpuCacheL3;
-        if (cpuSpecs.CpuTDP == null) cpuSpecs.CpuTDP = datasetCpu.CpuTDP;
-      }
-    }
-
-    // Fallback tier 2B: Direct legitimate physical fields from passed payload or raw legacy record
-    const rawCpu = reqBody.rawCpu || {};
-    if (cpuSpecs.CpuNumberOfCores == null && (rawCpu.cores || reqBody['CPU Cores'])) {
-      const parsed = Number(rawCpu.cores || reqBody['CPU Cores']);
-      if (!isNaN(parsed) && parsed > 0) cpuSpecs.CpuNumberOfCores = parsed;
-    }
-    if (cpuSpecs.CpuNumberOfThreads == null && (rawCpu.threads || reqBody['CPU Threads'])) {
-      const parsed = Number(rawCpu.threads || reqBody['CPU Threads']);
-      if (!isNaN(parsed) && parsed > 0) cpuSpecs.CpuNumberOfThreads = parsed;
-    }
-    if (cpuSpecs.CpuTDP == null && (rawCpu.TDP || reqBody['CPU TDP (W)'])) {
-      const parsed = Number(rawCpu.TDP || reqBody['CPU TDP (W)']);
-      if (!isNaN(parsed) && parsed > 0) cpuSpecs.CpuTDP = parsed;
-    }
-    if (cpuSpecs.CpuFrequency == null && (rawCpu.baseClock || reqBody.cpuFrequency)) {
-      const parsed = Number(rawCpu.baseClock || reqBody.cpuFrequency);
-      if (!isNaN(parsed) && parsed > 0) {
-        cpuSpecs.CpuFrequency = parsed < 50 ? parsed * 1000 : parsed;
-      }
-    }
-    if (cpuSpecs.CpuTurboClock == null && (rawCpu.turboClock || reqBody.cpuTurboClock)) {
-      const parsed = Number(rawCpu.turboClock || reqBody.cpuTurboClock);
-      if (!isNaN(parsed) && parsed > 0) {
-        cpuSpecs.CpuTurboClock = parsed < 50 ? parsed * 1000 : parsed;
-      }
-    }
-    // Fallback tier 2C: If rawCpu was not attached, attempt lookup in legacy CPU collection
-    if (!cpuSpecs.CpuNumberOfCores && (reqBody.cpuLegacyId || reqBody.legacyId)) {
+    // Fallback: If canonicalResolver has extra fields (e.g. from MongoDB Hardware Master)
+    if (cpuQuery && (!cpuSpecs.CpuNumberOfCores || !cpuSpecs.CpuCacheL3 || !cpuSpecs.CpuTurboClock)) {
       try {
-        const { CPU } = require('../../models/Hardware');
-        const legacyDoc = await CPU.findById(reqBody.cpuLegacyId || reqBody.legacyId).lean();
-        if (legacyDoc) {
-          if (cpuSpecs.CpuNumberOfCores == null && legacyDoc.cores) {
-            const p = Number(legacyDoc.cores);
-            if (!isNaN(p) && p > 0) cpuSpecs.CpuNumberOfCores = p;
+        const canonical = await resolveCanonicalCpu(cpuQuery);
+        if (canonical?.resolved) {
+          const c = canonical.resolved;
+          if (cpuSpecs.CpuNumberOfCores == null && c.cores?.total) {
+            cpuSpecs.CpuNumberOfCores = c.cores.total;
+            provenance.cpu.CpuNumberOfCores = { value: c.cores.total, source: 'canonical_cpu.cores' };
           }
-          if (cpuSpecs.CpuNumberOfThreads == null && legacyDoc.threads) {
-            const p = Number(legacyDoc.threads);
-            if (!isNaN(p) && p > 0) cpuSpecs.CpuNumberOfThreads = p;
+          if (cpuSpecs.CpuNumberOfThreads == null && c.threads) {
+            cpuSpecs.CpuNumberOfThreads = c.threads;
+            provenance.cpu.CpuNumberOfThreads = { value: c.threads, source: 'canonical_cpu.threads' };
           }
-          if (cpuSpecs.CpuTDP == null && legacyDoc.TDP) {
-            const p = Number(legacyDoc.TDP);
-            if (!isNaN(p) && p > 0) cpuSpecs.CpuTDP = p;
+          if (cpuSpecs.CpuFrequency == null && c.clocks?.baseClockGHz) {
+            cpuSpecs.CpuFrequency = c.clocks.baseClockGHz * 1000;
+            provenance.cpu.CpuFrequency = { value: cpuSpecs.CpuFrequency, source: 'canonical_cpu.baseClock' };
           }
-          if (cpuSpecs.CpuFrequency == null && legacyDoc.baseClock) {
-            const p = Number(legacyDoc.baseClock);
-            if (!isNaN(p) && p > 0) cpuSpecs.CpuFrequency = p < 50 ? p * 1000 : p;
+          if (cpuSpecs.CpuTurboClock == null && c.clocks?.boostClockGHz) {
+            cpuSpecs.CpuTurboClock = c.clocks.boostClockGHz * 1000;
+            provenance.cpu.CpuTurboClock = { value: cpuSpecs.CpuTurboClock, source: 'canonical_cpu.boostClock' };
           }
-          if (cpuSpecs.CpuTurboClock == null && legacyDoc.turboClock) {
-            const p = Number(legacyDoc.turboClock);
-            if (!isNaN(p) && p > 0) cpuSpecs.CpuTurboClock = p < 50 ? p * 1000 : p;
+          if (cpuSpecs.CpuCacheL3 == null && c.cache?.l3CacheMB) {
+            cpuSpecs.CpuCacheL3 = c.cache.l3CacheMB;
+            provenance.cpu.CpuCacheL3 = { value: c.cache.l3CacheMB, source: 'canonical_cpu.l3Cache' };
+          }
+          if (cpuSpecs.CpuTDP == null && c.power?.defaultTdpWatts) {
+            cpuSpecs.CpuTDP = c.power.defaultTdpWatts;
+            provenance.cpu.CpuTDP = { value: c.power.defaultTdpWatts, source: 'canonical_cpu.tdp' };
           }
         }
       } catch (_) {}
     }
 
-    // 3. Resolve GPU from Master Catalog
-    const gpuQuery = reqBody.gpuHardwareId || reqBody.gpuId || reqBody.GPU || reqBody.gpuName || reqBody.GPU_Model;
-    if (gpuQuery) {
-      const gpuRes = await resolveCanonicalGpu(gpuQuery);
-      if (gpuRes.resolved) {
-        const g = gpuRes.resolved;
-        const vramMB = g.memory?.vramGB ? g.memory.vramGB * 1000 : null;
-        const bwMBs = g.memory?.memoryBandwidthGBs ? g.memory.memoryBandwidthGBs * 1000 : null;
-        const busBits = g.memory?.memoryBusBits ?? null;
-        const shaders = g.cores?.shaderUnits ?? null;
-        const boostMHz = g.clocks?.boostClockMHz ?? null;
-        const baseMHz = g.clocks?.baseClockMHz || (boostMHz ? Math.round(boostMHz * 0.85) : null);
-        const rops = g.cores?.rops || (busBits ? Math.round(busBits / 4) : null);
-        const fp32 = (shaders && boostMHz) ? (2 * shaders * boostMHz) : null;
-
-        gpuSpecs = {
-          GpuMemorySize: vramMB,
-          GpuBandwidth: bwMBs,
-          GpuMemoryBus: busBits,
-          GpuNumberOfShadingUnits: shaders,
-          GpuBaseClock: baseMHz,
-          GpuBoostClock: boostMHz,
-          GpuNumberOfROPs: rops,
-          GpuFP32Performance: fp32,
-        };
-      }
+    // Fallback: Legacy CPU collection if legacyId provided
+    if ((!cpuSpecs.CpuNumberOfCores || !cpuSpecs.CpuFrequency) && (reqBody.cpuLegacyId || reqBody.legacyId)) {
+      try {
+        const { CPU } = require('../../models/Hardware');
+        const legacyDoc = await CPU.findById(reqBody.cpuLegacyId || reqBody.legacyId).lean();
+        if (legacyDoc) {
+          if (cpuSpecs.CpuNumberOfCores == null && legacyDoc.cores) {
+            cpuSpecs.CpuNumberOfCores = Number(legacyDoc.cores);
+            provenance.cpu.CpuNumberOfCores = { value: cpuSpecs.CpuNumberOfCores, source: 'legacy_cpu_doc.cores' };
+          }
+          if (cpuSpecs.CpuNumberOfThreads == null && legacyDoc.threads) {
+            cpuSpecs.CpuNumberOfThreads = Number(legacyDoc.threads);
+            provenance.cpu.CpuNumberOfThreads = { value: cpuSpecs.CpuNumberOfThreads, source: 'legacy_cpu_doc.threads' };
+          }
+          if (cpuSpecs.CpuTDP == null && legacyDoc.TDP) {
+            cpuSpecs.CpuTDP = Number(legacyDoc.TDP);
+            provenance.cpu.CpuTDP = { value: cpuSpecs.CpuTDP, source: 'legacy_cpu_doc.TDP' };
+          }
+          if (cpuSpecs.CpuFrequency == null && legacyDoc.baseClock) {
+            const bc = Number(legacyDoc.baseClock);
+            cpuSpecs.CpuFrequency = bc < 50 ? bc * 1000 : bc;
+            provenance.cpu.CpuFrequency = { value: cpuSpecs.CpuFrequency, source: 'legacy_cpu_doc.baseClock' };
+          }
+          if (cpuSpecs.CpuTurboClock == null && legacyDoc.turboClock) {
+            const tc = Number(legacyDoc.turboClock);
+            cpuSpecs.CpuTurboClock = tc < 50 ? tc * 1000 : tc;
+            provenance.cpu.CpuTurboClock = { value: cpuSpecs.CpuTurboClock, source: 'legacy_cpu_doc.turboClock' };
+          }
+        }
+      } catch (_) {}
     }
 
-    // Fallback tier 3A: Resolve GPU from verified project dataset catalog
-    if (!gpuSpecs.GpuNumberOfShadingUnits || !gpuSpecs.GpuFP32Performance || !gpuSpecs.GpuMemorySize) {
-      const datasetGpu = findDatasetGpu(gpuQuery);
-      if (datasetGpu) {
-        if (gpuSpecs.GpuMemorySize == null) gpuSpecs.GpuMemorySize = datasetGpu.GpuMemorySize;
-        if (gpuSpecs.GpuBandwidth == null) gpuSpecs.GpuBandwidth = datasetGpu.GpuBandwidth;
-        if (gpuSpecs.GpuMemoryBus == null) gpuSpecs.GpuMemoryBus = datasetGpu.GpuMemoryBus;
-        if (gpuSpecs.GpuNumberOfShadingUnits == null) gpuSpecs.GpuNumberOfShadingUnits = datasetGpu.GpuNumberOfShadingUnits;
-        if (gpuSpecs.GpuBaseClock == null) gpuSpecs.GpuBaseClock = datasetGpu.GpuBaseClock;
-        if (gpuSpecs.GpuBoostClock == null) gpuSpecs.GpuBoostClock = datasetGpu.GpuBoostClock;
-        if (gpuSpecs.GpuNumberOfROPs == null) gpuSpecs.GpuNumberOfROPs = datasetGpu.GpuNumberOfROPs;
-        if (gpuSpecs.GpuFP32Performance == null) gpuSpecs.GpuFP32Performance = datasetGpu.GpuFP32Performance;
-      }
-    }
+    // 3. Generic GPU Resolution with Field-Level Provenance
+    const gpuQuery = reqBody.gpuHardwareId || reqBody.gpuId || reqBody.GPU || reqBody.gpuName || reqBody.GPU_Model || (reqBody.rawGpu && (reqBody.rawGpu.name || reqBody.rawGpu.model));
+    const rawGpu = reqBody.rawGpu || reqBody;
+    const gpuResolved = resolveGpuSpecs(gpuQuery, rawGpu);
+    gpuSpecs = { ...gpuResolved.specs };
+    provenance.gpu = { ...gpuResolved.provenance };
 
-    // Fallback tier 3B: Direct legitimate physical fields from passed payload or raw legacy record
-    const rawGpu = reqBody.rawGpu || {};
-    if (gpuSpecs.GpuMemorySize == null && (rawGpu.memory?.vramGB || reqBody['GPU VRAM (GB)'])) {
-      const parsed = Number(rawGpu.memory?.vramGB || reqBody['GPU VRAM (GB)']);
-      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuMemorySize = parsed * 1000;
-    }
-    if (gpuSpecs.GpuBandwidth == null && (rawGpu.memory?.memoryBandwidthGBs || reqBody['GPU Bandwidth (GB/s)'])) {
-      const parsed = Number(rawGpu.memory?.memoryBandwidthGBs || reqBody['GPU Bandwidth (GB/s)']);
-      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuBandwidth = parsed * 1000;
-    }
-    if (gpuSpecs.GpuMemoryBus == null && (rawGpu.memory?.memoryBusBits || reqBody.gpuMemoryBus)) {
-      const parsed = Number(rawGpu.memory?.memoryBusBits || reqBody.gpuMemoryBus);
-      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuMemoryBus = parsed;
-    }
-    if (gpuSpecs.GpuNumberOfShadingUnits == null && (rawGpu.cores?.shaderUnits || reqBody.gpuShaders)) {
-      const parsed = Number(rawGpu.cores?.shaderUnits || reqBody.gpuShaders);
-      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuNumberOfShadingUnits = parsed;
-    }
-    if (gpuSpecs.GpuBaseClock == null && (rawGpu.clocks?.baseClockMHz || reqBody.gpuBaseClock)) {
-      const parsed = Number(rawGpu.clocks?.baseClockMHz || reqBody.gpuBaseClock);
-      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuBaseClock = parsed;
-    }
-    if (gpuSpecs.GpuBoostClock == null && (rawGpu.clocks?.boostClockMHz || reqBody.gpuBoostClock)) {
-      const parsed = Number(rawGpu.clocks?.boostClockMHz || reqBody.gpuBoostClock);
-      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuBoostClock = parsed;
-    }
-    if (gpuSpecs.GpuNumberOfROPs == null && (rawGpu.cores?.rops || reqBody.gpuRops)) {
-      const parsed = Number(rawGpu.cores?.rops || reqBody.gpuRops);
-      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuNumberOfROPs = parsed;
-    }
-    if (gpuSpecs.GpuFP32Performance == null && reqBody.gpuFp32) {
-      const parsed = Number(reqBody.gpuFp32);
-      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuFP32Performance = parsed;
+    // Fallback: If canonicalResolver has extra fields (e.g. from MongoDB Hardware Master)
+    if (gpuQuery && (!gpuSpecs.GpuNumberOfShadingUnits || !gpuSpecs.GpuFP32Performance || !gpuSpecs.GpuMemorySize)) {
+      try {
+        const canonicalG = await resolveCanonicalGpu(gpuQuery);
+        if (canonicalG?.resolved) {
+          const g = canonicalG.resolved;
+          const vramMB = g.memory?.vramGB ? g.memory.vramGB * 1000 : null;
+          const bwMBs = g.memory?.memoryBandwidthGBs ? g.memory.memoryBandwidthGBs * 1000 : null;
+          const busBits = g.memory?.memoryBusBits ?? null;
+          const shaders = g.cores?.shaderUnits ?? null;
+          const boostMHz = g.clocks?.boostClockMHz ?? null;
+          const baseMHz = g.clocks?.baseClockMHz || (boostMHz ? Math.round(boostMHz * 0.85) : null);
+          const rops = g.cores?.rops || (busBits ? Math.round(busBits / 4) : null);
+          const fp32 = (shaders && boostMHz) ? (2 * shaders * boostMHz) : null;
+
+          if (gpuSpecs.GpuMemorySize == null && vramMB) {
+            gpuSpecs.GpuMemorySize = vramMB;
+            provenance.gpu.GpuMemorySize = { value: vramMB, source: 'canonical_gpu.vram' };
+          }
+          if (gpuSpecs.GpuBandwidth == null && bwMBs) {
+            gpuSpecs.GpuBandwidth = bwMBs;
+            provenance.gpu.GpuBandwidth = { value: bwMBs, source: 'canonical_gpu.bandwidth' };
+          }
+          if (gpuSpecs.GpuMemoryBus == null && busBits) {
+            gpuSpecs.GpuMemoryBus = busBits;
+            provenance.gpu.GpuMemoryBus = { value: busBits, source: 'canonical_gpu.memoryBus' };
+          }
+          if (gpuSpecs.GpuNumberOfShadingUnits == null && shaders) {
+            gpuSpecs.GpuNumberOfShadingUnits = shaders;
+            provenance.gpu.GpuNumberOfShadingUnits = { value: shaders, source: 'canonical_gpu.shaderUnits' };
+          }
+          if (gpuSpecs.GpuBaseClock == null && baseMHz) {
+            gpuSpecs.GpuBaseClock = baseMHz;
+            provenance.gpu.GpuBaseClock = { value: baseMHz, source: 'canonical_gpu.baseClock' };
+          }
+          if (gpuSpecs.GpuBoostClock == null && boostMHz) {
+            gpuSpecs.GpuBoostClock = boostMHz;
+            provenance.gpu.GpuBoostClock = { value: boostMHz, source: 'canonical_gpu.boostClock' };
+          }
+          if (gpuSpecs.GpuNumberOfROPs == null && rops) {
+            gpuSpecs.GpuNumberOfROPs = rops;
+            provenance.gpu.GpuNumberOfROPs = { value: rops, source: 'canonical_gpu.rops' };
+          }
+          if (gpuSpecs.GpuFP32Performance == null && fp32) {
+            gpuSpecs.GpuFP32Performance = fp32;
+            provenance.gpu.GpuFP32Performance = { value: fp32, source: 'canonical_gpu.fp32' };
+          }
+        }
+      } catch (_) {}
     }
   }
 
@@ -415,6 +389,7 @@ async function resolveModelV2Payload(reqBody) {
     valid: missingFields.length === 0,
     missingFields,
     v2Payload,
+    provenance,
   };
 }
 
@@ -425,4 +400,7 @@ module.exports = {
   normalizeV2GameName,
   normalizeSettingOrdinal,
   resolveModelV2Payload,
+  resolveCpuSpecs,
+  resolveGpuSpecs,
+  normalizeHardwareSku,
 };

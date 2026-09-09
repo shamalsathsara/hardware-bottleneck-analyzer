@@ -191,12 +191,8 @@ function App() {
       try {
         const data = await predictFps(payload);
 
-        let finalFps = data.predicted_fps ?? data.predictedFps;
-        if (cpuScore < 3000) {
-          finalFps = (cpuScore / 100) + 5;
-        } else if (analysis.severity > 10) {
-          finalFps = finalFps - finalFps * (analysis.severity / 100) * 0.70;
-        }
+        let finalFps = Number(data.predicted_fps ?? data.predictedFps);
+        if (!Number.isFinite(finalFps)) finalFps = 60;
         finalFps = Math.max(5, Math.min(900, finalFps));
 
         setPrediction(Math.round(finalFps));

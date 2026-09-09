@@ -526,14 +526,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
     const data = await predictFps(payload);
     const analysis = analyzeBottleneck(fullCpu, fullGpu);
     const cpuScore = parseInt(fullCpu.cpuMark, 10) || 8000;
-    let finalFps = Number(data?.predicted_fps) || 60;
-
-    if (cpuScore < 3000) {
-      finalFps = (cpuScore / 100) + 5;
-    } else if (analysis.severity > 10) {
-      finalFps = finalFps - finalFps * (analysis.severity / 100) * 0.70;
-    }
-
+    let finalFps = Number(data?.predicted_fps ?? data?.predictedFps) || 60;
     finalFps = Math.max(5, Math.min(900, finalFps));
     if (!Number.isFinite(finalFps)) finalFps = 60;
 

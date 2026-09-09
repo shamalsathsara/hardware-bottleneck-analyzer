@@ -678,27 +678,36 @@ select:-webkit-autofill:focus {
 
 .gauge-center-text {
   position: absolute;
-  bottom: 0;
+  bottom: 8px;
   left: 0;
   right: 0;
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
+  pointer-events: none;
 }
 
 .gauge-fps-value {
-  font-size: 2.85rem;
+  font-size: 2rem;
   font-weight: 900;
   line-height: 1;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.03em;
   color: var(--text);
 }
 
+.gauge-fps-value.gauge-fps-value-3digit {
+  font-size: 1.75rem;
+  letter-spacing: -0.04em;
+}
+
 .gauge-fps-unit {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-muted);
+  opacity: 0.9;
 }
 
 .gauge-fps-label {

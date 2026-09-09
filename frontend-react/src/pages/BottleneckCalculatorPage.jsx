@@ -526,7 +526,7 @@ export default function BottleneckCalculatorPage({
                       </svg>
 
                       <div className="gauge-center-text">
-                        <div className="gauge-fps-value" style={{ color: fpsTierColor }}>{prediction}</div>
+                        <div className={`gauge-fps-value ${String(prediction).length >= 3 ? 'gauge-fps-value-3digit' : ''}`} style={{ color: fpsTierColor }}>{prediction}</div>
                         <div className="gauge-fps-unit" style={{ color: fpsTierColor }}>FPS</div>
                       </div>
                     </div>

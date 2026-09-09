@@ -348,6 +348,35 @@
     }
   },
   {
+    "hardwareId": "gpu_nvidia_geforce_rtx_3060_ti_desktop",
+    "type": "gpu",
+    "manufacturer": "NVIDIA",
+    "canonicalName": "NVIDIA GeForce RTX 3060 Ti",
+    "slug": "nvidia-geforce-rtx-3060-ti",
+    "aliases": ["GeForce RTX 3060 Ti", "RTX 3060 Ti", "Nvidia RTX 3060 Ti", "3060 Ti", "3060Ti"],
+    "marketSegment": "desktop",
+    "family": "GeForce RTX 30",
+    "generation": "Ampere",
+    "architecture": "GA104",
+    "releaseYear": 2020,
+    "memory": { "vramGB": 8, "memoryType": "GDDR6", "memoryBusBits": 256, "memoryBandwidthGBs": 448 },
+    "cores": { "shaderUnits": 4864, "tensorCores": 152, "rayTracingCores": 38, "rops": 80 },
+    "clocks": { "baseClockMHz": 1410, "boostClockMHz": 1665 },
+    "power": { "defaultTgpWatts": 200, "recommendedPsuWatts": 600 },
+    "features": { "rayTracingSupport": true, "hardwareUpscalingFamily": "DLSS", "dlssGenerationSupport": 2, "directXVersion": "12 Ultimate" },
+    "performance": { "rasterPerformanceScore": null, "rayTracingScore": null, "computeScore": null },
+    "quality": { "specQuality": "verified", "performanceQuality": "unavailable", "mlReady": true },
+    "provenance": {
+      "specifications": {
+        "sourceName": "NVIDIA Official Product Specifications",
+        "sourceType": "manufacturer",
+        "sourceUrl": "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3060-3060ti/",
+        "verifiedAt": "2026-09-09T00:00:00.000Z",
+        "verificationMethod": "official_spec"
+      }
+    }
+  },
+  {
     "hardwareId": "gpu_amd_radeon_rx_7900_xtx_desktop",
     "type": "gpu",
     "manufacturer": "AMD",
