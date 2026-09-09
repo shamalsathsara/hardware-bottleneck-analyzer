@@ -11,10 +11,15 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
 
   // Sync internal query state if the parent component forces a new value (e.g., loading a saved rig or preset)
   useEffect(() => {
-    if (value !== undefined && value !== query) {
-      skipNextSearchRef.current = true;
-      setQuery(value);
-      setIsOpen(false);
+    if (value !== undefined) {
+      setQuery((prevQuery) => {
+        if (value !== prevQuery) {
+          skipNextSearchRef.current = true;
+          setIsOpen(false);
+          return value;
+        }
+        return prevQuery;
+      });
     }
   }, [value]);
 

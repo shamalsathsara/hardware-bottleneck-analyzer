@@ -25,12 +25,12 @@ router.post('/predict', async (req, res) => {
     );
 
     if (!requestedVersion) {
-      if (process.env.MODEL_VERSION) {
+      if ((req.body.CPU_Make || req.body.GPU_Make) && !req.body.CPU && !req.body.CpuNumberOfCores) {
+        requestedVersion = 'v1';
+      } else if (process.env.MODEL_VERSION) {
         requestedVersion = process.env.MODEL_VERSION;
       } else if (hasV2Signature || req.body.CPU || req.body.GPU || req.body.cpuHardwareId || req.body.gpuHardwareId || req.body.cpuName || req.body.gpuName) {
         requestedVersion = 'v2';
-      } else if (req.body.CPU_Make || req.body.GPU_Make) {
-        requestedVersion = 'v1';
       } else {
         requestedVersion = 'v2';
       }

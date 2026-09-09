@@ -70,7 +70,7 @@ export default function MyRigs({ currentUser, onLoadRig, onBack }) {
         </div>
         <div>
           <h1 style={{ margin: '0 0 0.2rem', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>
-            {currentUser.username}&apos;s Rigs
+            {currentUser?.username || 'User'}&apos;s Rigs
           </h1>
           <p style={{ margin: 0, color: 'var(--text-sub)', fontSize: '0.875rem' }}>
             Your saved PC hardware profiles

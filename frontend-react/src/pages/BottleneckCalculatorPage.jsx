@@ -130,10 +130,10 @@ export default function BottleneckCalculatorPage({
 }) {
   // Semicircle gauge calculation
   const maxScaleFps = 165;
-  const fpsNumber = prediction ? Number(prediction) : 0;
+  const fpsNumber = (prediction && Number.isFinite(Number(prediction))) ? Number(prediction) : 0;
   const clampedFpsRatio = Math.min(Math.max(fpsNumber / maxScaleFps, 0.05), 1);
   const arcLength = 172.78; // PI * 55
-  const strokeDashoffset = arcLength * (1 - clampedFpsRatio);
+  const strokeDashoffset = arcLength * (1 - (Number.isFinite(clampedFpsRatio) ? clampedFpsRatio : 0.05));
 
   // Derived metric cards data
   const isCpuBottleneck = bottleneckData?.type === 'cpu';

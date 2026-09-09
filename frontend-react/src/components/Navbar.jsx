@@ -1,5 +1,11 @@
 import { useState } from 'react';
 
+const LogoIcon = () => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px', flexShrink: 0 }}>
+    <path d="M12 3L2 20h4l3.5-7h5l3.5 7h4L12 3z" />
+  </svg>
+);
+
 export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -20,8 +26,7 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
           onClick={(e) => handleNav('/', e)}
           aria-label="Project Aura Home"
         >
-          <div className="nav-logo-glow" />
-          <div className="nav-logo-border" />
+          <LogoIcon />
           <span className="logo-text">Project Aura</span>
         </a>
 
@@ -55,20 +60,28 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
           >
             About
           </a>
+          <a 
+            href="/contact" 
+            className={`nav-link ${currentRoute === '/contact' ? 'active' : ''}`}
+            onClick={(e) => handleNav('/contact', e)}
+          >
+            Contact
+          </a>
         </div>
 
-        {/* Right Actions (Auth & Primary CTA) */}
+        {/* Right Actions (Auth & User controls) */}
         <div className="nav-actions-desktop">
+          <a 
+            href="/my-rigs" 
+            className={`nav-rigs-btn ${currentRoute === '/my-rigs' ? 'active' : ''}`}
+            onClick={(e) => handleNav('/my-rigs', e)}
+            title="View your saved PC builds"
+          >
+            My Rigs
+          </a>
+
           {currentUser ? (
             <div className="nav-user-cluster">
-              <a 
-                href="/my-rigs" 
-                className={`nav-rigs-btn ${currentRoute === '/my-rigs' ? 'active' : ''}`}
-                onClick={(e) => handleNav('/my-rigs', e)}
-                title="View your saved PC builds"
-              >
-                My Rigs
-              </a>
               <span className="nav-username" title={`Logged in as ${currentUser.username}`}>
                 {currentUser.username}
               </span>
@@ -89,14 +102,6 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
               Sign In
             </a>
           )}
-
-          <a 
-            href="/bottleneck-calculator" 
-            className="nav-cta-btn"
-            onClick={(e) => handleNav('/bottleneck-calculator', e)}
-          >
-            Analyze My PC
-          </a>
         </div>
 
         {/* Mobile Menu Toggle Button */}
@@ -166,14 +171,6 @@ export default function Navbar({ currentRoute, onNavigate, currentUser, onLogout
             role="menuitem"
           >
             About
-          </a>
-          <a 
-            href="/methodology" 
-            className={`mobile-nav-item ${currentRoute === '/methodology' ? 'active' : ''}`}
-            onClick={(e) => handleNav('/methodology', e)}
-            role="menuitem"
-          >
-            Methodology
           </a>
           <a 
             href="/contact" 

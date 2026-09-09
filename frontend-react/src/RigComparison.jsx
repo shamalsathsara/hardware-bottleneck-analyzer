@@ -463,17 +463,41 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
     let gpuTdp = 75;
     let bandwidth = 128;
 
+    let gpuBaseClock = 1200, gpuBoostClock = 1500, gpuMemoryBus = 128, gpuROPs = 32;
     if (fullGpu.memory?.vramGB) {
       vram = fullGpu.memory.vramGB;
       gpuTdp = fullGpu.power?.defaultTgpWatts || 200;
       bandwidth = fullGpu.memory.memoryBandwidthGBs || 448;
+      gpuBaseClock = fullGpu.clocks?.baseClockMHz || 1800;
+      gpuBoostClock = fullGpu.clocks?.boostClockMHz || 2100;
+      gpuMemoryBus = fullGpu.memory?.busWidthBits || 192;
+      gpuROPs = fullGpu.renderUnits?.rops || 80;
     } else {
-      if      (cuda > 250000) { vram = 24; gpuTdp = 350; bandwidth = 1008; }
-      else if (cuda > 175000) { vram = 16; gpuTdp = 280; bandwidth = 760;  }
-      else if (cuda > 100000) { vram = 12; gpuTdp = 200; bandwidth = 448;  }
-      else if (cuda > 75000)  { vram = 8;  gpuTdp = 130; bandwidth = 256;  }
-      else if (cuda > 45000)  { vram = 6;  gpuTdp = 90;  bandwidth = 192;  }
+      if (cuda > 250000) {
+        vram = 24; gpuTdp = 350; bandwidth = 1008;
+        gpuBaseClock = 2235; gpuBoostClock = 2520; gpuMemoryBus = 384; gpuROPs = 176;
+      } else if (cuda > 175000) {
+        vram = 16; gpuTdp = 280; bandwidth = 760;
+        gpuBaseClock = 2100; gpuBoostClock = 2400; gpuMemoryBus = 256; gpuROPs = 112;
+      } else if (cuda > 100000) {
+        vram = 12; gpuTdp = 200; bandwidth = 448;
+        gpuBaseClock = 1800; gpuBoostClock = 2100; gpuMemoryBus = 192; gpuROPs = 80;
+      } else if (cuda > 75000) {
+        vram = 8;  gpuTdp = 130; bandwidth = 256;
+        gpuBaseClock = 1700; gpuBoostClock = 1950; gpuMemoryBus = 128; gpuROPs = 64;
+      } else if (cuda > 45000) {
+        vram = 6;  gpuTdp = 90;  bandwidth = 192;
+        gpuBaseClock = 1530; gpuBoostClock = 1785; gpuMemoryBus = 192; gpuROPs = 48;
+      } else {
+        vram = 4;  gpuTdp = 75;  bandwidth = 112;
+        gpuBaseClock = 1300; gpuBoostClock = 1550; gpuMemoryBus = 128; gpuROPs = 32;
+      }
     }
+
+    const gpuFP32 = Math.round((2 * cuda * gpuBoostClock) / 1e6 * 10) / 10;
+    const cpuBaseFreqMHz = 2800 + Math.min(cores, 16) * 50;
+    const cpuTurboFreqMHz = cpuBaseFreqMHz + 1200;
+    const cpuCacheL3MB = Math.max(6, Math.min(cores * 2, 64));
 
     const payload = {
       'CPU': fullCpu.cpuName || fullCpu.canonicalName || rig.cpu,
@@ -488,6 +512,15 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       'RAM (GB)': parseInt(rig.ram, 10) || 16,
       'Resolution': rig.resolution || '1920x1080',
       'Graphics Settings': rig.settings || 'High',
+      'cpuFrequency': cpuBaseFreqMHz,
+      'cpuTurboClock': cpuTurboFreqMHz,
+      'cpuCacheL3': cpuCacheL3MB,
+      'gpuShaders': cuda,
+      'gpuBaseClock': gpuBaseClock,
+      'gpuBoostClock': gpuBoostClock,
+      'gpuMemoryBus': gpuMemoryBus,
+      'gpuRops': gpuROPs,
+      'gpuFp32': gpuFP32,
     };
 
     const data = await predictFps(payload);

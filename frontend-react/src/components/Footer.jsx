@@ -91,7 +91,7 @@ export default function Footer({ onNavigate }) {
       <div className="footer-bottom-bar">
         <div className="footer-bottom-container">
           <p className="footer-copyright">
-            &copy; {new Date().getFullYear()} <strong>Project Aura</strong>. Built with React, Node.js, Python &amp; Random Forest ML.
+            &copy; {new Date().getFullYear()} <strong>Project Aura</strong>. Built with React, Node.js, Python &amp; Machine Learning.
           </p>
           <p className="footer-disclaimer-note">
             Performance predictions are ML regression estimates. Real-world gaming results depend on drivers, thermals, and software versions.
