@@ -2,6 +2,24 @@ import HeroBackgroundSlider from '../components/home/HeroBackgroundSlider';
 import HeroFeatureStrip from '../components/home/HeroFeatureStrip';
 
 // Icons for CTA and UI elements
+const IconDoubleChevron = () => (
+  <svg
+    className="hero-eyebrow-chevron"
+    viewBox="0 0 16 12"
+    width="14"
+    height="11"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polyline points="2 1.5 6.5 6 2 10.5" />
+    <polyline points="7.5 1.5 12 6 7.5 10.5" />
+  </svg>
+);
+
 const IconBolt = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -65,7 +83,9 @@ export default function HomePage({ onNavigate }) {
             
             {/* Small Eyebrow */}
             <div className="hero-eyebrow-tag">
-              <span className="hero-eyebrow-dot" />
+              <span className="hero-eyebrow-chevron-wrap">
+                <IconDoubleChevron />
+              </span>
               <span>PC PERFORMANCE. POWERED BY ML.</span>
             </div>
 

@@ -2,12 +2,12 @@ import { useState } from 'react';
 
 // Easily editable personal and contact details
 const contactInfo = {
-  name: "YOUR NAME",
-  email: "YOUR EMAIL",
-  location: "YOUR LOCATION",
-  github: "YOUR GITHUB URL",
-  linkedin: "YOUR LINKEDIN URL",
-  portfolio: "YOUR PORTFOLIO URL"
+  name: "Shamal Sathsara",
+  email: "shamalsathsara4@gmail.com",
+  location: "Colombo,Sri Lanka",
+  github: "https://github.com/shamalsathsara",
+  linkedin: "www.linkedin.com/in/shamal-sathsara-93a245267",
+  portfolio: "https://shamal-sathsara.vercel.app/"
 };
 
 // Clean, professional SVG icons

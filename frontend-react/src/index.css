@@ -1964,7 +1964,7 @@ select:-webkit-autofill:focus {
 .hero-eyebrow-tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -1973,12 +1973,42 @@ select:-webkit-autofill:focus {
   text-transform: uppercase;
 }
 
-.hero-eyebrow-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #38bdf8;
-  box-shadow: 0 0 8px #38bdf8;
+.hero-eyebrow-chevron-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #38bdf8;
+  animation: eyebrowChevronSlide 1.8s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+.hero-eyebrow-chevron {
+  display: block;
+  width: 14px;
+  height: 11px;
+}
+
+@keyframes eyebrowChevronSlide {
+  0% {
+    transform: translateX(0);
+    filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.4)) drop-shadow(-2px 0 4px rgba(0, 242, 254, 0.2));
+  }
+  50% {
+    transform: translateX(3px);
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.7)) drop-shadow(-4px 0 7px rgba(0, 242, 254, 0.45));
+  }
+  100% {
+    transform: translateX(0);
+    filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.4)) drop-shadow(-2px 0 4px rgba(0, 242, 254, 0.2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-eyebrow-chevron-wrap {
+    animation: none;
+    transform: none;
+    filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.5));
+  }
 }
 
 .hero-title-main {
