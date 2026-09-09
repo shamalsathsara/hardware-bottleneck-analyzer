@@ -158,5 +158,60 @@ class TestModelV2Integration(unittest.TestCase):
 
         self.assertLessEqual(ultra_res['predictedFps'], med_res['predictedFps'])
 
+    def test_model_v2_game_sensitivity(self):
+        # i5-9500 + GTX 1660 SUPER specs on Medium
+        base_hardware = {
+            "modelVersion": "v2",
+            "GameSetting_Ordinal": 2,
+            "CpuNumberOfCores": 6.0,
+            "CpuNumberOfThreads": 6.0,
+            "CpuFrequency": 3000.0,
+            "CpuTurboClock": 4400.0,
+            "CpuCacheL3": 9.0,
+            "CpuTDP": 65.0,
+            "GpuMemorySize": 6000.0,
+            "GpuBandwidth": 336000.0,
+            "GpuMemoryBus": 192.0,
+            "GpuNumberOfShadingUnits": 1408.0,
+            "GpuBaseClock": 1530.0,
+            "GpuBoostClock": 1785.0,
+            "GpuNumberOfROPs": 48.0,
+            "GpuFP32Performance": 5027000.0
+        }
+
+        # Predict for Apex Legends
+        res_apex = self.app.post('/predict', json=dict(base_hardware, GameName="apexLegends")).get_json()
+        self.assertEqual(res_apex['modelVersion'], 'v2')
+        self.assertEqual(res_apex['gameCoverage'], 'known')
+        self.assertEqual(res_apex['game'], 'apexLegends')
+        fps_apex = res_apex['predictedFps']
+
+        # Predict for GTA V
+        res_gta = self.app.post('/predict', json=dict(base_hardware, GameName="grandTheftAuto5")).get_json()
+        self.assertEqual(res_gta['modelVersion'], 'v2')
+        self.assertEqual(res_gta['gameCoverage'], 'known')
+        self.assertEqual(res_gta['game'], 'grandTheftAuto5')
+        fps_gta = res_gta['predictedFps']
+
+        # Predict for CS:GO
+        res_csgo = self.app.post('/predict', json=dict(base_hardware, GameName="counterStrikeGlobalOffensive")).get_json()
+        self.assertEqual(res_csgo['modelVersion'], 'v2')
+        self.assertEqual(res_csgo['gameCoverage'], 'known')
+        self.assertEqual(res_csgo['game'], 'counterStrikeGlobalOffensive')
+        fps_csgo = res_csgo['predictedFps']
+
+        # Verify games produce their distinct model predictions
+        self.assertNotEqual(fps_apex, fps_gta)
+        self.assertNotEqual(fps_apex, fps_csgo)
+        self.assertNotEqual(fps_gta, fps_csgo)
+        self.assertTrue(fps_csgo > fps_gta)
+
+        # Predict for unseen game (e.g. Cyberpunk 2077)
+        res_unseen = self.app.post('/predict', json=dict(base_hardware, GameName="Cyberpunk 2077")).get_json()
+        self.assertEqual(res_unseen['modelVersion'], 'v2')
+        self.assertEqual(res_unseen['gameCoverage'], 'unseen')
+        self.assertEqual(res_unseen['game'], 'Cyberpunk 2077')
+        self.assertTrue(res_unseen['predictedFps'] > 0)
+
 if __name__ == '__main__':
     unittest.main()

@@ -171,5 +171,73 @@ describe('Project Aura V2.4 — Model V2 Backend Integration & Prediction Bridge
       expect(res.body.predicted_fps).toBe(84.5);
       expect(axios.post).toHaveBeenCalledTimes(1);
     });
+
+    test('POST /api/predict routes selected game slugs correctly to Model V2', async () => {
+      const baseHardware = {
+        CpuNumberOfCores: 6,
+        CpuNumberOfThreads: 6,
+        CpuFrequency: 3000,
+        CpuTurboClock: 4400,
+        CpuCacheL3: 9,
+        CpuTDP: 65,
+        GpuMemorySize: 6000,
+        GpuBandwidth: 336000,
+        GpuMemoryBus: 192,
+        GpuNumberOfShadingUnits: 1408,
+        GpuBaseClock: 1530,
+        GpuBoostClock: 1785,
+        GpuNumberOfROPs: 48,
+        GpuFP32Performance: 5027000,
+        GameSetting_Ordinal: 2,
+      };
+
+      // Test Game A: apex-legends -> apexLegends
+      axios.post.mockResolvedValueOnce({
+        data: { predictedFps: 114.98, modelVersion: 'v2', gameCoverage: 'known', game: 'apexLegends' },
+      });
+      const resA = await request(app).post('/api/predict').send({ ...baseHardware, gameSlug: 'apex-legends' });
+      expect(resA.status).toBe(200);
+      expect(axios.post).toHaveBeenLastCalledWith(
+        expect.stringContaining('/predict'),
+        expect.objectContaining({ GameName: 'apexLegends' }),
+        expect.any(Object)
+      );
+
+      // Test Game B: grand-theft-auto-v -> grandTheftAuto5
+      axios.post.mockResolvedValueOnce({
+        data: { predictedFps: 94.98, modelVersion: 'v2', gameCoverage: 'known', game: 'grandTheftAuto5' },
+      });
+      const resB = await request(app).post('/api/predict').send({ ...baseHardware, gameSlug: 'grand-theft-auto-v' });
+      expect(resB.status).toBe(200);
+      expect(axios.post).toHaveBeenLastCalledWith(
+        expect.stringContaining('/predict'),
+        expect.objectContaining({ GameName: 'grandTheftAuto5' }),
+        expect.any(Object)
+      );
+
+      // Test Game C: cs:go -> counterStrikeGlobalOffensive
+      axios.post.mockResolvedValueOnce({
+        data: { predictedFps: 281.84, modelVersion: 'v2', gameCoverage: 'known', game: 'counterStrikeGlobalOffensive' },
+      });
+      const resC = await request(app).post('/api/predict').send({ ...baseHardware, game: 'cs:go' });
+      expect(resC.status).toBe(200);
+      expect(axios.post).toHaveBeenLastCalledWith(
+        expect.stringContaining('/predict'),
+        expect.objectContaining({ GameName: 'counterStrikeGlobalOffensive' }),
+        expect.any(Object)
+      );
+
+      // Test Game D: Unseen game -> preserved as-is
+      axios.post.mockResolvedValueOnce({
+        data: { predictedFps: 138.42, modelVersion: 'v2', gameCoverage: 'unseen', game: 'Cyberpunk 2077' },
+      });
+      const resD = await request(app).post('/api/predict').send({ ...baseHardware, game: 'Cyberpunk 2077' });
+      expect(resD.status).toBe(200);
+      expect(axios.post).toHaveBeenLastCalledWith(
+        expect.stringContaining('/predict'),
+        expect.objectContaining({ GameName: 'Cyberpunk 2077' }),
+        expect.any(Object)
+      );
+    });
   });
 });

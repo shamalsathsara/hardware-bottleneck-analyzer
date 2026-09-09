@@ -1,4 +1,5 @@
 import HardwareSearch from '../HardwareSearch';
+import GameSearch from '../components/game/GameSearch';
 
 // SVG Icons
 const IconCpu = () => (
@@ -103,6 +104,9 @@ export default function BottleneckCalculatorPage({
   selectedGpu,
   setSelectedGpu,
   setSelectedGpuData,
+  selectedGame,
+  setSelectedGame,
+  setSelectedGameData,
   ram,
   setRam,
   resolution,
@@ -286,6 +290,44 @@ export default function BottleneckCalculatorPage({
 
           <div className="form-subheading">Target Workload Settings</div>
 
+          <div className="form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <label htmlFor="game-search-input" style={{ margin: 0 }}>Target Game (Optional)</label>
+              {selectedGame && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGame('');
+                    if (setSelectedGameData) setSelectedGameData(null);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-sub, #94a3b8)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    textDecoration: 'underline',
+                    padding: 0,
+                  }}
+                >
+                  Clear Game
+                </button>
+              )}
+            </div>
+            <GameSearch 
+              placeholder="All PC Games (or type e.g. Apex Legends, GTA V, CS:GO)..."
+              onSelectGame={(game) => {
+                setSelectedGame(game.name);
+                if (setSelectedGameData) setSelectedGameData(game);
+              }}
+            />
+            {selectedGame && (
+              <div style={{ fontSize: '0.78rem', color: 'var(--primary, #38bdf8)', marginTop: '4px', fontWeight: 600 }}>
+                Selected Game: {selectedGame}
+              </div>
+            )}
+          </div>
+
           <div className="form-row-2col">
             <div className="form-group">
               <label htmlFor="resolution-select">Target Resolution</label>
@@ -425,7 +467,14 @@ export default function BottleneckCalculatorPage({
                       <div className="gauge-fps-unit">FPS</div>
                     </div>
                   </div>
-                  <div className="gauge-fps-label">Estimated Average FPS</div>
+                  <div className="gauge-fps-label">
+                    Estimated Average FPS{selectedGame ? ` in ${selectedGame}` : ''}
+                  </div>
+                  {predictionMetadata?.gameCoverage === 'known' && selectedGame && (
+                    <div style={{ fontSize: '0.75rem', color: '#4ade80', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
+                      ✓ Verified Game Benchmark Profile
+                    </div>
+                  )}
                   {predictionMetadata?.gameCoverage === 'unseen' && (
                     <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px', textAlign: 'center', fontWeight: 500 }}>
                       ⚠️ Estimated for an untested game

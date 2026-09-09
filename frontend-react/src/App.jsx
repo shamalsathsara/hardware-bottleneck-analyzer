@@ -67,6 +67,8 @@ function App() {
   const [selectedGpu, setSelectedGpu] = useState('');
   const [selectedCpuData, setSelectedCpuData] = useState(null);
   const [selectedGpuData, setSelectedGpuData] = useState(null);
+  const [selectedGame, setSelectedGame] = useState('');
+  const [selectedGameData, setSelectedGameData] = useState(null);
   const [ram, setRam] = useState('16');
   const [resolution, setResolution] = useState('1920x1080');
   const [settings, setSettings] = useState('High');
@@ -130,6 +132,8 @@ function App() {
         'RAM (GB)': parseInt(ram),
         'Resolution': resolution,
         'Graphics Settings': settings,
+        'game': selectedGame || '',
+        'gameSlug': selectedGameData?.slug || selectedGame || '',
       };
 
       const data = await predictFps(payload);
@@ -150,7 +154,7 @@ function App() {
         modelVersion: data.modelVersion || 'v2',
         gameCoverage: data.gameCoverage || 'known',
         preset: data.preset,
-        game: data.game,
+        game: data.game || selectedGame || 'General Gaming Baseline',
       });
       setBottleneckData(analysis);
 
@@ -301,6 +305,10 @@ function App() {
               selectedGpu={selectedGpu}
               setSelectedGpu={setSelectedGpu}
               setSelectedGpuData={setSelectedGpuData}
+              selectedGame={selectedGame}
+              setSelectedGame={setSelectedGame}
+              selectedGameData={selectedGameData}
+              setSelectedGameData={setSelectedGameData}
               ram={ram}
               setRam={setRam}
               resolution={resolution}
@@ -345,6 +353,12 @@ function App() {
             <GameDetailPage 
               slug={currentRoute.replace('/games/', '')}
               onNavigate={navigate}
+              onTestGame={(gameObj) => {
+                setSelectedGame(gameObj?.name || gameObj?.slug || '');
+                setSelectedGameData(gameObj || null);
+                handleResetAnalysis();
+                navigate(ROUTES.BOTTLENECK_CALCULATOR);
+              }}
             />
           )}
 

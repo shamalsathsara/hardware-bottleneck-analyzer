@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getGameBySlug } from '../services/gameService';
 
-export default function GameDetailPage({ slug, onNavigate }) {
+export default function GameDetailPage({ slug, onNavigate, onTestGame }) {
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -149,7 +149,13 @@ export default function GameDetailPage({ slug, onNavigate }) {
 
         <div>
           <button
-            onClick={() => onNavigate('/bottleneck-calculator')}
+            onClick={() => {
+              if (onTestGame) {
+                onTestGame(game);
+              } else {
+                onNavigate('/bottleneck-calculator');
+              }
+            }}
             style={{
               background: 'var(--primary, #38bdf8)',
               color: '#000',
