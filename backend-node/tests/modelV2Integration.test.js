@@ -239,5 +239,80 @@ describe('Project Aura V2.4 — Model V2 Backend Integration & Prediction Bridge
         expect.any(Object)
       );
     });
+
+    test('POST /api/predict executes Model V2 for legacy hardware with legitimate project specs (i5-8400 + GTX 1660 SUPER)', async () => {
+      axios.post.mockResolvedValueOnce({
+        data: {
+          predictedFps: 90.76,
+          predicted_fps: 90.76,
+          modelVersion: 'v2',
+          gameCoverage: 'known',
+          game: 'grandTheftAuto5',
+        },
+      });
+
+      const payload = {
+        CPU: 'Intel Core i5-8400 @ 2.80GHz',
+        GPU: 'GeForce GTX 1660 SUPER',
+        GameName: 'grandTheftAuto5',
+        GameSetting_Ordinal: 3,
+      };
+
+      const res = await request(app).post('/api/predict').send(payload);
+      expect(res.status).toBe(200);
+      expect(res.body.modelVersion).toBe('v2');
+      expect(res.body.predictedFps).toBe(90.76);
+      expect(axios.post).toHaveBeenLastCalledWith(
+        expect.stringContaining('/predict'),
+        expect.objectContaining({
+          CpuNumberOfCores: 6,
+          CpuNumberOfThreads: 6,
+          CpuCacheL3: 9,
+          GpuNumberOfShadingUnits: 1408,
+          GpuMemoryBus: 192,
+          GpuNumberOfROPs: 48,
+          GameName: 'grandTheftAuto5',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    test('POST /api/predict executes Model V2 for i5-9500 with verified project specs', async () => {
+      axios.post.mockResolvedValueOnce({
+        data: {
+          predictedFps: 94.98,
+          predicted_fps: 94.98,
+          modelVersion: 'v2',
+          gameCoverage: 'known',
+          game: 'grandTheftAuto5',
+        },
+      });
+
+      const payload = {
+        CPU: 'Intel Core i5-9500 @ 3.00GHz',
+        GPU: 'GeForce GTX 1660 SUPER',
+        GameName: 'grandTheftAuto5',
+        GameSetting_Ordinal: 3,
+      };
+
+      const res = await request(app).post('/api/predict').send(payload);
+      expect(res.status).toBe(200);
+      expect(res.body.modelVersion).toBe('v2');
+      expect(res.body.predictedFps).toBe(94.98);
+    });
+
+    test('POST /api/predict returns 400 for legacy hardware with genuinely missing physical specs', async () => {
+      const payload = {
+        CPU: 'Intel Celeron 300A',
+        GPU: 'GeForce GTX 1660 SUPER',
+        GameName: 'grandTheftAuto5',
+        GameSetting_Ordinal: 3,
+      };
+
+      const res = await request(app).post('/api/predict').send(payload);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('MODEL_V2_HARDWARE_DATA_INCOMPLETE');
+      expect(res.body.missingFields.length).toBeGreaterThan(0);
+    });
   });
 });

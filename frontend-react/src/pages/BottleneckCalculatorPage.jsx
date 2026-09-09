@@ -296,7 +296,8 @@ export default function BottleneckCalculatorPage({
               placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i7-14700K)..." 
               value={selectedCpu}
               onSelect={(item) => {
-                setSelectedCpu(item.cpuName);
+                const name = item.displayName || item.canonicalName || item.cpuName;
+                setSelectedCpu(name);
                 setSelectedCpuData(item);
               }} 
             />
@@ -309,7 +310,8 @@ export default function BottleneckCalculatorPage({
               placeholder="Type to search GPUs (e.g. RTX 4070 Ti, RX 7800 XT)..." 
               value={selectedGpu}
               onSelect={(item) => {
-                setSelectedGpu(item.Device);
+                const name = item.displayName || item.canonicalName || item.Device;
+                setSelectedGpu(name);
                 setSelectedGpuData(item);
               }} 
             />

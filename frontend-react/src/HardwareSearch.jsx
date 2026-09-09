@@ -6,10 +6,11 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const containerRef = useRef(null);
   const skipNextSearchRef = useRef(false);
 
-  // Sync internal query state if the parent component forces a new value (e.g., loading a saved rig or preset)
+  // Sync internal query state if parent forces a new value (e.g. preset or saved rig)
   useEffect(() => {
     if (value !== undefined) {
       setQuery((prevQuery) => {
@@ -43,6 +44,7 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
     if (!query || query.trim() === '') {
       setResults([]);
       setIsOpen(false);
+      setSelectedIndex(-1);
       return;
     }
 
@@ -52,18 +54,34 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
         const data = type === 'cpu' ? await searchCpus(query) : await searchGpus(query);
         const list = data || [];
         
-        // Deduplicate entries with identical names
+        // Deduplicate entries with normalized display names without filtering out legacy items
         const seen = new Set();
         const unique = [];
-        for (const item of list) {
-          const name = (type === 'cpu' ? item.cpuName : item.Device) || '';
-          if (name && !seen.has(name)) {
-            seen.add(name);
-            unique.push(item);
+        for (const rawItem of list) {
+          const displayName = rawItem.displayName || 
+            (type === 'cpu' ? rawItem.cpuName : (rawItem.Device || rawItem.gpuName)) || 
+            rawItem.canonicalName || '';
+            
+          if (displayName && !seen.has(displayName.toLowerCase())) {
+            seen.add(displayName.toLowerCase());
+            const normalized = {
+              ...rawItem,
+              displayName,
+              canonicalName: rawItem.canonicalName || displayName,
+              cpuName: displayName,
+              Device: displayName,
+              gpuName: displayName,
+              hardwareId: rawItem.hardwareId || null,
+              hardwareSource: rawItem.hardwareSource || 'legacy',
+              legacyId: rawItem.legacyId || (rawItem.hardwareSource === 'legacy' ? String(rawItem._id) : null),
+              rawRecord: rawItem.rawRecord || rawItem,
+            };
+            unique.push(normalized);
           }
         }
 
         setResults(unique);
+        setSelectedIndex(-1);
         if (unique.length > 0) {
           setIsOpen(true);
         }
@@ -72,18 +90,38 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
       } finally {
         setLoading(false);
       }
-    }, 300); // 300ms debounce
+    }, 250); // 250ms debounce
 
     return () => clearTimeout(timer);
   }, [query, type]);
 
   const handleSelect = (item) => {
-    const itemName = type === 'cpu' ? item.cpuName : item.Device;
+    const itemName = item.displayName || (type === 'cpu' ? item.cpuName : item.Device);
     skipNextSearchRef.current = true;
     setQuery(itemName);
     setIsOpen(false);
     setResults([]);
+    setSelectedIndex(-1);
     onSelect(item);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!isOpen || results.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : results.length - 1));
+    } else if (e.key === 'Enter') {
+      if (selectedIndex >= 0 && selectedIndex < results.length) {
+        e.preventDefault();
+        handleSelect(results[selectedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+    }
   };
 
   const inputId = id || `${type}-search-input`;
@@ -105,7 +143,11 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
             setIsOpen(true);
           }
         }}
+        onKeyDown={handleKeyDown}
         autoComplete="off"
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-autocomplete="list"
       />
       
       {loading && (
@@ -115,28 +157,34 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
       )}
 
       {isOpen && results.length > 0 && (
-        <ul style={{
-          position: 'absolute',
-          top: 'calc(100% + 4px)',
-          left: 0,
-          right: 0,
-          backgroundColor: 'var(--surface-2, #0f172a)',
-          border: '1px solid var(--border-hover, #334155)',
-          borderRadius: 'var(--radius-sm, 8px)',
-          listStyle: 'none',
-          padding: '4px 0',
-          margin: 0,
-          maxHeight: '220px',
-          overflowY: 'auto',
-          zIndex: 1000,
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)'
-        }}>
+        <ul 
+          role="listbox"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            backgroundColor: 'var(--surface-2, #0f172a)',
+            border: '1px solid var(--border-hover, #334155)',
+            borderRadius: 'var(--radius-sm, 8px)',
+            listStyle: 'none',
+            padding: '4px 0',
+            margin: 0,
+            maxHeight: '220px',
+            overflowY: 'auto',
+            zIndex: 1000,
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)'
+          }}
+        >
           {results.map((item, idx) => {
-            const name = type === 'cpu' ? item.cpuName : item.Device;
+            const name = item.displayName || (type === 'cpu' ? item.cpuName : item.Device);
             const key = item._id || `${name}_${idx}`;
+            const isSelected = idx === selectedIndex;
             return (
               <li 
                 key={key}
+                role="option"
+                aria-selected={isSelected}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   handleSelect(item);
@@ -146,12 +194,29 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
                   cursor: 'pointer',
                   fontSize: '0.875rem',
                   color: 'var(--text, #f8fafc)',
-                  transition: 'background-color 0.15s'
+                  backgroundColor: isSelected ? 'rgba(56, 189, 248, 0.18)' : 'transparent',
+                  transition: 'background-color 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.12)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                onMouseEnter={() => setSelectedIndex(idx)}
+                onMouseLeave={() => setSelectedIndex(-1)}
               >
-                {name}
+                <span>{name}</span>
+                {item.hardwareSource === 'master' && (
+                  <span style={{ 
+                    fontSize: '0.68rem', 
+                    padding: '2px 6px', 
+                    borderRadius: '4px', 
+                    backgroundColor: 'rgba(56, 189, 248, 0.15)', 
+                    color: 'var(--primary, #38bdf8)',
+                    fontWeight: '600'
+                  }}>
+                    MASTER
+                  </span>
+                )}
               </li>
             );
           })}

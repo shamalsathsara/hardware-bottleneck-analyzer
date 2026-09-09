@@ -192,7 +192,7 @@ function RigPanel({ label, rig, onChange, onClear, savedRigs }) {
           type="cpu" 
           placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i5-12400F)..." 
           value={rig.cpu}
-          onSelect={(item) => onChange({ ...rig, cpu: item.cpuName })} 
+          onSelect={(item) => onChange({ ...rig, cpu: item.displayName || item.canonicalName || item.cpuName, cpuData: item })} 
         />
       </div>
 
@@ -205,7 +205,7 @@ function RigPanel({ label, rig, onChange, onClear, savedRigs }) {
           type="gpu" 
           placeholder="Type to search GPUs (e.g. RTX 4070, RX 7800 XT)..." 
           value={rig.gpu}
-          onSelect={(item) => onChange({ ...rig, gpu: item.Device })} 
+          onSelect={(item) => onChange({ ...rig, gpu: item.displayName || item.canonicalName || item.Device, gpuData: item })} 
         />
       </div>
 
@@ -430,8 +430,8 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
   };
 
   const analyzeRig = async (rig) => {
-    const fullCpu = await resolveCpu(rig.cpu);
-    const fullGpu = await resolveGpu(rig.gpu);
+    const fullCpu = rig.cpuData || await resolveCpu(rig.cpu);
+    const fullGpu = rig.gpuData || await resolveGpu(rig.gpu);
 
     if (!fullCpu) {
       throw new Error(`CPU not found: "${rig.cpu}". Please choose from the autocomplete suggestions.`);

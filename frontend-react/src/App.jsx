@@ -22,6 +22,7 @@ import { ROUTES, ROUTE_TITLES, getNormalizedRoute } from './constants/routes';
 import { SRI_LK_STORES } from './constants/stores';
 import { useAuth } from './hooks/useAuth';
 import { useHardwareData } from './hooks/useHardwareData';
+import { searchCpus, searchGpus } from './services/hardwareService';
 import { predictFps } from './services/analysisService';
 import { saveUserRig } from './services/rigService';
 import { analyzeBottleneck } from './utils/BottleneckLogic';
@@ -100,8 +101,28 @@ function App() {
       let fullCpu = selectedCpuData;
       let fullGpu = selectedGpuData;
 
-      if (!fullCpu) fullCpu = cpuList.find(c => c.cpuName === selectedCpu || c.canonicalName === selectedCpu);
-      if (!fullGpu) fullGpu = gpuList.find(g => g.Device === selectedGpu || g.canonicalName === selectedGpu);
+      if (!fullCpu && selectedCpu) {
+        fullCpu = cpuList.find(c => c.cpuName === selectedCpu || c.canonicalName === selectedCpu || c.displayName === selectedCpu);
+        if (!fullCpu) {
+          try {
+            const matches = await searchCpus(selectedCpu);
+            if (matches && matches.length > 0) fullCpu = matches[0];
+          } catch (err) {
+            console.debug('CPU fallback lookup failed', err);
+          }
+        }
+      }
+      if (!fullGpu && selectedGpu) {
+        fullGpu = gpuList.find(g => g.Device === selectedGpu || g.canonicalName === selectedGpu || g.displayName === selectedGpu);
+        if (!fullGpu) {
+          try {
+            const matches = await searchGpus(selectedGpu);
+            if (matches && matches.length > 0) fullGpu = matches[0];
+          } catch (err) {
+            console.debug('GPU fallback lookup failed', err);
+          }
+        }
+      }
 
       if (!fullCpu) {
         throw new Error(`CPU not found: "${selectedCpu}". Please choose from the autocomplete list.`);
@@ -149,9 +170,17 @@ function App() {
 
       const payload = {
         cpuHardwareId: fullCpu.hardwareId,
-        CPU: fullCpu.canonicalName || fullCpu.cpuName,
+        cpuLegacyId: fullCpu.legacyId || (fullCpu.hardwareSource === 'legacy' ? String(fullCpu._id) : undefined),
+        cpuSource: fullCpu.hardwareSource,
+        CPU: fullCpu.canonicalName || fullCpu.cpuName || fullCpu.displayName,
+        rawCpu: fullCpu.rawRecord || fullCpu,
+
         gpuHardwareId: fullGpu.hardwareId,
-        GPU: fullGpu.canonicalName || fullGpu.Device,
+        gpuLegacyId: fullGpu.legacyId || (fullGpu.hardwareSource === 'legacy' ? String(fullGpu._id) : undefined),
+        gpuSource: fullGpu.hardwareSource,
+        GPU: fullGpu.canonicalName || fullGpu.Device || fullGpu.displayName,
+        rawGpu: fullGpu.rawRecord || fullGpu,
+
         'RAM (GB)': parseInt(ram, 10) || 16,
         Resolution: resolution,
         'Graphics Settings': settings,

@@ -4,6 +4,7 @@
  */
 
 const { resolveCanonicalCpu, resolveCanonicalGpu, resolveCanonicalGame } = require('../benchmarks/canonicalResolver');
+const { findDatasetCpu, findDatasetGpu } = require('./datasetHardwareCatalog');
 
 const KNOWN_V2_GAMES_MAP = Object.freeze({
   'a way out': 'aWayOut',
@@ -217,13 +218,74 @@ async function resolveModelV2Payload(reqBody) {
       }
     }
 
-    // Direct fallback from passed properties if master resolution missed any field
-    if (reqBody['CPU Cores'] && cpuSpecs.CpuNumberOfCores == null) cpuSpecs.CpuNumberOfCores = Number(reqBody['CPU Cores']);
-    if (reqBody['CPU Threads'] && cpuSpecs.CpuNumberOfThreads == null) cpuSpecs.CpuNumberOfThreads = Number(reqBody['CPU Threads']);
-    if (reqBody['CPU TDP (W)'] && cpuSpecs.CpuTDP == null) cpuSpecs.CpuTDP = Number(reqBody['CPU TDP (W)']);
-    if (reqBody.cpuFrequency && cpuSpecs.CpuFrequency == null) cpuSpecs.CpuFrequency = Number(reqBody.cpuFrequency);
-    if (reqBody.cpuTurboClock && cpuSpecs.CpuTurboClock == null) cpuSpecs.CpuTurboClock = Number(reqBody.cpuTurboClock);
-    if (reqBody.cpuCacheL3 && cpuSpecs.CpuCacheL3 == null) cpuSpecs.CpuCacheL3 = Number(reqBody.cpuCacheL3);
+    // Fallback tier 2A: Resolve CPU from verified project dataset catalog
+    if (!cpuSpecs.CpuNumberOfCores || !cpuSpecs.CpuCacheL3 || !cpuSpecs.CpuFrequency) {
+      const datasetCpu = findDatasetCpu(cpuQuery);
+      if (datasetCpu) {
+        if (cpuSpecs.CpuNumberOfCores == null) cpuSpecs.CpuNumberOfCores = datasetCpu.CpuNumberOfCores;
+        if (cpuSpecs.CpuNumberOfThreads == null) cpuSpecs.CpuNumberOfThreads = datasetCpu.CpuNumberOfThreads;
+        if (cpuSpecs.CpuFrequency == null) cpuSpecs.CpuFrequency = datasetCpu.CpuFrequency;
+        if (cpuSpecs.CpuTurboClock == null) cpuSpecs.CpuTurboClock = datasetCpu.CpuTurboClock;
+        if (cpuSpecs.CpuCacheL3 == null) cpuSpecs.CpuCacheL3 = datasetCpu.CpuCacheL3;
+        if (cpuSpecs.CpuTDP == null) cpuSpecs.CpuTDP = datasetCpu.CpuTDP;
+      }
+    }
+
+    // Fallback tier 2B: Direct legitimate physical fields from passed payload or raw legacy record
+    const rawCpu = reqBody.rawCpu || {};
+    if (cpuSpecs.CpuNumberOfCores == null && (rawCpu.cores || reqBody['CPU Cores'])) {
+      const parsed = Number(rawCpu.cores || reqBody['CPU Cores']);
+      if (!isNaN(parsed) && parsed > 0) cpuSpecs.CpuNumberOfCores = parsed;
+    }
+    if (cpuSpecs.CpuNumberOfThreads == null && (rawCpu.threads || reqBody['CPU Threads'])) {
+      const parsed = Number(rawCpu.threads || reqBody['CPU Threads']);
+      if (!isNaN(parsed) && parsed > 0) cpuSpecs.CpuNumberOfThreads = parsed;
+    }
+    if (cpuSpecs.CpuTDP == null && (rawCpu.TDP || reqBody['CPU TDP (W)'])) {
+      const parsed = Number(rawCpu.TDP || reqBody['CPU TDP (W)']);
+      if (!isNaN(parsed) && parsed > 0) cpuSpecs.CpuTDP = parsed;
+    }
+    if (cpuSpecs.CpuFrequency == null && (rawCpu.baseClock || reqBody.cpuFrequency)) {
+      const parsed = Number(rawCpu.baseClock || reqBody.cpuFrequency);
+      if (!isNaN(parsed) && parsed > 0) {
+        cpuSpecs.CpuFrequency = parsed < 50 ? parsed * 1000 : parsed;
+      }
+    }
+    if (cpuSpecs.CpuTurboClock == null && (rawCpu.turboClock || reqBody.cpuTurboClock)) {
+      const parsed = Number(rawCpu.turboClock || reqBody.cpuTurboClock);
+      if (!isNaN(parsed) && parsed > 0) {
+        cpuSpecs.CpuTurboClock = parsed < 50 ? parsed * 1000 : parsed;
+      }
+    }
+    // Fallback tier 2C: If rawCpu was not attached, attempt lookup in legacy CPU collection
+    if (!cpuSpecs.CpuNumberOfCores && (reqBody.cpuLegacyId || reqBody.legacyId)) {
+      try {
+        const { CPU } = require('../../models/Hardware');
+        const legacyDoc = await CPU.findById(reqBody.cpuLegacyId || reqBody.legacyId).lean();
+        if (legacyDoc) {
+          if (cpuSpecs.CpuNumberOfCores == null && legacyDoc.cores) {
+            const p = Number(legacyDoc.cores);
+            if (!isNaN(p) && p > 0) cpuSpecs.CpuNumberOfCores = p;
+          }
+          if (cpuSpecs.CpuNumberOfThreads == null && legacyDoc.threads) {
+            const p = Number(legacyDoc.threads);
+            if (!isNaN(p) && p > 0) cpuSpecs.CpuNumberOfThreads = p;
+          }
+          if (cpuSpecs.CpuTDP == null && legacyDoc.TDP) {
+            const p = Number(legacyDoc.TDP);
+            if (!isNaN(p) && p > 0) cpuSpecs.CpuTDP = p;
+          }
+          if (cpuSpecs.CpuFrequency == null && legacyDoc.baseClock) {
+            const p = Number(legacyDoc.baseClock);
+            if (!isNaN(p) && p > 0) cpuSpecs.CpuFrequency = p < 50 ? p * 1000 : p;
+          }
+          if (cpuSpecs.CpuTurboClock == null && legacyDoc.turboClock) {
+            const p = Number(legacyDoc.turboClock);
+            if (!isNaN(p) && p > 0) cpuSpecs.CpuTurboClock = p < 50 ? p * 1000 : p;
+          }
+        }
+      } catch (_) {}
+    }
 
     // 3. Resolve GPU from Master Catalog
     const gpuQuery = reqBody.gpuHardwareId || reqBody.gpuId || reqBody.GPU || reqBody.gpuName || reqBody.GPU_Model;
@@ -253,15 +315,55 @@ async function resolveModelV2Payload(reqBody) {
       }
     }
 
-    // Direct fallback from passed GPU properties
-    if (reqBody['GPU VRAM (GB)'] && gpuSpecs.GpuMemorySize == null) gpuSpecs.GpuMemorySize = Number(reqBody['GPU VRAM (GB)']) * 1000;
-    if (reqBody['GPU Bandwidth (GB/s)'] && gpuSpecs.GpuBandwidth == null) gpuSpecs.GpuBandwidth = Number(reqBody['GPU Bandwidth (GB/s)']) * 1000;
-    if (reqBody.gpuMemoryBus && gpuSpecs.GpuMemoryBus == null) gpuSpecs.GpuMemoryBus = Number(reqBody.gpuMemoryBus);
-    if (reqBody.gpuShaders && gpuSpecs.GpuNumberOfShadingUnits == null) gpuSpecs.GpuNumberOfShadingUnits = Number(reqBody.gpuShaders);
-    if (reqBody.gpuBaseClock && gpuSpecs.GpuBaseClock == null) gpuSpecs.GpuBaseClock = Number(reqBody.gpuBaseClock);
-    if (reqBody.gpuBoostClock && gpuSpecs.GpuBoostClock == null) gpuSpecs.GpuBoostClock = Number(reqBody.gpuBoostClock);
-    if (reqBody.gpuRops && gpuSpecs.GpuNumberOfROPs == null) gpuSpecs.GpuNumberOfROPs = Number(reqBody.gpuRops);
-    if (reqBody.gpuFp32 && gpuSpecs.GpuFP32Performance == null) gpuSpecs.GpuFP32Performance = Number(reqBody.gpuFp32);
+    // Fallback tier 3A: Resolve GPU from verified project dataset catalog
+    if (!gpuSpecs.GpuNumberOfShadingUnits || !gpuSpecs.GpuFP32Performance || !gpuSpecs.GpuMemorySize) {
+      const datasetGpu = findDatasetGpu(gpuQuery);
+      if (datasetGpu) {
+        if (gpuSpecs.GpuMemorySize == null) gpuSpecs.GpuMemorySize = datasetGpu.GpuMemorySize;
+        if (gpuSpecs.GpuBandwidth == null) gpuSpecs.GpuBandwidth = datasetGpu.GpuBandwidth;
+        if (gpuSpecs.GpuMemoryBus == null) gpuSpecs.GpuMemoryBus = datasetGpu.GpuMemoryBus;
+        if (gpuSpecs.GpuNumberOfShadingUnits == null) gpuSpecs.GpuNumberOfShadingUnits = datasetGpu.GpuNumberOfShadingUnits;
+        if (gpuSpecs.GpuBaseClock == null) gpuSpecs.GpuBaseClock = datasetGpu.GpuBaseClock;
+        if (gpuSpecs.GpuBoostClock == null) gpuSpecs.GpuBoostClock = datasetGpu.GpuBoostClock;
+        if (gpuSpecs.GpuNumberOfROPs == null) gpuSpecs.GpuNumberOfROPs = datasetGpu.GpuNumberOfROPs;
+        if (gpuSpecs.GpuFP32Performance == null) gpuSpecs.GpuFP32Performance = datasetGpu.GpuFP32Performance;
+      }
+    }
+
+    // Fallback tier 3B: Direct legitimate physical fields from passed payload or raw legacy record
+    const rawGpu = reqBody.rawGpu || {};
+    if (gpuSpecs.GpuMemorySize == null && (rawGpu.memory?.vramGB || reqBody['GPU VRAM (GB)'])) {
+      const parsed = Number(rawGpu.memory?.vramGB || reqBody['GPU VRAM (GB)']);
+      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuMemorySize = parsed * 1000;
+    }
+    if (gpuSpecs.GpuBandwidth == null && (rawGpu.memory?.memoryBandwidthGBs || reqBody['GPU Bandwidth (GB/s)'])) {
+      const parsed = Number(rawGpu.memory?.memoryBandwidthGBs || reqBody['GPU Bandwidth (GB/s)']);
+      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuBandwidth = parsed * 1000;
+    }
+    if (gpuSpecs.GpuMemoryBus == null && (rawGpu.memory?.memoryBusBits || reqBody.gpuMemoryBus)) {
+      const parsed = Number(rawGpu.memory?.memoryBusBits || reqBody.gpuMemoryBus);
+      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuMemoryBus = parsed;
+    }
+    if (gpuSpecs.GpuNumberOfShadingUnits == null && (rawGpu.cores?.shaderUnits || reqBody.gpuShaders)) {
+      const parsed = Number(rawGpu.cores?.shaderUnits || reqBody.gpuShaders);
+      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuNumberOfShadingUnits = parsed;
+    }
+    if (gpuSpecs.GpuBaseClock == null && (rawGpu.clocks?.baseClockMHz || reqBody.gpuBaseClock)) {
+      const parsed = Number(rawGpu.clocks?.baseClockMHz || reqBody.gpuBaseClock);
+      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuBaseClock = parsed;
+    }
+    if (gpuSpecs.GpuBoostClock == null && (rawGpu.clocks?.boostClockMHz || reqBody.gpuBoostClock)) {
+      const parsed = Number(rawGpu.clocks?.boostClockMHz || reqBody.gpuBoostClock);
+      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuBoostClock = parsed;
+    }
+    if (gpuSpecs.GpuNumberOfROPs == null && (rawGpu.cores?.rops || reqBody.gpuRops)) {
+      const parsed = Number(rawGpu.cores?.rops || reqBody.gpuRops);
+      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuNumberOfROPs = parsed;
+    }
+    if (gpuSpecs.GpuFP32Performance == null && reqBody.gpuFp32) {
+      const parsed = Number(reqBody.gpuFp32);
+      if (!isNaN(parsed) && parsed > 0) gpuSpecs.GpuFP32Performance = parsed;
+    }
   }
 
   // 4. Resolve Game Name

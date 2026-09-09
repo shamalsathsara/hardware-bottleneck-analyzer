@@ -67,9 +67,17 @@ async function searchUnifiedCpus(query, options = {}) {
 
   // 2. Search Legacy CPU collection
   const legacyFilter = {
-    $and: regexList.map(reg => ({ cpuName: reg })),
+    $and: regexList.map(reg => ({
+      $or: [
+        { cpuName: reg },
+        { manufacturer: reg },
+      ],
+    })),
   };
-  const legacyCpus = await CPU.find(legacyFilter).limit(limit * 2).lean();
+  const legacyCpus = await CPU.find(legacyFilter)
+    .sort({ cpuMark: -1 })
+    .limit(limit * 3)
+    .lean();
 
   const results = [];
   const seenSkus = new Set();
@@ -84,10 +92,13 @@ async function searchUnifiedCpus(query, options = {}) {
 
     results.push({
       _id: m._id,
-      hardwareId: m.hardwareId,
+      displayName: m.canonicalName,
       canonicalName: m.canonicalName,
-      slug: m.slug,
       cpuName: m.canonicalName,
+      hardwareId: m.hardwareId,
+      hardwareSource: 'master',
+      legacyId: null,
+      slug: m.slug,
       cpuMark: cpuScore,
       cores: totalCores,
       threads: m.threads || totalCores * 2,
@@ -96,7 +107,7 @@ async function searchUnifiedCpus(query, options = {}) {
       power: m.power,
       marketSegment: m.marketSegment,
       quality: m.quality,
-      hardwareSource: 'master',
+      rawRecord: m,
     });
   }
 
@@ -106,13 +117,25 @@ async function searchUnifiedCpus(query, options = {}) {
     if (!sku || seenSkus.has(sku)) continue;
     seenSkus.add(sku);
 
+    const displayName = l.cpuName;
+
     results.push({
       _id: l._id,
-      cpuName: l.cpuName,
-      canonicalName: l.cpuName,
+      displayName,
+      canonicalName: displayName,
+      cpuName: displayName,
+      hardwareId: null,
+      hardwareSource: 'legacy',
+      legacyId: String(l._id),
       cpuMark: parseInt(l.cpuMark, 10) || 8000,
       cores: parseInt(l.cores, 10) || 6,
-      hardwareSource: 'legacy',
+      threads: l.threads ? parseInt(l.threads, 10) : undefined,
+      baseClock: l.baseClock,
+      turboClock: l.turboClock,
+      TDP: l.TDP,
+      socket: l.socket,
+      category: l.category,
+      rawRecord: l,
     });
 
     if (results.length >= limit) break;
@@ -155,9 +178,18 @@ async function searchUnifiedGpus(query, options = {}) {
 
   // 2. Search Legacy GPU collection
   const legacyFilter = {
-    $and: regexList.map(reg => ({ Device: reg })),
+    $and: regexList.map(reg => ({
+      $or: [
+        { Device: reg },
+        { gpuName: reg },
+        { Manufacturer: reg },
+      ],
+    })),
   };
-  const legacyGpus = await GPU.find(legacyFilter).limit(limit * 2).lean();
+  const legacyGpus = await GPU.find(legacyFilter)
+    .sort({ CUDA: -1, G3Dmark: -1 })
+    .limit(limit * 3)
+    .lean();
 
   const results = [];
   const seenSkus = new Set();
@@ -174,10 +206,14 @@ async function searchUnifiedGpus(query, options = {}) {
 
     results.push({
       _id: m._id,
-      hardwareId: m.hardwareId,
+      displayName: m.canonicalName,
       canonicalName: m.canonicalName,
-      slug: m.slug,
       Device: m.canonicalName,
+      gpuName: m.canonicalName,
+      hardwareId: m.hardwareId,
+      hardwareSource: 'master',
+      legacyId: null,
+      slug: m.slug,
       Manufacturer: m.manufacturer || 'NVIDIA',
       CUDA: cudaEst,
       memory: m.memory,
@@ -187,23 +223,33 @@ async function searchUnifiedGpus(query, options = {}) {
       power: m.power,
       marketSegment: m.marketSegment,
       quality: m.quality,
-      hardwareSource: 'master',
+      rawRecord: m,
     });
   }
 
   // Append legacy records only if not already represented by Master
   for (const l of legacyGpus) {
-    const sku = normalizeSkuKey(l.Device);
+    const rawName = l.Device || l.gpuName || '';
+    const sku = normalizeSkuKey(rawName);
     if (!sku || seenSkus.has(sku)) continue;
     seenSkus.add(sku);
 
+    const displayName = rawName;
+
     results.push({
       _id: l._id,
-      Device: l.Device,
-      canonicalName: l.Device,
+      displayName,
+      canonicalName: displayName,
+      Device: displayName,
+      gpuName: displayName,
+      hardwareId: null,
+      hardwareSource: 'legacy',
+      legacyId: String(l._id),
       Manufacturer: l.Manufacturer || 'NVIDIA',
       CUDA: parseInt(l.CUDA, 10) || 50000,
-      hardwareSource: 'legacy',
+      G3Dmark: l.G3Dmark,
+      TDP: l.TDP,
+      rawRecord: l,
     });
 
     if (results.length >= limit) break;

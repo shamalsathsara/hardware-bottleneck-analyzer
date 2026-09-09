@@ -30,19 +30,24 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
   });
 
   describe('2. Unified CPU Search', () => {
-    test('finds older CPUs from legacy database (i5-8400, i5-9500, i5-10400F)', async () => {
+    test('finds older CPUs from legacy database (i3-10105, i5-8400, i5-9500, i5-10400F)', async () => {
+      const res10105 = await searchUnifiedCpus('i3 10105');
+      expect(res10105.length).toBeGreaterThan(0);
+      expect(res10105.some(c => (c.cpuName || c.displayName || '').includes('10105'))).toBe(true);
+      expect(res10105[0].hardwareSource).toBeDefined();
+
       const res8400 = await searchUnifiedCpus('i5 8400');
       expect(res8400.length).toBeGreaterThan(0);
-      expect(res8400.some(c => c.cpuName.includes('8400'))).toBe(true);
+      expect(res8400.some(c => (c.cpuName || c.displayName || '').includes('8400'))).toBe(true);
       expect(res8400[0].hardwareSource).toBeDefined();
 
       const res9500 = await searchUnifiedCpus('i5-9500');
       expect(res9500.length).toBeGreaterThan(0);
-      expect(res9500.some(c => c.cpuName.includes('9500'))).toBe(true);
+      expect(res9500.some(c => (c.cpuName || c.displayName || '').includes('9500'))).toBe(true);
 
       const res10400 = await searchUnifiedCpus('i5 10400F');
       expect(res10400.length).toBeGreaterThan(0);
-      expect(res10400.some(c => c.cpuName.includes('10400'))).toBe(true);
+      expect(res10400.some(c => (c.cpuName || c.displayName || '').includes('10400'))).toBe(true);
     });
 
     test('finds modern CPUs from Hardware Master with canonical priority', async () => {
@@ -70,12 +75,12 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
     test('finds legacy/older GPUs from legacy collection (GTX 1660 SUPER, RTX 3060 Ti)', async () => {
       const res1660 = await searchUnifiedGpus('GTX 1660 SUPER');
       expect(res1660.length).toBeGreaterThan(0);
-      expect(res1660.some(g => g.Device.includes('1660 SUPER'))).toBe(true);
+      expect(res1660.some(g => (g.Device || g.displayName || '').includes('1660 SUPER'))).toBe(true);
       expect(res1660[0].hardwareSource).toBe('legacy');
 
       const res3060Ti = await searchUnifiedGpus('RTX 3060 Ti');
       expect(res3060Ti.length).toBeGreaterThan(0);
-      expect(res3060Ti.some(g => g.Device.includes('3060 Ti'))).toBe(true);
+      expect(res3060Ti.some(g => (g.Device || g.displayName || '').includes('3060 Ti'))).toBe(true);
       expect(res3060Ti[0].hardwareSource).toBe('legacy');
     });
 
@@ -91,7 +96,7 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
     });
   });
 
-  describe('4. Model V2 Hardware Spec Safety', () => {
+  describe('4. Model V2 Hardware Spec Safety & Resolution', () => {
     test('resolves full physical specs when master hardware is provided', async () => {
       const payload = {
         cpuHardwareId: 'cpu_amd_ryzen_7_7800x3d_desktop',
@@ -107,17 +112,61 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
       expect(result.v2Payload.GameName).toBe('grandTheftAuto5');
     });
 
-    test('rejects incomplete physical hardware without fabricating synthetic tiers', async () => {
+    test('resolves legitimate physical specs for legacy hardware from verified project data (i5-8400 + GTX 1660 SUPER)', async () => {
       const payload = {
-        CPU: 'Intel Core i5-8400 @ 2.80GHz', // Legacy CPU not in master
-        GPU: 'GeForce GTX 1660 SUPER',       // Legacy GPU not in master
+        CPU: 'Intel Core i5-8400 @ 2.80GHz',
+        GPU: 'GeForce GTX 1660 SUPER',
+        GameName: 'grandTheftAuto5',
+        GameSetting_Ordinal: 3,
+      };
+
+      const result = await resolveModelV2Payload(payload);
+      expect(result.valid).toBe(true);
+      expect(result.v2Payload.CpuNumberOfCores).toBe(6);
+      expect(result.v2Payload.CpuNumberOfThreads).toBe(6);
+      expect(result.v2Payload.CpuCacheL3).toBe(9);
+      expect(result.v2Payload.GpuNumberOfShadingUnits).toBe(1408);
+      expect(result.v2Payload.GpuMemoryBus).toBe(192);
+      expect(result.v2Payload.GpuNumberOfROPs).toBe(48);
+      expect(result.missingFields).toHaveLength(0);
+    });
+
+    test('resolves legitimate physical specs for i5-9500 and i3-10105 from project data', async () => {
+      const payload9500 = {
+        CPU: 'Intel Core i5-9500 @ 3.00GHz',
+        GPU: 'GeForce GTX 1660 SUPER',
+        GameName: 'grandTheftAuto5',
+        GameSetting_Ordinal: 3,
+      };
+      const res9500 = await resolveModelV2Payload(payload9500);
+      expect(res9500.valid).toBe(true);
+      expect(res9500.v2Payload.CpuNumberOfCores).toBe(6);
+      expect(res9500.v2Payload.CpuCacheL3).toBe(9);
+
+      const payload10105 = {
+        CPU: 'Intel Core i3-10105 @ 3.70GHz',
+        GPU: 'GeForce GTX 1660 SUPER',
+        GameName: 'grandTheftAuto5',
+        GameSetting_Ordinal: 3,
+      };
+      const res10105 = await resolveModelV2Payload(payload10105);
+      expect(res10105.valid).toBe(true);
+      expect(res10105.v2Payload.CpuNumberOfCores).toBe(4);
+      expect(res10105.v2Payload.CpuNumberOfThreads).toBe(8);
+      expect(res10105.v2Payload.CpuCacheL3).toBe(6);
+    });
+
+    test('returns controlled fallback for hardware with genuinely missing physical specs', async () => {
+      const payload = {
+        CPU: 'Generic Legacy Pentium 4',
+        GPU: 'GeForce GTX 1660 SUPER',
         GameName: 'grandTheftAuto5',
         GameSetting_Ordinal: 3,
       };
 
       const result = await resolveModelV2Payload(payload);
       expect(result.valid).toBe(false);
-      expect(result.missingFields.length).toBeGreaterThan(0);
+      expect(result.missingFields).toContain('CpuNumberOfCores');
     });
 
     test('does NOT fake a fallback game (e.g. Apex Legends) when no game is supplied', async () => {
