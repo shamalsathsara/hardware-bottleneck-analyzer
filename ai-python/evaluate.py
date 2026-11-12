@@ -5,7 +5,10 @@ Comprehensive evaluation of the trained Random Forest Regressor
 
 import pandas as pd
 import numpy as np
+import os
 import joblib
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import (
     mean_absolute_error, mean_squared_error, r2_score,
@@ -20,9 +23,9 @@ print("=" * 60)
 
 # ── 1. Load model & data ───────────────────────────────────
 print("\n📦 Loading trained model and dataset...")
-model        = joblib.load('project_aura.joblib')
-model_cols   = joblib.load('ai_columns.joblib')
-data         = pd.read_csv('FpsTest/fps_dataset.csv')
+model        = joblib.load(os.path.join(BASE_DIR, 'project_aura.joblib'))
+model_cols   = joblib.load(os.path.join(BASE_DIR, 'ai_columns.joblib'))
+data         = pd.read_csv(os.path.join(BASE_DIR, 'FpsTest', 'fps_dataset.csv'))
 
 print(f"   Dataset rows  : {len(data)}")
 print(f"   Dataset cols  : {len(data.columns)}")

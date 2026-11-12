@@ -15,12 +15,8 @@ export async function searchGpus(query) {
 }
 
 export async function fetchHardwareStats() {
-  try {
-    const { data } = await apiClient.get('/api/hardware/stats');
-    return data;
-  } catch {
-    return { maxCpuMark: 100000, maxGpuCuda: 500000 };
-  }
+  const { data } = await apiClient.get('/api/hardware/stats');
+  return data;
 }
 
 export async function fetchAllCpusLightweight() {

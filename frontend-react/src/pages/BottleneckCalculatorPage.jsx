@@ -1,5 +1,7 @@
 import HardwareSearch from '../HardwareSearch';
 import GameSearch from '../components/game/GameSearch';
+import { RESOLUTIONS, QUALITY_PRESETS, RAM_OPTIONS, PREDICTION_RESOLUTION } from '../constants/hardware';
+import { ROUTES } from '../constants/routes';
 
 // SVG Icons
 const IconCpu = () => (
@@ -98,6 +100,7 @@ const IconGamepad = () => (
 
 export default function BottleneckCalculatorPage({
   loadingData,
+  hardwareError,
   selectedCpu,
   setSelectedCpu,
   setSelectedCpuData,
@@ -126,6 +129,8 @@ export default function BottleneckCalculatorPage({
   selectedUpgradeComponent,
   generateSmartRecommendation,
   error,
+  notice,
+  onDismissNotice,
   currentUser,
   onNavigate,
   onOpenSaveModal,
@@ -138,13 +143,8 @@ export default function BottleneckCalculatorPage({
   const strokeDashoffset = arcLength * (1 - (Number.isFinite(clampedFpsRatio) ? clampedFpsRatio : 0.05));
 
   // Mode resolution
-  const hasActiveResult = !isThinking && Boolean(bottleneckData) && (
-    analysisMode === 'general' ||
-    (analysisMode === 'game' && prediction != null) ||
-    prediction != null ||
-    (!selectedGame && bottleneckData)
-  );
-  const isGeneralMode = !selectedGame || analysisMode === 'general' || prediction == null;
+  const hasActiveResult = !isThinking && Boolean(bottleneckData);
+  const isGeneralMode = analysisMode !== 'game' || prediction == null;
 
   // Derived metric cards data
   const isCpuBottleneck = bottleneckData?.type === 'cpu';
@@ -228,7 +228,9 @@ export default function BottleneckCalculatorPage({
       meaningText = 'Your system components are operating with balanced compute throughput.';
     }
   } else {
-    meaningText = `You can expect smooth gaming performance at ${resLabel} ${settings} settings in ${selectedGame}.`;
+    const experience = fpsNumber >= 60 ? 'smooth' : fpsNumber >= 30 ? 'playable' : 'low';
+    meaningText = `Expect ${experience} performance (~${fpsNumber} FPS) at ${resLabel} ${settings} settings in ${selectedGame}.`;
+    if (fpsNumber < 30) meaningText += ' Consider lowering the preset or upgrading the limiting component.';
     if (severity <= 10) {
       meaningText += ` Your CPU and GPU are well balanced with no significant bottleneck restrictions.`;
     } else if (isCpuBottleneck) {
@@ -270,7 +272,7 @@ export default function BottleneckCalculatorPage({
       </header>
 
       {/* ── 2. TWO-COLUMN MAIN GRID ── */}
-      <main className="analyzer-main-grid">
+      <div className="analyzer-main-grid">
         
         {/* LEFT COLUMN: YOUR PC COMPONENTS CARD */}
         <section className="analyzer-card configuration-card" aria-labelledby="config-card-title">
@@ -286,6 +288,12 @@ export default function BottleneckCalculatorPage({
               <span>⏳ Loading hardware database (CPUs &amp; GPUs)...</span>
             </div>
           )}
+          {hardwareError && !loadingData && (
+            <div className="error-banner" role="alert">
+              <span className="error-icon">⚠️</span>
+              <span>{hardwareError}</span>
+            </div>
+          )}
 
           <div className="form-subheading">Your Components</div>
 
@@ -296,10 +304,9 @@ export default function BottleneckCalculatorPage({
               placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i7-14700K)..." 
               value={selectedCpu}
               onSelect={(item) => {
-                const name = item.displayName || item.canonicalName || item.cpuName;
-                setSelectedCpu(name);
+                setSelectedCpu(item ? item.displayName : '');
                 setSelectedCpuData(item);
-              }} 
+              }}
             />
           </div>
 
@@ -310,10 +317,9 @@ export default function BottleneckCalculatorPage({
               placeholder="Type to search GPUs (e.g. RTX 4070 Ti, RX 7800 XT)..." 
               value={selectedGpu}
               onSelect={(item) => {
-                const name = item.displayName || item.canonicalName || item.Device;
-                setSelectedGpu(name);
+                setSelectedGpu(item ? item.displayName : '');
                 setSelectedGpuData(item);
-              }} 
+              }}
             />
           </div>
 
@@ -327,7 +333,7 @@ export default function BottleneckCalculatorPage({
                   type="button"
                   onClick={() => {
                     setSelectedGame('');
-                    if (setSelectedGameData) setSelectedGameData(null);
+                    setSelectedGameData(null);
                   }}
                   style={{
                     background: 'transparent',
@@ -347,8 +353,8 @@ export default function BottleneckCalculatorPage({
               value={selectedGame}
               placeholder="All PC Games (or type e.g. Apex Legends, GTA V, CS:GO)..."
               onSelectGame={(game) => {
-                setSelectedGame(game.name);
-                if (setSelectedGameData) setSelectedGameData(game);
+                setSelectedGame(game ? game.name : '');
+                setSelectedGameData(game);
               }}
             />
             {selectedGame && (
@@ -362,37 +368,31 @@ export default function BottleneckCalculatorPage({
             <div className="form-group">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                 <label htmlFor="resolution-select" style={{ marginBottom: 0 }}>Target Resolution</label>
-                {resolution === '1920x1080' ? (
+                {resolution === PREDICTION_RESOLUTION ? (
                   <span className="badge-status-pill badge-status-supported">Supported</span>
                 ) : (
                   <span className="badge-status-pill badge-status-developing">Still Developing</span>
                 )}
               </div>
               <select id="resolution-select" value={resolution} onChange={e => setResolution(e.target.value)}>
-                <option value="1920x1080">1080p (FHD) &mdash; Supported</option>
-                <option value="2560x1440">1440p (QHD) &mdash; Still Developing</option>
-                <option value="3840x2160">4K (UHD) &mdash; Still Developing</option>
+                {RESOLUTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label htmlFor="settings-select">Graphics Quality Preset</label>
               <select id="settings-select" value={settings} onChange={e => setSettings(e.target.value)}>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Ultra">Ultra</option>
+                {QUALITY_PRESETS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
               </select>
+              <small style={{ color: 'var(--text-sub, #94a3b8)', fontSize: '0.72rem' }}>
+                FPS model is trained on Medium &amp; Ultra presets.
+              </small>
             </div>
           </div>
 
           <div className="form-group">
             <label htmlFor="ram-select">System RAM Capacity</label>
             <select id="ram-select" value={ram} onChange={e => setRam(e.target.value)}>
-              <option value="4">4 GB</option>
-              <option value="8">8 GB</option>
-              <option value="16">16 GB (Recommended)</option>
-              <option value="32">32 GB</option>
-              <option value="64">64 GB</option>
+              {RAM_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
           </div>
 
@@ -412,7 +412,7 @@ export default function BottleneckCalculatorPage({
             <button
               id="compare-rigs-btn"
               className="btn-secondary-action"
-              onClick={() => onNavigate('/compare')}
+              onClick={() => onNavigate(ROUTES.COMPARE)}
             >
               Compare Rigs
             </button>
@@ -428,9 +428,15 @@ export default function BottleneckCalculatorPage({
           </div>
 
           {error && (
-            <div className="error-banner">
+            <div className="error-banner" role="alert">
               <span className="error-icon">⚠️</span>
               <span>{error}</span>
+            </div>
+          )}
+          {notice && (
+            <div className="loading-data-pill" role="status" style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <span>✓ {notice}</span>
+              <button type="button" className="btn-ghost-action" onClick={onDismissNotice} aria-label="Dismiss">×</button>
             </div>
           )}
         </section>
@@ -687,7 +693,7 @@ export default function BottleneckCalculatorPage({
                 </div>
                 <button
                   className="btn-methodology-link"
-                  onClick={() => onNavigate('/methodology')}
+                  onClick={() => onNavigate(ROUTES.METHODOLOGY)}
                 >
                   How it works?
                 </button>
@@ -700,7 +706,7 @@ export default function BottleneckCalculatorPage({
                   onClick={() => {
                     if (!currentUser) {
                       if (window.confirm('You need an account to save PC builds to your profile. Would you like to sign in?')) {
-                        onNavigate('/auth');
+                        onNavigate(ROUTES.AUTH);
                       }
                       return;
                     }
@@ -711,7 +717,7 @@ export default function BottleneckCalculatorPage({
                 </button>
                 <button
                   className="btn-quotation-link"
-                  onClick={() => onNavigate('/quotation')}
+                  onClick={() => onNavigate(ROUTES.QUOTATION)}
                 >
                   View Pricing (LKR)
                 </button>
@@ -721,10 +727,10 @@ export default function BottleneckCalculatorPage({
           )}
         </section>
 
-      </main>
+      </div>
 
       {/* ── 3. BOTTOM FEATURE STRIP ── */}
-      <footer className="analyzer-feature-strip" aria-label="Project Aura Platform Capabilities">
+      <section className="analyzer-feature-strip" aria-label="Project Aura Platform Capabilities">
         
         <div className="feature-strip-cell">
           <div className="feature-cell-icon text-cyan">
@@ -766,7 +772,7 @@ export default function BottleneckCalculatorPage({
           </div>
         </div>
 
-      </footer>
+      </section>
 
     </div>
   );

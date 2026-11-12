@@ -1,16 +1,18 @@
-# React + Vite
+# Project Aura: Frontend (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+```bash
+npm install
+npm run dev        # http://localhost:5173, talks to the API on http://localhost:4000
+npm run lint
+npm run build      # production bundle in dist/
+npm test           # Cypress E2E (start `npm run dev` first; API calls are stubbed)
+```
 
-Currently, two official plugins are available:
+## Configuration
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+`VITE_API_URL` is read **at build time** (see `.env.example`):
 
-## React Compiler
+- **Production behind nginx (recommended):** leave it empty. The app calls `/api/...` on its own domain.
+- **API on another host:** set it to that origin, e.g. `VITE_API_URL=https://api.example.com`, and add the frontend origin to the API's `CORS_ORIGINS`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The app uses client-side routing, so the web server must fall back to `index.html` for unknown paths (`deploy/nginx.conf.example` does this).

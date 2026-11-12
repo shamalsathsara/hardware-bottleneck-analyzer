@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { estimatePrices } from './services/pricingService';
+import { getErrorMessage } from './services/apiClient';
 
 // Simple Icons
 const IconArrowLeft = () => (
@@ -18,30 +17,53 @@ const IconDownload = () => (
   </svg>
 );
 
+const toPrice = (value) => {
+  const n = Number(String(value ?? '').replace(/[,\s]/g, ''));
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+};
+
 const Quotation = ({ cpu, gpu, ram, onBack }) => {
-  const [prices, setPrices] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const hasBuild = Boolean(cpu && gpu);
+  const requestKey = `${cpu}|${gpu}|${ram}`;
+  const [result, setResult] = useState({ key: null, prices: null, error: null });
 
   useEffect(() => {
-    const fetchPrices = async () => {
-      try {
-        const data = await estimatePrices({ cpu, gpu, ram });
-        setPrices(data);
-      } catch (err) {
-        console.error('Pricing error:', err.message);
-        const msg = err?.response?.data?.error || 'Failed to fetch live prices. Please make sure the Gemini API key is configured.';
-        setError(msg);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!cpu || !gpu) return undefined; // no paid API call without a build
+    let cancelled = false;
+    const key = `${cpu}|${gpu}|${ram}`;
 
-    fetchPrices();
+    estimatePrices({ cpu, gpu, ram })
+      .then((data) => {
+        if (cancelled) return;
+        setResult({
+          key,
+          error: null,
+          prices: {
+            cpuPriceLkr: toPrice(data?.cpuPriceLkr),
+            gpuPriceLkr: toPrice(data?.gpuPriceLkr),
+            ramPriceLkr: toPrice(data?.ramPriceLkr),
+          },
+        });
+      })
+      .catch((err) => {
+        if (!cancelled) setResult({ key, prices: null, error: getErrorMessage(err, 'Could not estimate prices right now. Please try again later.') });
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [cpu, gpu, ram]);
 
-  const generatePDF = () => {
+  const loading = hasBuild && result.key !== requestKey;
+  const prices = loading ? null : result.prices;
+  const error = hasBuild
+    ? (loading ? null : result.error)
+    : 'Select a CPU and GPU in the Bottleneck Calculator first, then open pricing.';
+
+  const generatePDF = async () => {
     if (!prices) return;
+    // PDF libraries are large; load them only when a quotation is downloaded.
+    const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
 
     // 1. Create a blank virtual A4 document canvas in the browser's memory
     const doc = new jsPDF();

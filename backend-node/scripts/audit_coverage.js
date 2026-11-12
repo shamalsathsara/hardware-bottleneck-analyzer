@@ -263,7 +263,7 @@ async function runAudit() {
 
       try {
         const resp = await axios.post(`${PYTHON_AI_URL}/predict`, payload, { timeout: 10000 });
-        const fps = resp.data.predicted_fps;
+        const fps = resp.data.predictedFps;
         row[g.game] = `${fps.toFixed(1)} FPS`;
       } catch (err) {
         row[g.game] = `ERROR: ${err.message}`;

@@ -1,207 +1,238 @@
+"""Project Aura AI service.
+
+Internal HTTP service that serves FPS predictions. It is called only by the
+Node backend and must stay bound to localhost / a private network.
+
+Model selection is controlled exclusively by the MODEL_VERSION environment
+variable ("v2" by default, "v1" as a legacy rollback). Clients cannot choose.
+"""
+
+import logging
+import math
 import os
+
 import joblib
-import numpy as np
 import pandas as pd
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
+from werkzeug.exceptions import HTTPException
+
 from preprocessing import preprocess_features
 
-app = Flask(__name__)
+logging.basicConfig(
+    level=os.environ.get('LOG_LEVEL', 'INFO'),
+    format='%(asctime)s %(levelname)s [aura-ai] %(message)s',
+)
+log = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SUPPORTED_VERSIONS = ('v1', 'v2')
 
-print("Starting Aura AI...")
+app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 64 * 1024
 
-# Model V2 known games catalog
-KNOWN_V2_GAMES = {
-    'aWayOut', 'airMechStrike', 'apexLegends', 'battlefield4', 'battletech',
-    'callOfDutyWW2', 'counterStrikeGlobalOffensive', 'destiny2', 'dota2',
-    'farCry5', 'fortnite', 'frostpunk', 'grandTheftAuto5', 'leagueOfLegends',
-    'overwatch', 'pathOfExile', 'playerUnknownsBattlegrounds', 'radicalHeights',
-    'rainbowSixSiege', 'seaOfThieves', 'starcraft2', 'totalWar3Kingdoms',
-    'warframe', 'worldOfTanks'
-}
-
-# 16 physical input features required by Model V2 pipeline
-V2_REQUIRED_FEATURES = [
+# Model V2 numeric features (GameName is handled separately).
+V2_NUMERIC_FEATURES = (
     'CpuNumberOfCores',
     'CpuNumberOfThreads',
-    'CpuFrequency',
-    'CpuTurboClock',
-    'CpuCacheL3',
-    'CpuTDP',
-    'GpuMemorySize',
-    'GpuBandwidth',
-    'GpuMemoryBus',
+    'CpuFrequency',            # MHz
+    'CpuTurboClock',           # MHz
+    'CpuCacheL3',              # MB
+    'CpuTDP',                  # W
+    'GpuMemorySize',           # MB
+    'GpuBandwidth',            # MB/s
+    'GpuMemoryBus',            # bits
     'GpuNumberOfShadingUnits',
-    'GpuBaseClock',
-    'GpuBoostClock',
+    'GpuBaseClock',            # MHz
+    'GpuBoostClock',           # MHz
     'GpuNumberOfROPs',
-    'GpuFP32Performance',
-    'GameName',
-    'GameSetting_Ordinal'
-]
+    'GpuFP32Performance',      # MFLOPS (2 * shaders * boost MHz)
+)
+V2_REQUIRED_FEATURES = V2_NUMERIC_FEATURES + ('GameName', 'GameSetting_Ordinal')
 
-ORDINAL_PRESET_MAP = {
-    1: 'Low',
-    2: 'Medium',
-    3: 'High',
-    4: 'Ultra'
-}
+# The V2 training data only contains these presets, at 1080p.
+SUPPORTED_PRESETS = {2: 'Medium', 4: 'Ultra'}
+SUPPORTED_RESOLUTION = '1080p'
 
-# 1. Load Model V1 (Rollback Baseline)
-v1_model_path = os.path.join(BASE_DIR, 'project_aura.joblib')
-v1_cols_path = os.path.join(BASE_DIR, 'ai_columns.joblib')
-model_v1 = None
-model_columns_v1 = None
-
-try:
-    model_v1 = joblib.load(v1_model_path)
-    model_columns_v1 = joblib.load(v1_cols_path)
-    print("AI Model V1 loaded successfully.")
-except FileNotFoundError as e:
-    print(f"Model V1 file not found: {e}")
-
-# 2. Load Model V2 (Production Candidate)
-v2_model_path = os.path.join(BASE_DIR, 'ml-model-v2', 'experiments', 'v2_baseline', 'candidate_model_v2.joblib')
-model_v2 = None
-
-try:
-    model_v2 = joblib.load(v2_model_path)
-    print("AI Model V2 candidate pipeline loaded successfully.")
-except FileNotFoundError as e:
-    print(f"Model V2 file not found: {e}")
+FPS_MIN, FPS_MAX = 5.0, 1200.0
 
 
-def is_v2_payload(data):
-    """Detects whether payload contains explicit V2 physical feature fields."""
-    v2_signature = {'CpuNumberOfCores', 'GpuNumberOfShadingUnits', 'GpuFP32Performance'}
-    return bool(v2_signature.intersection(data.keys()))
+def _load(path, label):
+    try:
+        obj = joblib.load(path)
+        log.info('%s loaded from %s', label, path)
+        return obj
+    except Exception:  # corrupt pickle, version mismatch, missing file...
+        log.exception('Failed to load %s from %s', label, path)
+        return None
+
+
+model_v1 = _load(os.path.join(BASE_DIR, 'project_aura.joblib'), 'Model V1')
+model_columns_v1 = _load(os.path.join(BASE_DIR, 'ai_columns.joblib'), 'Model V1 columns')
+model_v2 = _load(
+    os.path.join(BASE_DIR, 'ml-model-v2', 'experiments', 'v2_baseline', 'candidate_model_v2.joblib'),
+    'Model V2',
+)
+
+
+def _known_games(model):
+    """Reads the game categories the V2 pipeline was trained on."""
+    try:
+        encoder = model.named_steps['preprocessor'].named_transformers_['game']
+        return frozenset(str(g) for g in encoder.categories_[0])
+    except Exception:
+        return frozenset()
+
+
+KNOWN_V2_GAMES = _known_games(model_v2) if model_v2 is not None else frozenset()
+
+
+def active_version():
+    return os.environ.get('MODEL_VERSION', 'v2').strip().lower()
+
+
+def model_ready(version):
+    if version == 'v2':
+        return model_v2 is not None
+    if version == 'v1':
+        return model_v1 is not None and model_columns_v1 is not None
+    return False
+
+
+def error(code, message, status, **extra):
+    return jsonify({'error': code, 'message': message, **extra}), status
+
+
+def _positive_number(value):
+    """Returns a finite float > 0, or None if the value is not acceptable."""
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return None
+    try:
+        num = float(value)
+    except ValueError:
+        return None
+    return num if math.isfinite(num) and num > 0 else None
+
+
+def _preset_ordinal(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)) and float(value).is_integer():
+        return int(value)
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value.strip())
+    return None
+
+
+def _clamp_fps(value):
+    return round(max(FPS_MIN, min(float(value), FPS_MAX)), 2)
+
+
+@app.errorhandler(HTTPException)
+def handle_http_error(exc):
+    return error(exc.name.upper().replace(' ', '_'), exc.description, exc.code)
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(exc):
+    log.exception('Unhandled prediction error')
+    return error('INTERNAL_ERROR', 'Prediction failed due to an internal error.', 500)
 
 
 @app.route('/health', methods=['GET'])
 def health():
+    version = active_version()
+    ready = model_ready(version)
     return jsonify({
-        'status': 'healthy',
+        'status': 'healthy' if ready else 'unhealthy',
+        'activeVersion': version,
         'models': {
-            'v1_available': model_v1 is not None,
-            'v2_available': model_v2 is not None,
-            'default_version': os.environ.get('MODEL_VERSION', 'v2')
+            'v1_available': model_ready('v1'),
+            'v2_available': model_ready('v2'),
         },
-        'known_games_count': len(KNOWN_V2_GAMES)
+        'known_games_count': len(KNOWN_V2_GAMES),
+    }), 200 if ready else 503
+
+
+def predict_v2(data):
+    missing = [f for f in V2_REQUIRED_FEATURES if data.get(f) is None]
+    if missing:
+        return error(
+            'MODEL_V2_HARDWARE_DATA_INCOMPLETE',
+            'Required physical hardware specifications are missing.',
+            400,
+            missingFields=missing,
+        )
+
+    row = {}
+    invalid = []
+    for field in V2_NUMERIC_FEATURES:
+        num = _positive_number(data[field])
+        if num is None:
+            invalid.append(field)
+        row[field] = num
+
+    game_name = data['GameName']
+    if not isinstance(game_name, str) or not game_name.strip():
+        invalid.append('GameName')
+
+    if invalid:
+        return error(
+            'MODEL_V2_INVALID_FEATURE',
+            'Hardware features must be positive finite numbers and GameName a non-empty string.',
+            400,
+            invalidFields=invalid,
+        )
+
+    ordinal = _preset_ordinal(data['GameSetting_Ordinal'])
+    if ordinal not in SUPPORTED_PRESETS:
+        return error(
+            'UNSUPPORTED_PRESET',
+            'FPS prediction is only available for the Medium and Ultra presets.',
+            400,
+            supportedPresets=list(SUPPORTED_PRESETS.values()),
+        )
+
+    game_name = game_name.strip()
+    row['GameName'] = game_name
+    row['GameSetting_Ordinal'] = ordinal
+
+    prediction = model_v2.predict(pd.DataFrame([row]))[0]
+
+    return jsonify({
+        'predictedFps': _clamp_fps(prediction),
+        'modelVersion': 'v2',
+        'gameCoverage': 'known' if game_name in KNOWN_V2_GAMES else 'unseen',
+        'resolution': SUPPORTED_RESOLUTION,
+        'preset': SUPPORTED_PRESETS[ordinal],
+        'supportedPresets': list(SUPPORTED_PRESETS.values()),
+        'game': game_name,
     }), 200
+
+
+def predict_v1(data):
+    df = preprocess_features(data, model_columns_v1)
+    prediction = model_v1.predict(df)[0]
+    return jsonify({'predictedFps': _clamp_fps(prediction), 'modelVersion': 'v1'}), 200
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    try:
-        data = request.json
-        
-        if not isinstance(data, dict) or not data:
-            return jsonify({'error': 'Invalid payload format. Expected a non-empty JSON object.'}), 400
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not data:
+        return error('INVALID_PAYLOAD', 'Expected a non-empty JSON object.', 400)
 
-        requested_version = (
-            data.get('modelVersion') or
-            request.headers.get('X-Model-Version') or
-            os.environ.get('MODEL_VERSION')
-        )
+    version = active_version()
+    if version not in SUPPORTED_VERSIONS:
+        log.error('Invalid MODEL_VERSION configured: %r', version)
+        return error('MODEL_MISCONFIGURED', 'The prediction service is misconfigured.', 503)
+    if not model_ready(version):
+        return error('MODEL_UNAVAILABLE', f'Model {version} is not loaded on this server.', 503)
 
-        if not requested_version:
-            requested_version = 'v2' if is_v2_payload(data) else 'v1'
-
-        requested_version = str(requested_version).lower().strip()
-
-        # Model V2: Physical specifications pipeline
-        if requested_version == 'v2':
-            if model_v2 is None:
-                return jsonify({'error': 'Model V2 is not loaded on this server.'}), 503
-
-            missing_fields = []
-            for field in V2_REQUIRED_FEATURES:
-                val = data.get(field)
-                if val is None or (isinstance(val, (int, float)) and np.isnan(val)):
-                    missing_fields.append(field)
-
-            if missing_fields:
-                return jsonify({
-                    'error': 'MODEL_V2_HARDWARE_DATA_INCOMPLETE',
-                    'message': 'Required physical hardware specifications are missing.',
-                    'missingFields': missing_fields
-                }), 400
-
-            try:
-                row_dict = {
-                    'GameName': str(data['GameName']),
-                    'GameSetting_Ordinal': int(data['GameSetting_Ordinal']),
-                    'CpuNumberOfCores': float(data['CpuNumberOfCores']),
-                    'CpuNumberOfThreads': float(data['CpuNumberOfThreads']),
-                    'CpuFrequency': float(data['CpuFrequency']),
-                    'CpuTurboClock': float(data['CpuTurboClock']),
-                    'CpuCacheL3': float(data['CpuCacheL3']),
-                    'CpuTDP': float(data['CpuTDP']),
-                    'GpuMemorySize': float(data['GpuMemorySize']),
-                    'GpuBandwidth': float(data['GpuBandwidth']),
-                    'GpuMemoryBus': float(data['GpuMemoryBus']),
-                    'GpuNumberOfShadingUnits': float(data['GpuNumberOfShadingUnits']),
-                    'GpuBaseClock': float(data['GpuBaseClock']),
-                    'GpuBoostClock': float(data['GpuBoostClock']),
-                    'GpuNumberOfROPs': float(data['GpuNumberOfROPs']),
-                    'GpuFP32Performance': float(data['GpuFP32Performance']),
-                }
-            except (ValueError, TypeError) as conv_err:
-                return jsonify({
-                    'error': 'MODEL_V2_INVALID_FEATURE_TYPE',
-                    'message': f'Feature numeric conversion failed: {str(conv_err)}'
-                }), 400
-
-            input_df = pd.DataFrame([row_dict])
-            raw_prediction = float(model_v2.predict(input_df)[0])
-            final_prediction = max(5.0, min(raw_prediction, 1200.0))
-
-            game_name = str(data['GameName'])
-            game_coverage = 'known' if game_name in KNOWN_V2_GAMES else 'unseen'
-            preset_ordinal = int(data['GameSetting_Ordinal'])
-            preset_label = ORDINAL_PRESET_MAP.get(preset_ordinal, f'Ordinal_{preset_ordinal}')
-
-            return jsonify({
-                'predictedFps': round(final_prediction, 2),
-                'predicted_fps': round(final_prediction, 2),
-                'modelVersion': 'v2',
-                'gameCoverage': game_coverage,
-                'resolution': '1080p',
-                'preset': preset_label,
-                'game': game_name
-            }), 200
-
-        # Model V1: Legacy categorical fallback
-        elif requested_version == 'v1':
-            if model_v1 is None or model_columns_v1 is None:
-                return jsonify({'error': 'Model V1 is not loaded on this server.'}), 503
-
-            df, processed_data = preprocess_features(data, model_columns_v1)
-            base_prediction = float(model_v1.predict(df)[0])
-            
-            vram = processed_data.get('GPU VRAM (GB)', 8)
-            if vram > 24:
-                base_prediction *= 1.15
-            elif vram > 16:
-                base_prediction *= 1.05
-                
-            final_prediction = max(5.0, min(base_prediction, 1200.0))
-
-            return jsonify({
-                'predicted_fps': round(final_prediction, 2),
-                'predictedFps': round(final_prediction, 2),
-                'modelVersion': 'v1'
-            }), 200
-
-        else:
-            return jsonify({'error': f'Unsupported modelVersion: "{requested_version}". Supported versions: "v1", "v2".'}), 400
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    return predict_v2(data) if version == 'v2' else predict_v1(data)
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    print(f"Project Aura AI online on port {port}")
-    app.run(port=port, debug=False)
+    # Development only. In production run: gunicorn -w 2 --preload -b 127.0.0.1:5000 app:app
+    port = int(os.environ.get('AI_PORT', 5000))
+    log.info('Project Aura AI (dev server) on 127.0.0.1:%d', port)
+    app.run(host='127.0.0.1', port=port, debug=False)

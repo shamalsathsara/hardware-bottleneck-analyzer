@@ -1,18 +1,25 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
-  try {
-    const mongoUri = process.env.MONGO_URI;
-    if (!mongoUri) {
-      console.warn('⚠️ MONGO_URI environment variable is not defined.');
-      return;
+const RETRY_DELAY_MS = 5000;
+const MAX_ATTEMPTS = 10;
+
+/**
+ * Connects to MongoDB, retrying transient failures. Rejects after MAX_ATTEMPTS
+ * so a misconfigured deployment fails loudly instead of serving without a DB.
+ */
+async function connectDB(uri, { attempts = MAX_ATTEMPTS } = {}) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 });
+      console.log('MongoDB connected.');
+      return mongoose.connection;
+    } catch (err) {
+      console.error(`MongoDB connection attempt ${attempt}/${attempts} failed: ${err.message}`);
+      if (attempt === attempts) throw err;
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     }
-    await mongoose.connect(mongoUri);
-    console.log('✅ Successfully connected to MongoDB Atlas!');
-  } catch (err) {
-    console.error('❌ MongoDB Connection Error. Retrying in 5 seconds...', err.message);
-    setTimeout(connectDB, 5000);
   }
-};
+  return mongoose.connection;
+}
 
 module.exports = connectDB;

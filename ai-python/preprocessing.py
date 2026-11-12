@@ -1,50 +1,65 @@
+"""Feature preprocessing for the legacy Model V1 (rollback only)."""
+
+import math
+
 import pandas as pd
 
 RESOLUTION_MAP = {
-    "1080p": "1920x1080",
-    "1440p": "2560x1440",
-    "4K": "3840x2160",
+    '1080p': '1920x1080',
+    '1440p': '2560x1440',
+    '4k': '3840x2160',
+    '2160p': '3840x2160',
 }
 
-def safe_num(val, default, min_val=1, max_val=10000):
-    """Safely coerces input to a float within realistic bounds."""
+# (field, default, min, max)
+NUMERIC_FIELDS = (
+    ('CPU Cores', 6, 1, 128),
+    ('CPU Threads', 12, 1, 256),
+    ('CPU TDP (W)', 65, 10, 1000),
+    ('GPU VRAM (GB)', 8, 1, 128),
+    ('GPU Bandwidth (GB/s)', 300, 10, 5000),
+    ('GPU TDP (W)', 200, 10, 1500),
+    ('RAM (GB)', 16, 1, 512),
+)
+CATEGORICAL_FIELDS = ('CPU', 'GPU', 'GPU Series', 'Resolution', 'Graphics Settings')
+
+
+def safe_num(val, default, min_val, max_val):
+    """Coerces input to a float clamped to realistic bounds; falls back to default."""
+    if isinstance(val, bool):
+        return float(default)
     try:
-        num = float(val) if val is not None else float(default)
-        if pd.isna(num):
-            return float(default)
-        return max(float(min_val), min(float(max_val), num))
+        num = float(val)
     except (ValueError, TypeError):
         return float(default)
+    if not math.isfinite(num):
+        return float(default)
+    return max(float(min_val), min(float(max_val), num))
+
+
+def _text(val):
+    return val.strip() if isinstance(val, str) else ''
+
 
 def preprocess_features(raw_data, model_columns):
+    """Builds a one-hot encoded single-row DataFrame aligned to the V1 training columns.
+
+    Only known V1 fields are read, so arbitrary or nested client values can't
+    break the encoding.
     """
-    Transforms raw JSON input dictionary into a one-hot encoded DataFrame
-    matching the trained Model V1 71-dimension column order and schema.
-    """
-    data = dict(raw_data)
+    row = {name: safe_num(raw_data.get(name), d, lo, hi) for name, d, lo, hi in NUMERIC_FIELDS}
 
-    if 'Resolution' in data and data['Resolution'] in RESOLUTION_MAP:
-        data['Resolution'] = RESOLUTION_MAP[data['Resolution']]
+    for name in CATEGORICAL_FIELDS:
+        value = _text(raw_data.get(name))
+        if value:
+            row[name] = value
 
-    if 'CPU' in data and 'Core i' in data['CPU']:
-        data['CPU'] = data['CPU'].replace('Core i', 'i')
+    if 'Resolution' in row:
+        row['Resolution'] = RESOLUTION_MAP.get(row['Resolution'].lower(), row['Resolution'])
+    if 'CPU' in row:
+        row['CPU'] = row['CPU'].replace('Core i', 'i')
+    if 'Graphics Settings' in row:
+        row['Graphics Settings'] = row['Graphics Settings'].capitalize()
 
-    data['CPU Cores'] = safe_num(data.get('CPU Cores'), 6, min_val=1, max_val=128)
-    data['CPU Threads'] = safe_num(data.get('CPU Threads'), 12, min_val=1, max_val=256)
-    data['CPU TDP (W)'] = safe_num(data.get('CPU TDP (W)'), 65, min_val=10, max_val=1000)
-    data['GPU VRAM (GB)'] = safe_num(data.get('GPU VRAM (GB)'), 8, min_val=1, max_val=128)
-    data['GPU Bandwidth (GB/s)'] = safe_num(data.get('GPU Bandwidth (GB/s)'), 300, min_val=10, max_val=5000)
-    data['GPU TDP (W)'] = safe_num(data.get('GPU TDP (W)'), 200, min_val=10, max_val=1500)
-    data['RAM (GB)'] = safe_num(data.get('RAM (GB)'), 16, min_val=1, max_val=512)
-
-    df = pd.DataFrame([data])
-
-    num_cols = ['CPU Cores', 'CPU Threads', 'CPU TDP (W)', 'GPU VRAM (GB)', 'GPU Bandwidth (GB/s)', 'GPU TDP (W)', 'RAM (GB)']
-    for col in num_cols:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(data[col])
-
-    df = pd.get_dummies(df)
-    df = df.reindex(columns=model_columns, fill_value=0)
-
-    return df, data
+    df = pd.get_dummies(pd.DataFrame([row]))
+    return df.reindex(columns=model_columns, fill_value=0)

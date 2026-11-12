@@ -33,6 +33,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor, GradientBoostingRegressor
+from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error, r2_score
 
 # Feature column definitions
@@ -275,21 +276,25 @@ def run_experiment():
     # ---------------------------------------------------------
     # 7. Identify Best Candidate Model & Feature Importance
     # ---------------------------------------------------------
-    # Best candidate across all protocols: HistGradientBoostingRegressor
-    best_candidate_name = 'HistGradientBoostingRegressor'
+    # Best candidate = lowest mean test MAE across all four protocols (baseline excluded).
+    def mean_protocol_mae(name):
+        return float(np.mean([r[name]['test_mae'] for r in (results_std, results_gpu, results_cpu, results_game)]))
+
+    real_candidates = [name for name, cls, _ in candidate_configs if cls is not DummyRegressor]
+    best_candidate_name = min(real_candidates, key=mean_protocol_mae)
     best_model = fitted_models_std[best_candidate_name]
-    
-    print(f"\nAnalyzing Feature Importance for best candidate: {best_candidate_name}...")
-    ohe = best_model.named_steps['preprocessor'].named_transformers_['game']
-    game_ohe_cols = list(ohe.get_feature_names_out(['GameName']))
-    transformed_feature_names = ALL_NUMERIC_FEATURES + game_ohe_cols
-    
-    # Use permutation importance or tree importance from RandomForest for interpretability
-    rf_model = fitted_models_std['RandomForestRegressor']
-    rf_importances = rf_model.named_steps['regressor'].feature_importances_
+    print(f"\nBest candidate (mean MAE across protocols): {best_candidate_name} "
+          f"({mean_protocol_mae(best_candidate_name):.2f})")
+
+    # Permutation importance on the selected model (model-agnostic, raw input features).
+    print(f"Analyzing Feature Importance for best candidate: {best_candidate_name}...")
+    perm = permutation_importance(
+        best_model, X_test_std, y_test_std,
+        n_repeats=5, random_state=42, scoring='neg_mean_absolute_error',
+    )
     df_importance = pd.DataFrame({
-        'Feature': transformed_feature_names,
-        'Importance': rf_importances
+        'Feature': ALL_MODEL_FEATURES,
+        'Importance': perm.importances_mean,
     }).sort_values(by='Importance', ascending=False)
     
     importance_csv_path = os.path.join(exp_dir, 'feature_importance.csv')
@@ -300,7 +305,7 @@ def run_experiment():
     cpu_imp = df_importance[df_importance['Feature'].isin(CPU_FEATURES)]['Importance'].sum()
     gpu_imp = df_importance[df_importance['Feature'].isin(GPU_FEATURES)]['Importance'].sum()
     workload_imp = df_importance[df_importance['Feature'].isin(WORKLOAD_FEATURES)]['Importance'].sum()
-    game_imp = df_importance[df_importance['Feature'].str.startswith('GameName_')]['Importance'].sum()
+    game_imp = df_importance[df_importance['Feature'] == 'GameName']['Importance'].sum()
     
     grouped_importance = {
         'GPU_Physical': float(gpu_imp),
@@ -350,7 +355,7 @@ def run_experiment():
         'experiment_name': 'Project Aura Model V2 Baseline (1080p)',
         'random_seed': 42,
         'dataset': {
-            'path': clean_csv_path,
+            'path': os.path.relpath(clean_csv_path, base_dir),
             'total_rows': len(df),
             'features': ALL_MODEL_FEATURES,
             'target': TARGET_COL,
@@ -381,7 +386,7 @@ def run_experiment():
         'grouped_feature_importance': grouped_importance,
         'best_candidate': {
             'name': best_candidate_name,
-            'artifact': candidate_model_path,
+            'artifact': os.path.relpath(candidate_model_path, base_dir),
             'median_abs_error': median_abs_err,
             'p90_abs_error': p90_abs_err,
             'p95_abs_error': p95_abs_err,

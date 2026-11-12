@@ -2,10 +2,13 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
+import os
 import joblib
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 print("Loading dataset...") 
-data = pd.read_csv('FpsTest/fps_dataset.csv') 
+data = pd.read_csv(os.path.join(BASE_DIR, 'FpsTest', 'fps_dataset.csv')) 
 
 # Exclude target-correlated metrics to prevent leakage
 X = data.drop(columns=['Min FPS', 'Avg FPS', 'Max FPS', 'Bottleneck Score', 'Total System TDP (W)'])
@@ -24,6 +27,6 @@ error = mean_absolute_error(y_test, predictions)
 print(f"Training Complete. MAE: {error:.2f} FPS")
 
 # Save model and column schema for V1 inference
-joblib.dump(model, 'project_aura.joblib')
-joblib.dump(list(X.columns), 'ai_columns.joblib') 
+joblib.dump(model, os.path.join(BASE_DIR, 'project_aura.joblib'))
+joblib.dump(list(X.columns), os.path.join(BASE_DIR, 'ai_columns.joblib')) 
 print("Model V1 artifacts saved successfully.")

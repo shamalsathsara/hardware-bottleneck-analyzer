@@ -4,13 +4,14 @@ const { resolveModelV2Payload } = require('../services/datasetV2/modelV2Resolver
 const HardwareCpu = require('../models/HardwareCpu');
 const HardwareGpu = require('../models/HardwareGpu');
 const { CPU, GPU } = require('../models/Hardware');
-require('dotenv').config();
+const { seedHardwareFixtures } = require('./setup/fixtures');
 
 describe('Unified Hardware Search & Analyzer Mode Separation', () => {
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
     }
+    await seedHardwareFixtures();
   });
 
   afterAll(async () => {
@@ -81,7 +82,23 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
       const res3060Ti = await searchUnifiedGpus('RTX 3060 Ti');
       expect(res3060Ti.length).toBeGreaterThan(0);
       expect(res3060Ti.some(g => (g.Device || g.displayName || '').includes('3060 Ti'))).toBe(true);
-      expect(res3060Ti[0].hardwareSource).toBe('legacy');
+      // RTX 3060 Ti is part of the Hardware Master seed, so the master record wins.
+      expect(res3060Ti[0].hardwareSource).toBe('master');
+    });
+
+    test('master GPUs carry the legacy benchmark score (same scale as legacy GPUs)', async () => {
+      const [rtx3060] = await searchUnifiedGpus('RTX 3060');
+      expect(rtx3060.hardwareSource).toBe('master');
+      expect(rtx3060.scoreEstimated).toBe(false);
+      expect(rtx3060.CUDA).toBeGreaterThan(50000); // legacy compute score, not the ~3584 shader count
+      expect(rtx3060.legacyId).toBeTruthy();
+      expect(rtx3060).not.toHaveProperty('rawRecord');
+    });
+
+    test('rejects nothing and stays bounded for very long queries', async () => {
+      const res = await searchUnifiedGpus('rtx '.repeat(200));
+      expect(Array.isArray(res)).toBe(true);
+      expect(res.length).toBeLessThanOrEqual(20);
     });
 
     test('deduplicates equivalent hardware and gives priority to Master', async () => {
@@ -102,7 +119,7 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
         cpuHardwareId: 'cpu_amd_ryzen_7_7800x3d_desktop',
         gpuHardwareId: 'gpu_nvidia_geforce_rtx_4070_desktop',
         GameName: 'grandTheftAuto5',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
 
       const result = await resolveModelV2Payload(payload);
@@ -117,7 +134,7 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
         CPU: 'Intel Core i5-8400 @ 2.80GHz',
         GPU: 'GeForce GTX 1660 SUPER',
         GameName: 'grandTheftAuto5',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
 
       const result = await resolveModelV2Payload(payload);
@@ -136,7 +153,7 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
         CPU: 'Intel Core i5-9500 @ 3.00GHz',
         GPU: 'GeForce GTX 1660 SUPER',
         GameName: 'grandTheftAuto5',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
       const res9500 = await resolveModelV2Payload(payload9500);
       expect(res9500.valid).toBe(true);
@@ -147,7 +164,7 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
         CPU: 'Intel Core i3-10105 @ 3.70GHz',
         GPU: 'GeForce GTX 1660 SUPER',
         GameName: 'grandTheftAuto5',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
       const res10105 = await resolveModelV2Payload(payload10105);
       expect(res10105.valid).toBe(true);
@@ -161,7 +178,7 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
         CPU: 'Generic Legacy Pentium 4',
         GPU: 'GeForce GTX 1660 SUPER',
         GameName: 'grandTheftAuto5',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
 
       const result = await resolveModelV2Payload(payload);
@@ -173,7 +190,7 @@ describe('Unified Hardware Search & Analyzer Mode Separation', () => {
       const payload = {
         cpuHardwareId: 'cpu_amd_ryzen_7_7800x3d_desktop',
         gpuHardwareId: 'gpu_nvidia_geforce_rtx_4070_desktop',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
 
       const result = await resolveModelV2Payload(payload);

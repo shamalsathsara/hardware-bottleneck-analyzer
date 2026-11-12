@@ -6,7 +6,7 @@ const contactInfo = {
   email: "shamalsathsara4@gmail.com",
   location: "Colombo,Sri Lanka",
   github: "https://github.com/shamalsathsara",
-  linkedin: "www.linkedin.com/in/shamal-sathsara-93a245267",
+  linkedin: "https://www.linkedin.com/in/shamal-sathsara-93a245267",
   portfolio: "https://shamal-sathsara.vercel.app/"
 };
 

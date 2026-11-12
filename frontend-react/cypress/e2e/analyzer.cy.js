@@ -1,40 +1,87 @@
-// cypress/e2e/analyzer.cy.js
-describe('Project Aura Analyzer', () => {
-  it('should run a bottleneck analysis', () => {
-    // Intercept backend API calls to provide robust, deterministic test data
-    cy.intercept('GET', '**/api/cpus', [{ cpuName: 'Test CPU Pro', cpuMark: 25000, cores: 12 }]).as('cpus')
-    cy.intercept('GET', '**/api/gpus', [{ Device: 'Test GPU Max', CUDA: 10000 }]).as('gpus')
-    cy.intercept('POST', '**/api/predict', { predicted_fps: 120.5 }).as('predict')
+// End-to-end tests for the Bottleneck Calculator with a stubbed API.
+// Run with the dev server up: `npm run dev` then `npm test`.
 
-    // 1. Go to your local React app and mock the login session
-    cy.visit('http://localhost:5173', {
-      onBeforeLoad(win) {
-        // Set fake user session to bypass the Auth (login) screen
-        win.localStorage.setItem('aura_user', JSON.stringify({
-          name: "Test User",
-          email: "test@example.com"
-        }))
-      }
-    })
+const CPU = { _id: 'cpu1', displayName: 'Test CPU Pro', cpuMark: 25000, cores: 12, hardwareSource: 'legacy', legacyId: 'cpu1' };
+const GPU = { _id: 'gpu1', displayName: 'Test GPU Max', CUDA: 200000, hardwareSource: 'legacy', legacyId: 'gpu1' };
 
-    // Wait for the mock hardware lists to load into the app
-    cy.wait('@cpus')
-    cy.wait('@gpus')
+function stubApi() {
+  cy.intercept('GET', '**/api/cpus/all-lightweight', [{ cpuName: 'Faster CPU', cpuMark: 40000 }]).as('cpuList');
+  cy.intercept('GET', '**/api/gpus/all-lightweight', [{ Device: 'Faster GPU', CUDA: 300000 }]).as('gpuList');
+  cy.intercept('GET', '**/api/hardware/stats', { maxCpuMark: 100000, maxGpuCuda: 500000 });
+  cy.intercept('GET', '**/api/cpus/search*', [CPU]).as('cpuSearch');
+  cy.intercept('GET', '**/api/gpus/search*', [GPU]).as('gpuSearch');
+  cy.intercept('GET', '**/api/games/search*', [{ name: 'Fortnite', slug: 'fortnite', dataQuality: 'verified' }]).as('gameSearch');
+}
 
-    // 2. Type the mocked CPU name into the input
-    cy.get('input[placeholder*="Type to search CPUs"]').clear().type('Test CPU Pro')
-    
-    // 3. Type the mocked GPU name
-    cy.get('input[placeholder*="Type to search GPUs"]').clear().type('Test GPU Max')
-    
-    // 4. Click the Run Analysis button
-    cy.contains('Run Analysis').click()
+function pickHardware() {
+  cy.get('#cpu-search-input').type('Test CPU');
+  cy.wait('@cpuSearch');
+  cy.contains('[role="option"]', 'Test CPU Pro').click();
 
-    // Wait for the prediction request to finish
-    cy.wait('@predict')
-    
-    // 5. Verify that the results appear and show an FPS number
-    cy.contains('Predicted Performance').should('exist')
-    cy.contains('FPS').should('exist')
-  })
-})
+  cy.get('#gpu-search-input').type('Test GPU');
+  cy.wait('@gpuSearch');
+  cy.contains('[role="option"]', 'Test GPU Max').click();
+}
+
+describe('Bottleneck Calculator', () => {
+  beforeEach(() => {
+    stubApi();
+    cy.visit('/bottleneck-calculator');
+  });
+
+  it('runs a general bottleneck analysis without a game', () => {
+    pickHardware();
+    cy.get('#run-analysis-btn').click();
+    cy.contains('Bottleneck Analysis Result').should('be.visible');
+    cy.contains('%').should('exist');
+  });
+
+  it('predicts FPS when a game is selected', () => {
+    cy.intercept('POST', '**/api/predict', {
+      predictedFps: 120.5, modelVersion: 'v2', gameCoverage: 'known', preset: 'Medium', game: 'fortnite',
+    }).as('predict');
+
+    pickHardware();
+    cy.get('#game-search-input').type('fort');
+    cy.wait('@gameSearch');
+    cy.contains('li', 'Fortnite').click();
+
+    cy.get('#run-analysis-btn').click();
+    cy.wait('@predict').its('request.body').should((body) => {
+      expect(body.CPU).to.eq('Test CPU Pro');
+      expect(body['Graphics Settings']).to.eq('Medium');
+    });
+    cy.contains('Game Performance Result').should('be.visible');
+    cy.get('.gauge-fps-value').should('have.text', '121');
+  });
+
+  it('only offers the presets the FPS model supports', () => {
+    cy.get('#settings-select option').then((options) => {
+      expect([...options].map((o) => o.value)).to.deep.eq(['Medium', 'Ultra']);
+    });
+  });
+
+  it('does not analyze stale hardware after the CPU text is edited', () => {
+    pickHardware();
+    cy.get('#cpu-search-input').type(' edited');
+    cy.get('#run-analysis-btn').click();
+    cy.contains('Please select both a CPU and a GPU').should('be.visible');
+  });
+
+  it('shows a friendly message when the AI service is down', () => {
+    cy.intercept('POST', '**/api/predict', {
+      statusCode: 503,
+      body: { error: 'AI_SERVICE_UNAVAILABLE', message: 'The prediction service is temporarily unavailable. Please try again shortly.' },
+    }).as('predict');
+
+    pickHardware();
+    cy.get('#game-search-input').type('fort');
+    cy.wait('@gameSearch');
+    cy.contains('li', 'Fortnite').click();
+    cy.get('#run-analysis-btn').click();
+    cy.wait('@predict');
+
+    cy.contains('Game FPS Prediction Unavailable').should('be.visible');
+    cy.contains('Bottleneck Analysis Result').should('be.visible');
+  });
+});

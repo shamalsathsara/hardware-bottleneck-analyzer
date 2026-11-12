@@ -1,17 +1,21 @@
-describe('Hardware Analyzer App', () => {
-  it('successfully loads the app', () => {
-    // Visit the base URL (which is http://localhost:5173 as configured in cypress.config.js)
-    cy.visit('/')
+describe('Navigation', () => {
+  beforeEach(() => {
+    cy.intercept('GET', '**/api/**', { statusCode: 200, body: [] });
+  });
 
-    // Verify the page loaded by checking for common elements
-    // The exact text will depend on your UI, but checking for "hardware" or "analyzer" is a safe bet
-    cy.get('body').should('be.visible')
-  })
+  it('loads the home page with the main heading', () => {
+    cy.visit('/');
+    cy.get('#hero-main-title').should('be.visible');
+    cy.title().should('contain', 'Project Aura');
+  });
 
-  it('handles navigation correctly', () => {
-    cy.visit('/')
-    // Ensure that clicking links or navigating works without crashing
-    // This is a placeholder test that you can expand upon!
-    cy.window().should('have.property', 'document')
-  })
-})
+  it('shows a 404 page for unknown routes instead of the home page', () => {
+    cy.visit('/this-page-does-not-exist');
+    cy.contains('Page not found').should('be.visible');
+  });
+
+  it('serves deep links to the calculator', () => {
+    cy.visit('/bottleneck-calculator/');
+    cy.get('#run-analysis-btn').should('be.visible');
+  });
+});

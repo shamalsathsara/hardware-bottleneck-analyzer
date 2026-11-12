@@ -102,7 +102,7 @@ def prepare_dataset_v2(raw_path=None, output_dir=None):
         'GpuBaseClock',       # Base Clock MHz
         'GpuBoostClock',      # Boost Clock MHz
         'GpuNumberOfROPs',    # Render Output Units
-        'GpuFP32Performance', # FP32 GFLOPS/Compute
+        'GpuFP32Performance', # FP32 compute in MFLOPS (2 * shaders * boost MHz)
         
         # Workload & Setting
         'GameSetting',

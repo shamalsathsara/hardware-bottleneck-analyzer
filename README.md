@@ -267,8 +267,8 @@ hardware-bottleneck-analyzer/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- **Node.js** (v18.0+ or v20.0+)
-- **Python** (v3.10+ or v3.13+)
+- **Node.js** v20+
+- **Python** 3.13 (the model artifacts are pinned to scikit-learn 1.9 / pandas 3.0)
 - **MongoDB Atlas** connection URI
 - **npm** and **pip**
 
@@ -283,10 +283,10 @@ python -m venv venv
 venv\Scripts\activate      # Windows
 # source venv/bin/activate # Linux/macOS
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (requirements-dev.txt adds pytest)
+pip install -r requirements-dev.txt
 
-# Start Flask prediction service (Port 5000)
+# Start the Flask development server (127.0.0.1:5000)
 python app.py
 ```
 
@@ -297,11 +297,11 @@ cd backend-node
 # Install dependencies
 npm install
 
-# Configure environment variables
+# Configure environment variables (JWT_SECRET and MONGO_URI are required)
 cp .env.example .env
 
 # Start Express server (Port 4000)
-node server.js
+npm run dev
 ```
 
 ### 3. Start the React Frontend
@@ -319,24 +319,13 @@ npm run dev
 
 ## 🔑 Environment Variables
 
-Create `.env` in `backend-node/`:
+- **API:** copy `backend-node/.env.example` to `backend-node/.env`. The server **refuses to start** unless `JWT_SECRET` (32+ characters) and `MONGO_URI` are set, and in production `CORS_ORIGINS` too.
+- **Frontend:** copy `frontend-react/.env.example` (optional). `VITE_API_URL` is inlined at build time. Leave it empty in production when nginx serves the app and `/api` from the same domain.
+- **AI service:** `MODEL_VERSION` (`v2` default, `v1` rollback; must match the API) and `LOG_LEVEL`.
 
-```env
-PORT=4000
-NODE_ENV=development
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/project_aura
-JWT_SECRET=your_jwt_secret_key_here
-AURA_AI_URL=http://127.0.0.1:5000
-MODEL_VERSION=v2
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_email_app_password_here
-IGDB_CLIENT_ID=your_twitch_client_id_here
-IGDB_CLIENT_SECRET=your_twitch_client_secret_here
-```
-
-*(Optional)* Create `.env` in `frontend-react/`:
-```env
-VITE_API_URL=http://localhost:4000
+Generate a JWT secret:
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
 ---
@@ -346,10 +335,12 @@ VITE_API_URL=http://localhost:4000
 ### Predict Gaming FPS & Bottleneck
 `POST /api/predict`
 
-**Request (Model V2 Payload)**:
+The model version is chosen by the server (`MODEL_VERSION`), never by the client.
+The frontend sends hardware names/IDs plus the game and preset; the API resolves them into the 16 physical features below (direct features are also accepted).
+
+**Request (resolved Model V2 features)**:
 ```json
 {
-  "modelVersion": "v2",
   "GameName": "apexLegends",
   "GameSetting_Ordinal": 2,
   "CpuNumberOfCores": 6,
@@ -373,14 +364,16 @@ VITE_API_URL=http://localhost:4000
 ```json
 {
   "predictedFps": 98.42,
-  "predicted_fps": 98.42,
   "modelVersion": "v2",
   "gameCoverage": "known",
   "resolution": "1080p",
   "preset": "Medium",
+  "supportedPresets": ["Medium", "Ultra"],
   "game": "apexLegends"
 }
 ```
+
+**Errors**: `400 MODEL_V2_HARDWARE_DATA_INCOMPLETE` (with `missingFields`), `400 UNSUPPORTED_PRESET` (only Medium/Ultra are supported), `400 MODEL_V2_INVALID_FEATURE`, `503 AI_SERVICE_UNAVAILABLE`, `504` when the AI service times out.
 
 <details>
 <summary><b>View Additional API Endpoints</b></summary>
@@ -396,6 +389,8 @@ VITE_API_URL=http://localhost:4000
 | `/api/user/rigs` | `GET` | Fetch saved PC configurations | Yes (JWT) |
 | `/api/user/rigs` | `POST` | Save a new PC configuration | Yes (JWT) |
 | `/api/user/rigs/:rigId` | `DELETE`| Remove a saved PC configuration | Yes (JWT) |
+| `/api/pricing/estimate` | `POST` | LKR price estimate (Gemini; rate limited) | No |
+| `/api/health` | `GET` | Liveness: database + AI service status (503 when degraded) | No |
 
 </details>
 
@@ -403,21 +398,54 @@ VITE_API_URL=http://localhost:4000
 
 ## 🧪 Testing & Verification
 
-| Test Suite | Framework | Passing Tests | Status |
-| :--- | :--- | :---: | :---: |
-| **Python ML Microservice** | Pytest | **19 / 19** | `PASS` |
-| **Node.js Backend Gateway** | Jest / Supertest | **162 / 162** (8 Suites) | `PASS` |
-| **Frontend Code Quality** | ESLint | **0 Errors** (1 Warning) | `PASS` |
-| **Frontend Production Build**| Vite | **Clean Build** (7.96s) | `PASS` |
+| Test Suite | Command | Notes |
+| :--- | :--- | :--- |
+| **Python ML service** (pytest) | `cd ai-python && pytest` | Real model artifacts; payload validation, presets, units |
+| **Node.js API** (Jest + Supertest) | `cd backend-node && npm test` | Runs against an **in-memory MongoDB** (mongodb-memory-server). It never touches the database in `.env` |
+| **Frontend lint** (ESLint) | `cd frontend-react && npm run lint` | |
+| **Frontend E2E** (Cypress) | `npm run dev` then `npm test` in `frontend-react` | API is stubbed |
 
 ---
 
 ## ⚠️ Current Limitations
 
-1. **Native 1080p Scope**: Model V2 was trained and validated on native 1080p benchmark observations. 1440p and 4K estimations utilize application-level baseline scaling rather than native higher-resolution ML training.
-2. **Graphics Presets**: Native training encompasses Medium and Ultra presets; Low and High presets are normalized cleanly to corresponding ordinals.
+1. **1080p only**: Model V2 was trained on 1080p benchmarks. For 1440p/4K the app shows the bottleneck analysis and a notice; it does not invent an FPS number.
+2. **Medium & Ultra only**: The training data contains only these two presets, so the UI offers only them and the API rejects Low/High (`UNSUPPORTED_PRESET`).
 3. **Training Catalog (24 Games)**: Untested game titles are supported via categorical one-hot unseen handling, but carry higher variance (MAE: 16.58 FPS). The UI explicitly labels these as `"⚠️ Estimated for an untested game"`.
 4. **Estimation Nature**: Predictions represent statistical approximations under standard thermal and benchmark conditions, not a manufacturer-guaranteed framerate.
+
+---
+
+## 🌐 Production Deployment (VPS + PM2 + nginx)
+
+Three processes on one server. Only nginx is public; the API and the AI service listen on localhost.
+
+```
+browser ──HTTPS──▶ nginx ──/──────▶ frontend-react/dist (static, SPA fallback)
+                        └─/api/──▶ 127.0.0.1:4000  aura-api  (Node, PM2)
+                                        └──────▶ 127.0.0.1:5000  aura-ai (gunicorn, PM2)
+```
+
+```bash
+# 1. AI service
+cd ai-python && python3.13 -m venv venv && venv/bin/pip install -r requirements.txt
+
+# 2. API
+cd ../backend-node && npm ci --omit=dev
+cp .env.example .env   # set NODE_ENV=production, MONGO_URI, JWT_SECRET, CORS_ORIGINS=https://your-domain
+
+# 3. Frontend (same-origin API: leave VITE_API_URL empty)
+cd ../frontend-react && npm ci && npm run build
+
+# 4. Processes
+cd .. && pm2 start ecosystem.config.js && pm2 save && pm2 startup
+
+# 5. nginx: adapt deploy/nginx.conf.example (domain, paths, TLS via certbot)
+```
+
+Health check: `curl https://your-domain/api/health` returns `{"status":"ok","db":"up","ai":"up"}`.
+
+Before going live, replace the placeholder domain `https://projectaura.dev` in `frontend-react/index.html`, `public/robots.txt` and `public/sitemap.xml`.
 
 ---
 

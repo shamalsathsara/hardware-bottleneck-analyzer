@@ -36,7 +36,7 @@ export default function MethodologyPage({ onNavigate }) {
               <li><strong>Continuous CPU Metrics:</strong> Physical Core Count, Thread Count, Thermal Design Power (TDP in Watts), and CPU PassMark scores.</li>
               <li><strong>Continuous GPU Metrics:</strong> Video RAM capacity (VRAM in GB), Memory Bus Bandwidth (GB/s), CUDA/Compute units, and GPU TDP.</li>
               <li><strong>System Memory:</strong> Total installed RAM capacity (GB).</li>
-              <li><strong>Workload Target:</strong> Target display resolution (1920&times;1080, 2560&times;1440, 3840&times;2160) and graphics fidelity presets (Low, Medium, High, Ultra).</li>
+              <li><strong>Workload Target:</strong> Game FPS prediction is trained on 1920&times;1080 benchmarks with the Medium and Ultra presets. 1440p and 4K are not yet supported for FPS prediction; the bottleneck analysis applies at any resolution.</li>
             </ul>
           </div>
         </section>

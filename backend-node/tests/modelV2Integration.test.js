@@ -23,13 +23,17 @@ describe('Project Aura V2.4 — Model V2 Backend Integration & Prediction Bridge
       expect(normalizeV2GameName(null)).toBeNull();
     });
 
-    test('normalizeSettingOrdinal maps UI preset strings to numeric ordinals', () => {
+    test('normalizeSettingOrdinal maps supported presets and rejects untrained ones', () => {
       expect(normalizeSettingOrdinal('Medium')).toBe(2);
       expect(normalizeSettingOrdinal('Ultra')).toBe(4);
-      expect(normalizeSettingOrdinal('low')).toBe(1);
-      expect(normalizeSettingOrdinal('high')).toBe(3);
       expect(normalizeSettingOrdinal(4)).toBe(4);
+      expect(normalizeSettingOrdinal('4')).toBe(4);
       expect(normalizeSettingOrdinal(null)).toBe(2);
+      // Model V2 was only trained on Medium and Ultra.
+      expect(normalizeSettingOrdinal('low')).toBeNull();
+      expect(normalizeSettingOrdinal('high')).toBeNull();
+      expect(normalizeSettingOrdinal(3)).toBeNull();
+      expect(normalizeSettingOrdinal({})).toBeNull();
     });
   });
 
@@ -139,37 +143,84 @@ describe('Project Aura V2.4 — Model V2 Backend Integration & Prediction Bridge
       expect(axios.post).not.toHaveBeenCalled();
     });
 
-    test('POST /api/predict supports Model V1 rollback via modelVersion: "v1"', async () => {
-      const mockV1Response = {
-        predicted_fps: 84.5,
-        predictedFps: 84.5,
-        modelVersion: 'v1',
-      };
-
-      axios.post.mockResolvedValueOnce({ data: mockV1Response });
-
-      const payload = {
+    test('POST /api/predict ignores a client-supplied modelVersion (server decides)', async () => {
+      const res = await request(app).post('/api/predict').send({
         modelVersion: 'v1',
         CPU: 'Intel i7-12700F',
-        'CPU Cores': 12,
-        'CPU Threads': 20,
-        'CPU TDP (W)': 65,
         GPU: 'RTX 3060',
-        'GPU Series': 'RTX 3000',
-        'GPU VRAM (GB)': 12,
-        'GPU Bandwidth (GB/s)': 360,
-        'GPU TDP (W)': 170,
-        'RAM (GB)': 16,
-        Resolution: '1920x1080',
         'Graphics Settings': 'Ultra',
+      });
+
+      // MODEL_VERSION=v2 on the server: request goes through V2 resolution, not V1.
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('MODEL_V2_HARDWARE_DATA_INCOMPLETE');
+      expect(axios.post).not.toHaveBeenCalled();
+    });
+
+    test('POST /api/predict rejects presets Model V2 was not trained on', async () => {
+      const res = await request(app).post('/api/predict').send({
+        CPU: 'Intel Core i5-9500 @ 3.00GHz',
+        GPU: 'GeForce GTX 1660 SUPER',
+        GameName: 'grandTheftAuto5',
+        'Graphics Settings': 'High',
+      });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('UNSUPPORTED_PRESET');
+      expect(res.body.supportedPresets).toEqual(['Medium', 'Ultra']);
+      expect(axios.post).not.toHaveBeenCalled();
+    });
+
+    test('POST /api/predict maps an unreachable AI service to 503 and a timeout to 504', async () => {
+      const body = {
+        CPU: 'Intel Core i5-9500 @ 3.00GHz',
+        GPU: 'GeForce GTX 1660 SUPER',
+        GameName: 'grandTheftAuto5',
+        GameSetting_Ordinal: 2,
       };
 
-      const res = await request(app).post('/api/predict').send(payload);
+      axios.post.mockRejectedValueOnce(Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' }));
+      const down = await request(app).post('/api/predict').send(body);
+      expect(down.status).toBe(503);
+      expect(down.body.error).toBe('AI_SERVICE_UNAVAILABLE');
+
+      axios.post.mockRejectedValueOnce(Object.assign(new Error('timeout'), { code: 'ECONNABORTED' }));
+      const slow = await request(app).post('/api/predict').send(body);
+      expect(slow.status).toBe(504);
+
+      axios.post.mockRejectedValueOnce(Object.assign(new Error('boom'), { response: { status: 500, data: { error: 'secret stack' } } }));
+      const crashed = await request(app).post('/api/predict').send(body);
+      expect(crashed.status).toBe(503);
+      expect(JSON.stringify(crashed.body)).not.toContain('secret stack');
+
+      axios.post.mockRejectedValueOnce(Object.assign(new Error('bad'), { response: { status: 400, data: { error: 'MODEL_V2_INVALID_FEATURE' } } }));
+      const invalid = await request(app).post('/api/predict').send(body);
+      expect(invalid.status).toBe(400);
+      expect(invalid.body.error).toBe('MODEL_V2_INVALID_FEATURE');
+    });
+
+    test('MODEL_VERSION=v1 rollback forwards only whitelisted V1 fields', async () => {
+      let rollbackApp;
+      const previous = process.env.MODEL_VERSION;
+      process.env.MODEL_VERSION = 'v1';
+      jest.isolateModules(() => {
+        rollbackApp = require('../server');
+      });
+      process.env.MODEL_VERSION = previous;
+
+      const isolatedAxios = jest.requireMock('axios');
+      isolatedAxios.post.mockResolvedValueOnce({ data: { predictedFps: 84.5, modelVersion: 'v1' } });
+
+      const res = await request(rollbackApp).post('/api/predict').send({
+        CPU: 'Intel i7-12700F',
+        GPU: 'RTX 3060',
+        'RAM (GB)': 16,
+        rawCpu: { huge: 'object' },
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.modelVersion).toBe('v1');
-      expect(res.body.predicted_fps).toBe(84.5);
-      expect(axios.post).toHaveBeenCalledTimes(1);
+      const forwarded = isolatedAxios.post.mock.calls.at(-1)[1];
+      expect(forwarded).toEqual({ CPU: 'Intel i7-12700F', GPU: 'RTX 3060', 'RAM (GB)': 16 });
     });
 
     test('POST /api/predict routes selected game slugs correctly to Model V2', async () => {
@@ -255,7 +306,7 @@ describe('Project Aura V2.4 — Model V2 Backend Integration & Prediction Bridge
         CPU: 'Intel Core i5-8400 @ 2.80GHz',
         GPU: 'GeForce GTX 1660 SUPER',
         GameName: 'grandTheftAuto5',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
 
       const res = await request(app).post('/api/predict').send(payload);
@@ -292,7 +343,7 @@ describe('Project Aura V2.4 — Model V2 Backend Integration & Prediction Bridge
         CPU: 'Intel Core i5-9500 @ 3.00GHz',
         GPU: 'GeForce GTX 1660 SUPER',
         GameName: 'grandTheftAuto5',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
 
       const res = await request(app).post('/api/predict').send(payload);
@@ -306,7 +357,7 @@ describe('Project Aura V2.4 — Model V2 Backend Integration & Prediction Bridge
         CPU: 'Intel Celeron 300A',
         GPU: 'GeForce GTX 1660 SUPER',
         GameName: 'grandTheftAuto5',
-        GameSetting_Ordinal: 3,
+        GameSetting_Ordinal: 4,
       };
 
       const res = await request(app).post('/api/predict').send(payload);

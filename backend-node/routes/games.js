@@ -7,7 +7,7 @@ const router = express.Router();
 // 1. GET /api/games/search?q= -> Fast autocomplete search
 router.get('/search', async (req, res) => {
   try {
-    const rawQuery = (req.query.q || '').trim();
+    const rawQuery = String(req.query.q || '').trim();
     if (!rawQuery) {
       return res.json([]);
     }
@@ -71,12 +71,12 @@ router.get('/', async (req, res) => {
     const filter = {};
 
     // Optional genre filter
-    if (req.query.genre && req.query.genre.trim()) {
+    if (typeof req.query.genre === 'string' && req.query.genre.trim()) {
       filter.genres = { $regex: new RegExp(`^${escapeRegex(req.query.genre.trim())}$`, 'i') };
     }
 
     // Optional general text search filter
-    if (req.query.search && req.query.search.trim()) {
+    if (typeof req.query.search === 'string' && req.query.search.trim()) {
       const safeSearch = escapeRegex(req.query.search.trim());
       const regex = new RegExp(safeSearch, 'i');
       filter.$or = [

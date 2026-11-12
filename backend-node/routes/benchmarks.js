@@ -39,11 +39,11 @@ router.get('/game/:slug', async (req, res) => {
     const skip = Math.max(0, parseInt(req.query.skip, 10) || 0);
 
     const filter = { gameSlug: cleanSlug };
-    if (req.query.resolution) {
-      filter['display.label'] = req.query.resolution;
+    if (typeof req.query.resolution === 'string' && req.query.resolution) {
+      filter['display.label'] = req.query.resolution.slice(0, 40);
     }
-    if (req.query.preset) {
-      filter['graphics.normalizedPreset'] = req.query.preset;
+    if (typeof req.query.preset === 'string' && req.query.preset) {
+      filter['graphics.normalizedPreset'] = req.query.preset.slice(0, 40);
     }
     if (req.query.trainingOnly === 'true') {
       filter.trainingEligible = true;

@@ -1,217 +1,138 @@
+"""HTTP-level tests for the Model V2 prediction path."""
+
 import os
 import sys
 import unittest
-import json
+from unittest.mock import patch
 
 AI_DIR = os.path.dirname(os.path.abspath(__file__))
 if AI_DIR not in sys.path:
     sys.path.insert(0, AI_DIR)
 
-from app import app, KNOWN_V2_GAMES
+from app import app, KNOWN_V2_GAMES  # noqa: E402
+
+# i5-9500 + GTX 1660 SUPER, in training units (MHz, MB, MB/s, MFLOPS)
+HARDWARE = {
+    'CpuNumberOfCores': 6.0,
+    'CpuNumberOfThreads': 6.0,
+    'CpuFrequency': 3000.0,
+    'CpuTurboClock': 4400.0,
+    'CpuCacheL3': 9.0,
+    'CpuTDP': 65.0,
+    'GpuMemorySize': 6000.0,
+    'GpuBandwidth': 336000.0,
+    'GpuMemoryBus': 192.0,
+    'GpuNumberOfShadingUnits': 1408.0,
+    'GpuBaseClock': 1530.0,
+    'GpuBoostClock': 1785.0,
+    'GpuNumberOfROPs': 48.0,
+    'GpuFP32Performance': 5027000.0,
+}
+
+
+def payload(**overrides):
+    return {**HARDWARE, 'GameName': 'apexLegends', 'GameSetting_Ordinal': 2, **overrides}
+
 
 class TestModelV2Integration(unittest.TestCase):
     def setUp(self):
-        self.app = app.test_client()
-        self.app.testing = True
+        app.config['TESTING'] = True
+        self.client = app.test_client()
+        self.env = patch.dict(os.environ, {'MODEL_VERSION': 'v2'})
+        self.env.start()
+
+    def tearDown(self):
+        self.env.stop()
+
+    def post(self, body):
+        return self.client.post('/predict', json=body)
 
     def test_health_endpoint(self):
-        response = self.app.get('/health')
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
+        res = self.client.get('/health')
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
         self.assertEqual(data['status'], 'healthy')
+        self.assertEqual(data['activeVersion'], 'v2')
         self.assertTrue(data['models']['v1_available'])
         self.assertTrue(data['models']['v2_available'])
         self.assertEqual(data['known_games_count'], 24)
+        self.assertEqual(len(KNOWN_V2_GAMES), 24)
 
-    def test_model_v1_legacy_payload(self):
-        payload = {
-            "modelVersion": "v1",
-            "CPU": "AMD Ryzen 7 7800X3D",
-            "CPU Cores": 8,
-            "CPU Threads": 16,
-            "CPU TDP (W)": 120,
-            "GPU": "NVIDIA GeForce RTX 4080",
-            "GPU Series": "RTX 4000",
-            "GPU VRAM (GB)": 16,
-            "GPU Bandwidth (GB/s)": 716,
-            "GPU TDP (W)": 320,
-            "RAM (GB)": 32,
-            "Resolution": "1920x1080",
-            "Graphics Settings": "Ultra"
-        }
-        response = self.app.post('/predict', json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
-        self.assertIn('predicted_fps', data)
-        self.assertEqual(data['modelVersion'], 'v1')
-        self.assertTrue(5.0 <= data['predicted_fps'] <= 1200.0)
-
-    def test_model_v2_known_game(self):
-        # i5-9500 + GTX 1660 SUPER specs on Apex Legends (Medium)
-        payload = {
-            "modelVersion": "v2",
-            "GameName": "apexLegends",
-            "GameSetting_Ordinal": 2, # Medium
-            "CpuNumberOfCores": 6.0,
-            "CpuNumberOfThreads": 6.0,
-            "CpuFrequency": 3000.0,
-            "CpuTurboClock": 4400.0,
-            "CpuCacheL3": 9.0,
-            "CpuTDP": 65.0,
-            "GpuMemorySize": 6000.0,
-            "GpuBandwidth": 336000.0,
-            "GpuMemoryBus": 192.0,
-            "GpuNumberOfShadingUnits": 1408.0,
-            "GpuBaseClock": 1530.0,
-            "GpuBoostClock": 1785.0,
-            "GpuNumberOfROPs": 48.0,
-            "GpuFP32Performance": 5027000.0
-        }
-        response = self.app.post('/predict', json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
+    def test_known_game(self):
+        res = self.post(payload())
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
         self.assertEqual(data['modelVersion'], 'v2')
         self.assertEqual(data['gameCoverage'], 'known')
         self.assertEqual(data['preset'], 'Medium')
-        self.assertTrue(data['predictedFps'] > 0)
-        self.assertTrue(np_isfinite := isinstance(data['predictedFps'], (int, float)))
+        self.assertEqual(data['resolution'], '1080p')
+        self.assertEqual(data['supportedPresets'], ['Medium', 'Ultra'])
+        self.assertGreater(data['predictedFps'], 0)
 
-    def test_model_v2_unseen_game(self):
-        # Forza Horizon 5 (Unseen game)
-        payload = {
-            "modelVersion": "v2",
-            "GameName": "Forza Horizon 5",
-            "GameSetting_Ordinal": 4, # Ultra
-            "CpuNumberOfCores": 6.0,
-            "CpuNumberOfThreads": 6.0,
-            "CpuFrequency": 3000.0,
-            "CpuTurboClock": 4400.0,
-            "CpuCacheL3": 9.0,
-            "CpuTDP": 65.0,
-            "GpuMemorySize": 6000.0,
-            "GpuBandwidth": 336000.0,
-            "GpuMemoryBus": 192.0,
-            "GpuNumberOfShadingUnits": 1408.0,
-            "GpuBaseClock": 1530.0,
-            "GpuBoostClock": 1785.0,
-            "GpuNumberOfROPs": 48.0,
-            "GpuFP32Performance": 5027000.0
-        }
-        response = self.app.post('/predict', json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
-        self.assertEqual(data['modelVersion'], 'v2')
+    def test_unseen_game(self):
+        res = self.post(payload(GameName='Forza Horizon 5', GameSetting_Ordinal=4))
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
         self.assertEqual(data['gameCoverage'], 'unseen')
         self.assertEqual(data['preset'], 'Ultra')
-        self.assertTrue(data['predictedFps'] > 0)
 
-    def test_model_v2_missing_hardware_fields(self):
-        # Missing GPU Shaders and FP32 Performance
-        payload = {
-            "modelVersion": "v2",
-            "GameName": "apexLegends",
-            "GameSetting_Ordinal": 2,
-            "CpuNumberOfCores": 6.0,
-            "CpuNumberOfThreads": 6.0,
-            "CpuFrequency": 3000.0,
-            "CpuTurboClock": 4400.0,
-            "CpuCacheL3": 9.0,
-            "CpuTDP": 65.0,
-            "GpuMemorySize": 6000.0
-            # Missing: GpuBandwidth, GpuMemoryBus, GpuNumberOfShadingUnits, etc.
-        }
-        response = self.app.post('/predict', json=payload)
-        self.assertEqual(response.status_code, 400)
-        data = response.get_json()
+    def test_numeric_string_ordinal_accepted(self):
+        res = self.post(payload(GameSetting_Ordinal='4'))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.get_json()['preset'], 'Ultra')
+
+    def test_missing_hardware_fields(self):
+        body = payload()
+        for key in ('GpuBandwidth', 'GpuNumberOfShadingUnits', 'GpuFP32Performance'):
+            body.pop(key)
+        res = self.post(body)
+        self.assertEqual(res.status_code, 400)
+        data = res.get_json()
         self.assertEqual(data['error'], 'MODEL_V2_HARDWARE_DATA_INCOMPLETE')
-        self.assertIn('missingFields', data)
         self.assertIn('GpuNumberOfShadingUnits', data['missingFields'])
         self.assertIn('GpuFP32Performance', data['missingFields'])
 
-    def test_model_v2_preset_scaling(self):
-        base_payload = {
-            "modelVersion": "v2",
-            "GameName": "apexLegends",
-            "CpuNumberOfCores": 6.0,
-            "CpuNumberOfThreads": 6.0,
-            "CpuFrequency": 3000.0,
-            "CpuTurboClock": 4400.0,
-            "CpuCacheL3": 9.0,
-            "CpuTDP": 65.0,
-            "GpuMemorySize": 6000.0,
-            "GpuBandwidth": 336000.0,
-            "GpuMemoryBus": 192.0,
-            "GpuNumberOfShadingUnits": 1408.0,
-            "GpuBaseClock": 1530.0,
-            "GpuBoostClock": 1785.0,
-            "GpuNumberOfROPs": 48.0,
-            "GpuFP32Performance": 5027000.0
-        }
+    def test_unsupported_presets_rejected(self):
+        for ordinal in (1, 3, 99, 2.5, 'High', True):
+            with self.subTest(ordinal=ordinal):
+                res = self.post(payload(GameSetting_Ordinal=ordinal))
+                self.assertEqual(res.status_code, 400)
+                self.assertEqual(res.get_json()['error'], 'UNSUPPORTED_PRESET')
 
-        # Medium (Ordinal 2)
-        med_payload = dict(base_payload, GameSetting_Ordinal=2)
-        med_res = self.app.post('/predict', json=med_payload).get_json()
+    def test_invalid_numeric_values_rejected(self):
+        for bad in ('NaN', 'inf', -100, 0, True, 'abc', [6]):
+            with self.subTest(value=bad):
+                res = self.post(payload(CpuNumberOfCores=bad))
+                self.assertEqual(res.status_code, 400)
+                data = res.get_json()
+                self.assertEqual(data['error'], 'MODEL_V2_INVALID_FEATURE')
+                self.assertIn('CpuNumberOfCores', data['invalidFields'])
 
-        # Ultra (Ordinal 4)
-        ultra_payload = dict(base_payload, GameSetting_Ordinal=4)
-        ultra_res = self.app.post('/predict', json=ultra_payload).get_json()
+    def test_non_string_game_rejected(self):
+        res = self.post(payload(GameName=['apexLegends']))
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('GameName', res.get_json()['invalidFields'])
 
-        self.assertLessEqual(ultra_res['predictedFps'], med_res['predictedFps'])
+    def test_ultra_not_faster_than_medium(self):
+        med = self.post(payload(GameSetting_Ordinal=2)).get_json()['predictedFps']
+        ultra = self.post(payload(GameSetting_Ordinal=4)).get_json()['predictedFps']
+        self.assertLessEqual(ultra, med)
 
-    def test_model_v2_game_sensitivity(self):
-        # i5-9500 + GTX 1660 SUPER specs on Medium
-        base_hardware = {
-            "modelVersion": "v2",
-            "GameSetting_Ordinal": 2,
-            "CpuNumberOfCores": 6.0,
-            "CpuNumberOfThreads": 6.0,
-            "CpuFrequency": 3000.0,
-            "CpuTurboClock": 4400.0,
-            "CpuCacheL3": 9.0,
-            "CpuTDP": 65.0,
-            "GpuMemorySize": 6000.0,
-            "GpuBandwidth": 336000.0,
-            "GpuMemoryBus": 192.0,
-            "GpuNumberOfShadingUnits": 1408.0,
-            "GpuBaseClock": 1530.0,
-            "GpuBoostClock": 1785.0,
-            "GpuNumberOfROPs": 48.0,
-            "GpuFP32Performance": 5027000.0
-        }
+    def test_game_sensitivity(self):
+        fps = {}
+        for game in ('apexLegends', 'grandTheftAuto5', 'counterStrikeGlobalOffensive'):
+            data = self.post(payload(GameName=game)).get_json()
+            self.assertEqual(data['gameCoverage'], 'known')
+            self.assertEqual(data['game'], game)
+            fps[game] = data['predictedFps']
 
-        # Predict for Apex Legends
-        res_apex = self.app.post('/predict', json=dict(base_hardware, GameName="apexLegends")).get_json()
-        self.assertEqual(res_apex['modelVersion'], 'v2')
-        self.assertEqual(res_apex['gameCoverage'], 'known')
-        self.assertEqual(res_apex['game'], 'apexLegends')
-        fps_apex = res_apex['predictedFps']
+        self.assertEqual(len(set(fps.values())), 3)
+        self.assertGreater(fps['counterStrikeGlobalOffensive'], fps['grandTheftAuto5'])
 
-        # Predict for GTA V
-        res_gta = self.app.post('/predict', json=dict(base_hardware, GameName="grandTheftAuto5")).get_json()
-        self.assertEqual(res_gta['modelVersion'], 'v2')
-        self.assertEqual(res_gta['gameCoverage'], 'known')
-        self.assertEqual(res_gta['game'], 'grandTheftAuto5')
-        fps_gta = res_gta['predictedFps']
+        unseen = self.post(payload(GameName='Cyberpunk 2077')).get_json()
+        self.assertEqual(unseen['gameCoverage'], 'unseen')
+        self.assertGreater(unseen['predictedFps'], 0)
 
-        # Predict for CS:GO
-        res_csgo = self.app.post('/predict', json=dict(base_hardware, GameName="counterStrikeGlobalOffensive")).get_json()
-        self.assertEqual(res_csgo['modelVersion'], 'v2')
-        self.assertEqual(res_csgo['gameCoverage'], 'known')
-        self.assertEqual(res_csgo['game'], 'counterStrikeGlobalOffensive')
-        fps_csgo = res_csgo['predictedFps']
-
-        # Verify games produce their distinct model predictions
-        self.assertNotEqual(fps_apex, fps_gta)
-        self.assertNotEqual(fps_apex, fps_csgo)
-        self.assertNotEqual(fps_gta, fps_csgo)
-        self.assertTrue(fps_csgo > fps_gta)
-
-        # Predict for unseen game (e.g. Cyberpunk 2077)
-        res_unseen = self.app.post('/predict', json=dict(base_hardware, GameName="Cyberpunk 2077")).get_json()
-        self.assertEqual(res_unseen['modelVersion'], 'v2')
-        self.assertEqual(res_unseen['gameCoverage'], 'unseen')
-        self.assertEqual(res_unseen['game'], 'Cyberpunk 2077')
-        self.assertTrue(res_unseen['predictedFps'] > 0)
 
 if __name__ == '__main__':
     unittest.main()

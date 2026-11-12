@@ -1,15 +1,14 @@
+// Game FPS prediction (Model V2) is trained on 1080p data with the Medium and Ultra presets only.
+export const PREDICTION_RESOLUTION = '1920x1080';
+export const PREDICTION_PRESETS = ['Medium', 'Ultra'];
+
 export const RESOLUTIONS = [
   { value: '1920x1080', label: '1080p (FHD) — Supported' },
   { value: '2560x1440', label: '1440p (QHD) — Still Developing' },
   { value: '3840x2160', label: '4K (UHD) — Still Developing' },
 ];
 
-export const QUALITY_PRESETS = [
-  { value: 'Low', label: 'Low' },
-  { value: 'Medium', label: 'Medium' },
-  { value: 'High', label: 'High' },
-  { value: 'Ultra', label: 'Ultra' },
-];
+export const QUALITY_PRESETS = PREDICTION_PRESETS.map((value) => ({ value, label: value }));
 
 export const RAM_OPTIONS = [
   { value: '4', label: '4 GB' },

@@ -2,10 +2,7 @@ const mongoose = require('mongoose');
 const Game = require('../../models/Game');
 const HardwareCpu = require('../../models/HardwareCpu');
 const HardwareGpu = require('../../models/HardwareGpu');
-
-function escapeRegex(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+const escapeRegex = require('../../utils/escapeRegex');
 
 /**
  * Resolves a human-friendly string or ID into a definitive canonical Game record.

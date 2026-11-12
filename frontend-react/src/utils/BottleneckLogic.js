@@ -64,6 +64,7 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
     const severity = Math.max(0, Math.min(100, Number.isFinite(rawSeverity) ? rawSeverity : 0));
   
     let message, color, cardClass, type;
+    let lean = null; // which side is marginally weaker, even when the build counts as balanced
   
     if (absDiff === 0) {
       type      = null;
@@ -71,7 +72,9 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
       cardClass = 'has-bottleneck-ok';
       message   = 'Balanced Build: Your CPU and GPU work perfectly together — solid gaming setup.';
     } else if (absDiff === 1) {
-      type      = diff > 0 ? 'gpu' : 'cpu';
+      // One tier apart is within the balanced band (severity 5%): no bottleneck type.
+      type      = null;
+      lean      = diff > 0 ? 'gpu' : 'cpu';
       color     = '#10b981';
       cardClass = 'has-bottleneck-ok';
       message   = diff > 0
@@ -105,7 +108,7 @@ export const analyzeBottleneck = (cpu, gpu, maxStats) => {
 
     const classification = getBottleneckClassification(severity, type);
   
-    return { severity, percentage: severity, message, color, cardClass, type, classification };
+    return { severity, percentage: severity, message, color, cardClass, type, lean, classification };
   };
 
 /**
@@ -200,60 +203,4 @@ export const getBottleneckClassification = (severity, type) => {
       : 'Your graphics card is severely underpowered compared to your processor.',
     type,
   };
-};
-  
-export const getExplanation = (data, style) => {
-    if (!data) return '';
-
-    if (data.type === 'cpu') {
-      if (style === 'technical') {
-        return `The processor is operating at or near 100% utilization while the GPU still has available compute headroom. This CPU bottleneck scenario occurs because the processor cannot generate render commands fast enough to keep the GPU fully saturated.`;
-      } else {
-        return `Your computer's brain (the CPU) is working so hard that it's struggling to keep up with your graphics card. Imagine a chef cooking orders too slowly — the kitchen (GPU) is sitting idle waiting. This makes your games run slower than they should.`;
-      }
-    }
-
-    if (data.type === 'gpu') {
-      if (style === 'technical') {
-        return `The GPU is operating at maximum utilization (close to 100% render load) while the CPU still has available processing headroom. This GPU bottleneck occurs because the graphics card cannot render frames fast enough to match the processor's output rate.`;
-      } else {
-        return `Your graphics card is working much harder than the rest of your computer. It's like a car engine running at full speed but the wheels can't keep up. This slows down your overall gaming performance, especially at higher resolutions.`;
-      }
-    }
-
-    if (style === 'technical') {
-      return `The CPU and GPU are operating with a balanced utilization ratio. Neither component is a significant limiting factor for the other, which means the system can sustain consistent frame delivery.`;
-    } else {
-      return `Great news! Your CPU and GPU are working well together as a team. Neither one is holding the other back. This means you get smooth, consistent gaming performance without any major weak links in your system.`;
-    }
-};
-
-export const generateQA = (data) => {
-    if (!data) {
-      return [
-        { q: 'What is a bottleneck?', a: 'A bottleneck happens when one component in your PC is much slower than the others, limiting overall performance.' },
-        { q: 'How does Project Aura detect bottlenecks?', a: 'Project Aura uses a trained AI model to predict FPS and checks if your CPU and GPU power levels are balanced.' },
-        { q: 'What should I do first?', a: 'Search for your CPU and GPU, select your game settings, and click "Run Analysis".' },
-      ];
-    }
-
-    if (data.type === 'cpu') {
-      return [
-        { q: 'Why is my setup bottlenecked?', a: 'Your CPU is too slow to send enough render commands to keep your GPU busy. The GPU ends up waiting, which reduces your FPS.' },
-        { q: 'Will upgrading the GPU improve my performance?', a: 'Not much — since the CPU is the bottleneck, a stronger GPU would still be limited by the slow processor.' },
-        { q: 'What should I upgrade first?', a: 'Upgrade your CPU. Look for a modern processor with 6 or more cores.' },
-      ];
-    } else if (data.type === 'gpu') {
-      return [
-        { q: 'Why is my setup bottlenecked?', a: 'Your graphics card is maxed out and cannot draw frames as fast as your CPU is asking for them.' },
-        { q: 'Is it bad to have a GPU bottleneck?', a: 'Not necessarily! In most gaming PCs, you want the GPU to be the limiting factor (working at 100%).' },
-        { q: 'What should I upgrade first?', a: 'Upgrading your GPU will give you the most noticeable increase in framerate and allow higher graphics settings.' },
-      ];
-    }
-
-    return [
-      { q: 'What does a balanced build mean?', a: 'It means your CPU and GPU are perfectly matched for each other.' },
-      { q: 'Do I need to upgrade?', a: 'Not right now! If you are happy with your FPS, your system is running optimally.' },
-      { q: 'If I upgrade later, what should I change?', a: 'You will likely need to upgrade both the CPU and GPU at the same time to keep this balance.' },
-    ];
 };

@@ -7,8 +7,10 @@ const userSchema = new mongoose.Schema(
     contact: { type: String, trim: true },
     passwordHash: { type: String, required: true },
 
-    resetCode: { type: String },
+    // Password reset: only a SHA-256 hash of the 6-digit code is stored.
+    resetCodeHash: { type: String },
     resetCodeExpires: { type: Date },
+    resetAttempts: { type: Number, default: 0 },
 
     savedRigs: [
       {
@@ -22,11 +24,11 @@ const userSchema = new mongoose.Schema(
         gpuHardwareId: { type: String, trim: true },
         cpuDisplayName: { type: String, trim: true },
         gpuDisplayName: { type: String, trim: true },
-        createdAt: { type: Date, default: Date.now }
-      }
-    ]
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);

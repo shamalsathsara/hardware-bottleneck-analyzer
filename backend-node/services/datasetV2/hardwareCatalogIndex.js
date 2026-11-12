@@ -113,7 +113,7 @@ function buildHardwareCatalog() {
           if (item.power?.defaultTdpWatts) setCpuField(sku, 'CpuTDP', item.power.defaultTdpWatts, 'hardware_master_seed', 100);
         }
       }
-    } catch (_) {}
+    } catch (err) { console.warn('Hardware catalog source failed to load:', err.message); }
   }
 
   const gpuSeedPath = path.join(baseDir, 'backend-node/data/hardware/gpus.seed.json');
@@ -149,7 +149,7 @@ function buildHardwareCatalog() {
           if (fp32) setGpuField(sku, 'GpuFP32Performance', fp32, 'hardware_master_seed', 100);
         }
       }
-    } catch (_) {}
+    } catch (err) { console.warn('Hardware catalog source failed to load:', err.message); }
   }
 
   // =========================================================================
@@ -202,7 +202,7 @@ function buildHardwareCatalog() {
           }
         }
       }
-    } catch (_) {}
+    } catch (err) { console.warn('Hardware catalog source failed to load:', err.message); }
   }
 
   // =========================================================================
@@ -237,7 +237,7 @@ function buildHardwareCatalog() {
           }
         }
       }
-    } catch (_) {}
+    } catch (err) { console.warn('Hardware catalog source failed to load:', err.message); }
   }
 
   const cpuData1Path = path.join(baseDir, 'backend-node/CPU/cpu_data1.csv');
@@ -269,7 +269,7 @@ function buildHardwareCatalog() {
           }
         }
       }
-    } catch (_) {}
+    } catch (err) { console.warn('Hardware catalog source failed to load:', err.message); }
   }
 
   // =========================================================================

@@ -1,6 +1,7 @@
 const express = require('express');
 const HardwareCpu = require('../models/HardwareCpu');
 const HardwareGpu = require('../models/HardwareGpu');
+const { CPU, GPU } = require('../models/Hardware');
 const escapeRegex = require('../utils/escapeRegex');
 
 const router = express.Router();
@@ -19,8 +20,8 @@ function getBoundedLimit(queryLimit, defaultLimit = 20, maxLimit = 50) {
 // ----------------------------------------------------------------------------
 router.get('/cpus/search', async (req, res) => {
   try {
-    const rawQuery = (req.query.q || '').trim();
-    const segment = (req.query.segment || '').trim().toLowerCase();
+    const rawQuery = String(req.query.q || '').trim().slice(0, 80);
+    const segment = String(req.query.segment || '').trim().toLowerCase();
     const limit = getBoundedLimit(req.query.limit, 20, 50);
 
     const filter = {};
@@ -32,7 +33,6 @@ router.get('/cpus/search', async (req, res) => {
       const safeQuery = escapeRegex(rawQuery);
       filter.$or = [
         { canonicalName: { $regex: safeQuery, $options: 'i' } },
-        { aliases: { $regex: `^${safeQuery}`, $options: 'i' } },
         { aliases: { $regex: safeQuery, $options: 'i' } },
       ];
     }
@@ -57,8 +57,8 @@ router.get('/cpus/search', async (req, res) => {
 // ----------------------------------------------------------------------------
 router.get('/gpus/search', async (req, res) => {
   try {
-    const rawQuery = (req.query.q || '').trim();
-    const segment = (req.query.segment || '').trim().toLowerCase();
+    const rawQuery = String(req.query.q || '').trim().slice(0, 80);
+    const segment = String(req.query.segment || '').trim().toLowerCase();
     const limit = getBoundedLimit(req.query.limit, 20, 50);
 
     const filter = {};
@@ -70,7 +70,6 @@ router.get('/gpus/search', async (req, res) => {
       const safeQuery = escapeRegex(rawQuery);
       filter.$or = [
         { canonicalName: { $regex: safeQuery, $options: 'i' } },
-        { aliases: { $regex: `^${safeQuery}`, $options: 'i' } },
         { aliases: { $regex: safeQuery, $options: 'i' } },
       ];
     }
@@ -165,37 +164,47 @@ router.get('/gpus/:slug', async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// 7. GET /api/hardware/stats (with legacy compatibility)
+// 7. GET /api/hardware/stats
 // ----------------------------------------------------------------------------
-const { CPU, GPU } = require('../models/Hardware');
+
+/**
+ * Max of a legacy score field. Legacy CSV imports stored some scores as strings,
+ * so a plain sort would compare lexicographically; convert to numbers first.
+ */
+async function maxNumeric(Model, field, fallback) {
+  const [row] = await Model.aggregate([
+    { $project: { v: { $convert: { input: `$${field}`, to: 'double', onError: null, onNull: null } } } },
+    { $group: { _id: null, max: { $max: '$v' } } },
+  ]);
+  return row && Number.isFinite(row.max) && row.max > 0 ? row.max : fallback;
+}
 
 router.get('/stats', async (req, res) => {
   try {
-    const totalCpus = await HardwareCpu.countDocuments();
-    const totalGpus = await HardwareGpu.countDocuments();
-    const verifiedSpecsCpus = await HardwareCpu.countDocuments({ 'quality.specQuality': 'verified' });
-    const verifiedSpecsGpus = await HardwareGpu.countDocuments({ 'quality.specQuality': 'verified' });
-    const mlReadyCpus = await HardwareCpu.countDocuments({ 'quality.mlReady': true });
-    const mlReadyGpus = await HardwareGpu.countDocuments({ 'quality.mlReady': true });
-
-    const topCpu = await CPU.findOne().sort({ cpuMark: -1 }).select('cpuMark').lean();
-    const topGpu = await GPU.findOne().sort({ CUDA: -1 }).select('CUDA').lean();
+    const [
+      totalCpus, totalGpus,
+      verifiedSpecsCpus, verifiedSpecsGpus,
+      mlReadyCpus, mlReadyGpus,
+      maxCpuMark, maxGpuCuda,
+    ] = await Promise.all([
+      HardwareCpu.countDocuments(),
+      HardwareGpu.countDocuments(),
+      HardwareCpu.countDocuments({ 'quality.specQuality': 'verified' }),
+      HardwareGpu.countDocuments({ 'quality.specQuality': 'verified' }),
+      HardwareCpu.countDocuments({ 'quality.mlReady': true }),
+      HardwareGpu.countDocuments({ 'quality.mlReady': true }),
+      maxNumeric(CPU, 'cpuMark', 100000),
+      maxNumeric(GPU, 'CUDA', 500000),
+    ]);
 
     res.json({
-      maxCpuMark: topCpu ? topCpu.cpuMark : 100000,
-      maxGpuCuda: topGpu ? topGpu.CUDA : 500000,
-      cpus: {
-        total: totalCpus,
-        verifiedSpecs: verifiedSpecsCpus,
-        mlReady: mlReadyCpus,
-      },
-      gpus: {
-        total: totalGpus,
-        verifiedSpecs: verifiedSpecsGpus,
-        mlReady: mlReadyGpus,
-      },
+      maxCpuMark,
+      maxGpuCuda,
+      cpus: { total: totalCpus, verifiedSpecs: verifiedSpecsCpus, mlReady: mlReadyCpus },
+      gpus: { total: totalGpus, verifiedSpecs: verifiedSpecsGpus, mlReady: mlReadyGpus },
     });
   } catch (error) {
+    console.error('Hardware stats error:', error.message);
     res.status(500).json({ error: 'Failed to fetch hardware stats' });
   }
 });

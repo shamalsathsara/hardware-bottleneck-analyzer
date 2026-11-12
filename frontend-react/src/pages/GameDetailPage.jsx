@@ -2,29 +2,33 @@ import { useState, useEffect } from 'react';
 import { getGameBySlug } from '../services/gameService';
 
 export default function GameDetailPage({ slug, onNavigate, onTestGame }) {
-  const [game, setGame] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Result is keyed by slug, so "loading" is derived instead of reset inside the effect.
+  const [result, setResult] = useState({ slug: null, game: null, error: null });
 
   useEffect(() => {
-    async function loadGame() {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await getGameBySlug(slug);
-        setGame(data);
-      } catch (err) {
-        console.error('Game detail fetch error:', err.message);
-        setError(`Game "${slug}" not found in our verified catalog.`);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (slug) {
-      loadGame();
-    }
+    let cancelled = false;
+    getGameBySlug(slug)
+      .then((data) => {
+        if (!cancelled) setResult({ slug, game: data, error: null });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setResult({
+          slug,
+          game: null,
+          error: err.response?.status === 404
+            ? `Game "${slug}" not found in our verified catalog.`
+            : 'Could not load this game right now. Please try again.',
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
+
+  const loading = result.slug !== slug;
+  const game = loading ? null : result.game;
+  const error = loading ? null : result.error;
 
   if (loading) {
     return (

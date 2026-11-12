@@ -3,6 +3,8 @@
  * and constructs the 16-feature payload for Model V2 inference.
  */
 
+const mongoose = require('mongoose');
+const { CPU } = require('../../models/Hardware');
 const { resolveCanonicalCpu, resolveCanonicalGpu, resolveCanonicalGame } = require('../benchmarks/canonicalResolver');
 const { resolveCpuSpecs, resolveGpuSpecs, normalizeHardwareSku } = require('./hardwareCatalogIndex');
 
@@ -113,14 +115,14 @@ const KNOWN_V2_GAMES_MAP = Object.freeze({
   'wot': 'worldOfTanks',
 });
 
+// Model V2 was trained only on Medium (2) and Ultra (4) presets.
 const PRESET_ORDINAL_MAP = Object.freeze({
-  low: 1,
   med: 2,
   medium: 2,
-  high: 3,
   ultra: 4,
   max: 4,
 });
+const SUPPORTED_ORDINALS = Object.freeze([2, 4]);
 
 const V2_REQUIRED_FIELDS = Object.freeze([
   'CpuNumberOfCores',
@@ -154,16 +156,21 @@ function normalizeV2GameName(rawGame) {
 }
 
 /**
- * Maps graphics settings string or number to Model V2 ordinal.
+ * Maps a graphics setting (name, number or numeric string) to a supported
+ * Model V2 ordinal. Returns null for presets the model was not trained on.
  */
 function normalizeSettingOrdinal(rawSetting) {
-  if (typeof rawSetting === 'number' && [1, 2, 3, 4].includes(rawSetting)) {
-    return rawSetting;
-  }
-  if (!rawSetting) return 2; // Default Medium
+  if (rawSetting === undefined || rawSetting === null || rawSetting === '') return 2; // default Medium
+  if (typeof rawSetting !== 'number' && typeof rawSetting !== 'string') return null;
+
   const clean = String(rawSetting).trim().toLowerCase();
-  return PRESET_ORDINAL_MAP[clean] || 2;
+  const ordinal = /^\d+$/.test(clean) ? Number(clean) : PRESET_ORDINAL_MAP[clean];
+  return SUPPORTED_ORDINALS.includes(ordinal) ? ordinal : null;
 }
+
+const CPU_SPEC_FIELDS = V2_REQUIRED_FIELDS.filter((f) => f.startsWith('Cpu'));
+const GPU_SPEC_FIELDS = V2_REQUIRED_FIELDS.filter((f) => f.startsWith('Gpu'));
+const hasMissing = (specs, fields) => fields.some((f) => specs[f] == null);
 
 /**
  * Resolves Model V2 physical features from request payload and hardware master.
@@ -216,8 +223,8 @@ async function resolveModelV2Payload(reqBody) {
     provenance.cpu = { ...cpuResolved.provenance };
 
     // Fallback: If canonicalResolver has extra fields (e.g. from MongoDB Hardware Master)
-    if (cpuQuery && (!cpuSpecs.CpuNumberOfCores || !cpuSpecs.CpuCacheL3 || !cpuSpecs.CpuTurboClock)) {
-      try {
+    if (cpuQuery && hasMissing(cpuSpecs, CPU_SPEC_FIELDS)) {
+      {
         const canonical = await resolveCanonicalCpu(cpuQuery);
         if (canonical?.resolved) {
           const c = canonical.resolved;
@@ -246,14 +253,14 @@ async function resolveModelV2Payload(reqBody) {
             provenance.cpu.CpuTDP = { value: c.power.defaultTdpWatts, source: 'canonical_cpu.tdp' };
           }
         }
-      } catch (_) {}
+      }
     }
 
     // Fallback: Legacy CPU collection if legacyId provided
-    if ((!cpuSpecs.CpuNumberOfCores || !cpuSpecs.CpuFrequency) && (reqBody.cpuLegacyId || reqBody.legacyId)) {
-      try {
-        const { CPU } = require('../../models/Hardware');
-        const legacyDoc = await CPU.findById(reqBody.cpuLegacyId || reqBody.legacyId).lean();
+    const legacyId = reqBody.cpuLegacyId || reqBody.legacyId;
+    if (hasMissing(cpuSpecs, CPU_SPEC_FIELDS) && mongoose.isValidObjectId(legacyId)) {
+      {
+        const legacyDoc = await CPU.findById(legacyId).lean();
         if (legacyDoc) {
           if (cpuSpecs.CpuNumberOfCores == null && legacyDoc.cores) {
             cpuSpecs.CpuNumberOfCores = Number(legacyDoc.cores);
@@ -278,7 +285,7 @@ async function resolveModelV2Payload(reqBody) {
             provenance.cpu.CpuTurboClock = { value: cpuSpecs.CpuTurboClock, source: 'legacy_cpu_doc.turboClock' };
           }
         }
-      } catch (_) {}
+      }
     }
 
     // 3. Generic GPU Resolution with Field-Level Provenance
@@ -289,8 +296,8 @@ async function resolveModelV2Payload(reqBody) {
     provenance.gpu = { ...gpuResolved.provenance };
 
     // Fallback: If canonicalResolver has extra fields (e.g. from MongoDB Hardware Master)
-    if (gpuQuery && (!gpuSpecs.GpuNumberOfShadingUnits || !gpuSpecs.GpuFP32Performance || !gpuSpecs.GpuMemorySize)) {
-      try {
+    if (gpuQuery && hasMissing(gpuSpecs, GPU_SPEC_FIELDS)) {
+      {
         const canonicalG = await resolveCanonicalGpu(gpuQuery);
         if (canonicalG?.resolved) {
           const g = canonicalG.resolved;
@@ -336,7 +343,7 @@ async function resolveModelV2Payload(reqBody) {
             provenance.gpu.GpuFP32Performance = { value: fp32, source: 'canonical_gpu.fp32' };
           }
         }
-      } catch (_) {}
+      }
     }
   }
 
@@ -353,7 +360,7 @@ async function resolveModelV2Payload(reqBody) {
   const gameName = normalizeV2GameName(rawGame);
 
   // 5. Resolve Setting Ordinal
-  const rawSetting = reqBody.GameSetting_Ordinal || reqBody.GameSetting || reqBody['Graphics Settings'] || reqBody.Graphics_Setting || reqBody.settings;
+  const rawSetting = reqBody.GameSetting_Ordinal ?? reqBody.GameSetting ?? reqBody['Graphics Settings'] ?? reqBody.Graphics_Setting ?? reqBody.settings;
   const settingOrdinal = normalizeSettingOrdinal(rawSetting);
 
   // Construct Final V2 Payload
@@ -386,7 +393,8 @@ async function resolveModelV2Payload(reqBody) {
   }
 
   return {
-    valid: missingFields.length === 0,
+    valid: missingFields.length === 0 && settingOrdinal !== null,
+    unsupportedPreset: settingOrdinal === null,
     missingFields,
     v2Payload,
     provenance,
@@ -396,6 +404,7 @@ async function resolveModelV2Payload(reqBody) {
 module.exports = {
   KNOWN_V2_GAMES_MAP,
   PRESET_ORDINAL_MAP,
+  SUPPORTED_ORDINALS,
   V2_REQUIRED_FIELDS,
   normalizeV2GameName,
   normalizeSettingOrdinal,

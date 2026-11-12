@@ -5,41 +5,50 @@ import GameSearch from '../components/game/GameSearch';
 const GENRES = ['All', 'Action', 'RPG', 'Open World', 'FPS', 'Soulslike', 'Multiplayer'];
 
 export default function GamesPage({ onNavigate }) {
-  const [games, setGames] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, pages: 1 });
   const [selectedGenre, setSelectedGenre] = useState('All');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  const fetchCatalog = async (page = 1, genre = selectedGenre) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = { page, limit: 12 };
-      if (genre && genre !== 'All') params.genre = genre;
-      const data = await getGames(params);
-      setGames(data.games || []);
-      setPagination(data.pagination || { page: 1, limit: 12, total: 0, pages: 1 });
-    } catch (err) {
-      console.error('Catalog fetch error:', err.message);
-      setError('Failed to load PC games catalog. Please ensure the backend is active.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [page, setPage] = useState(1);
+  const requestKey = `${selectedGenre}|${page}`;
+  const [result, setResult] = useState({
+    key: null, games: [], pagination: { page: 1, limit: 12, total: 0, pages: 1 }, error: null,
+  });
 
   useEffect(() => {
-    fetchCatalog(1, selectedGenre);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGenre]);
+    let cancelled = false;
+    const params = { page, limit: 12 };
+    if (selectedGenre !== 'All') params.genre = selectedGenre;
+
+    getGames(params)
+      .then((data) => {
+        if (cancelled) return;
+        setResult({
+          key: `${selectedGenre}|${page}`,
+          games: Array.isArray(data?.games) ? data.games : [],
+          pagination: data?.pagination || { page: 1, limit: 12, total: 0, pages: 1 },
+          error: null,
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setResult((prev) => ({ ...prev, key: `${selectedGenre}|${page}`, games: [], error: 'Failed to load the PC games catalog. Please try again.' }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedGenre, page]);
+
+  const loading = result.key !== requestKey;
+  const { games, pagination, error } = result;
 
   const handleGenreChange = (genre) => {
     setSelectedGenre(genre);
+    setPage(1);
   };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.pages) {
-      fetchCatalog(newPage, selectedGenre);
+      setPage(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -62,7 +71,7 @@ export default function GamesPage({ onNavigate }) {
 
       {/* Interactive Autocomplete Search */}
       <div style={{ maxWidth: '600px', margin: '0 auto 2rem auto' }}>
-        <GameSearch onSelectGame={(game) => onNavigate(`/games/${game.slug}`)} />
+        <GameSearch onSelectGame={(game) => game && onNavigate(`/games/${game.slug}`)} />
       </div>
 
       {/* Genre Filter Tags */}

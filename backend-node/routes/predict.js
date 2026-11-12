@@ -1,77 +1,97 @@
 const express = require('express');
 const axios = require('axios');
+const rateLimit = require('express-rate-limit');
+
+const config = require('../config/env');
 const { resolveModelV2Payload } = require('../services/datasetV2/modelV2Resolver');
 
 const router = express.Router();
 
-// POST /api/predict
-router.post('/predict', async (req, res) => {
+const predictLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'RATE_LIMITED', message: 'Too many prediction requests, please slow down.' },
+});
+
+// Only these fields are forwarded to the legacy V1 model.
+const V1_FIELDS = [
+  'CPU', 'CPU Cores', 'CPU Threads', 'CPU TDP (W)',
+  'GPU', 'GPU Series', 'GPU VRAM (GB)', 'GPU Bandwidth (GB/s)', 'GPU TDP (W)',
+  'RAM (GB)', 'Resolution', 'Graphics Settings',
+];
+
+function pick(obj, keys) {
+  const out = {};
+  for (const key of keys) {
+    if (obj[key] !== undefined) out[key] = obj[key];
+  }
+  return out;
+}
+
+async function buildPayload(body) {
+  if (config.modelVersion === 'v1') {
+    const payload = pick(body, V1_FIELDS);
+    if (!payload.CPU && !payload.GPU) {
+      return { status: 400, body: { error: 'HARDWARE_REQUIRED', message: 'CPU or GPU information is required.' } };
+    }
+    return { payload };
+  }
+
+  const { unsupportedPreset, missingFields, v2Payload, valid } = await resolveModelV2Payload(body);
+  if (unsupportedPreset) {
+    return {
+      status: 400,
+      body: {
+        error: 'UNSUPPORTED_PRESET',
+        message: 'FPS prediction is only available for the Medium and Ultra presets.',
+        supportedPresets: ['Medium', 'Ultra'],
+      },
+    };
+  }
+  if (!valid) {
+    return {
+      status: 400,
+      body: {
+        error: 'MODEL_V2_HARDWARE_DATA_INCOMPLETE',
+        message: 'Required physical hardware specifications could not be resolved.',
+        missingFields,
+      },
+    };
+  }
+  return { payload: v2Payload };
+}
+
+// POST /api/predict — model version is chosen by the server (MODEL_VERSION), never by the client.
+router.post('/predict', predictLimiter, async (req, res, next) => {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'INVALID_PAYLOAD', message: 'Expected a JSON object.' });
+  }
+
+  let built;
   try {
-    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
-      return res.status(400).json({ error: 'Invalid payload format. Expected a JSON object.' });
-    }
+    built = await buildPayload(req.body);
+  } catch (err) {
+    return next(err); // database failure while resolving hardware -> 500
+  }
+  if (!built.payload) return res.status(built.status).json(built.body);
 
-    const hasV2Signature = (
-      req.body.CpuNumberOfCores !== undefined ||
-      req.body.GpuNumberOfShadingUnits !== undefined ||
-      req.body.GpuFP32Performance !== undefined ||
-      req.body.GameSetting_Ordinal !== undefined
-    );
-
-    let requestedVersion = (
-      req.body.modelVersion ||
-      req.query.modelVersion ||
-      req.headers['x-model-version']
-    );
-
-    if (!requestedVersion) {
-      if ((req.body.CPU_Make || req.body.GPU_Make) && !req.body.CPU && !req.body.CpuNumberOfCores) {
-        requestedVersion = 'v1';
-      } else if (process.env.MODEL_VERSION) {
-        requestedVersion = process.env.MODEL_VERSION;
-      } else if (hasV2Signature || req.body.CPU || req.body.GPU || req.body.cpuHardwareId || req.body.gpuHardwareId || req.body.cpuName || req.body.gpuName) {
-        requestedVersion = 'v2';
-      } else {
-        requestedVersion = 'v2';
-      }
-    }
-
-    requestedVersion = requestedVersion.toString().toLowerCase().trim();
-
-    const pythonAiUrl = process.env.AURA_AI_URL || 'http://127.0.0.1:5000';
-
-    // Model V2: Physical specifications pipeline
-    if (requestedVersion === 'v2') {
-      const { valid, missingFields, v2Payload } = await resolveModelV2Payload(req.body);
-
-      if (!valid) {
-        return res.status(400).json({
-          error: 'MODEL_V2_HARDWARE_DATA_INCOMPLETE',
-          message: 'Required physical hardware specifications could not be resolved.',
-          missingFields,
-        });
-      }
-
-      const auraResponse = await axios.post(`${pythonAiUrl}/predict`, v2Payload, { timeout: 10000 });
-      return res.json(auraResponse.data);
-    }
-
-    // Model V1: Legacy categorical rollback
-    const { CPU } = req.body;
-    if (!CPU && !req.body.CPU_Model && !req.body.CPU_Make) {
-      return res.status(400).json({ error: 'CPU information is required for prediction.' });
-    }
-
-    const legacyPayload = { ...req.body, modelVersion: 'v1' };
-    const auraResponse = await axios.post(`${pythonAiUrl}/predict`, legacyPayload, { timeout: 10000 });
-
-    return res.json(auraResponse.data);
+  try {
+    const { data } = await axios.post(`${config.aiUrl}/predict`, built.payload, { timeout: config.aiTimeoutMs });
+    return res.json(data);
   } catch (error) {
-    console.error('Prediction proxy error:', error.message);
-    if (error.response && error.response.data && error.response.data.error) {
-      return res.status(error.response.status || 500).json(error.response.data);
+    const upstream = error.response;
+    if (upstream && upstream.status >= 400 && upstream.status < 500) {
+      return res.status(upstream.status).json(upstream.data);
     }
-    return res.status(500).json({ error: 'Failed to get prediction!' });
+
+    const timedOut = error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
+    console.error('Prediction service error:', upstream ? `HTTP ${upstream.status}` : error.code || error.message);
+    return res.status(timedOut ? 504 : 503).json({
+      error: 'AI_SERVICE_UNAVAILABLE',
+      message: 'The prediction service is temporarily unavailable. Please try again shortly.',
+    });
   }
 });
 

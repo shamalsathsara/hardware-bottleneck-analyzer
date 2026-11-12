@@ -234,7 +234,7 @@ export default function HomePage({ onNavigate }) {
               </div>
               <h3 className="why-card-title">Resolution-Aware Predictions</h3>
               <p className="why-card-desc">
-                High-refresh 1080p gaming taxes your CPU, while 4K shifts the load to your graphics card. Our model adjusts across all resolutions.
+                High-refresh 1080p gaming taxes your CPU, while 4K shifts the load to your graphics card. Game FPS prediction is currently validated for 1080p (Medium &amp; Ultra presets).
               </p>
             </div>
 
@@ -244,7 +244,7 @@ export default function HomePage({ onNavigate }) {
               </div>
               <h3 className="why-card-title">Side-by-Side Rig Comparison</h3>
               <p className="why-card-desc">
-                Compare your current gaming PC against a prospective new build to see exact projected framerate gains before upgrading.
+                Compare your current gaming PC against a prospective new build to see which one is better balanced before upgrading.
               </p>
             </div>
 

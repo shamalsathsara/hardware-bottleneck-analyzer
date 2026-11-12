@@ -1,56 +1,39 @@
 import { useState, useEffect } from 'react';
 import { fetchAllCpusLightweight, fetchAllGpusLightweight, fetchHardwareStats } from '../services/hardwareService';
 
+const DEFAULT_STATS = { maxCpuMark: 100000, maxGpuCuda: 500000 };
+
+/** Loads the compact CPU/GPU lists (used for upgrade suggestions) and score maxima. */
 export function useHardwareData() {
   const [cpuList, setCpuList] = useState([]);
   const [gpuList, setGpuList] = useState([]);
-  const [maxStats, setMaxStats] = useState({ maxCpuMark: 100000, maxGpuCuda: 500000 });
-  const [loading, setLoading] = useState(false);
+  const [maxStats, setMaxStats] = useState(DEFAULT_STATS);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let isMounted = true;
+    let cancelled = false;
 
-    async function loadData() {
-      setLoading(true);
-      try {
-        const [cpus, gpus, stats] = await Promise.all([
-          fetchAllCpusLightweight().catch(() => []),
-          fetchAllGpusLightweight().catch(() => []),
-          fetchHardwareStats().catch(() => ({ maxCpuMark: 100000, maxGpuCuda: 500000 })),
-        ]);
+    Promise.allSettled([fetchAllCpusLightweight(), fetchAllGpusLightweight(), fetchHardwareStats()])
+      .then(([cpus, gpus, stats]) => {
+        if (cancelled) return;
+        if (cpus.status === 'fulfilled' && Array.isArray(cpus.value)) setCpuList(cpus.value);
+        if (gpus.status === 'fulfilled' && Array.isArray(gpus.value)) setGpuList(gpus.value);
+        if (stats.status === 'fulfilled' && stats.value) setMaxStats({ ...DEFAULT_STATS, ...stats.value });
 
-        if (isMounted) {
-          setCpuList(cpus);
-          setGpuList(gpus);
-          setMaxStats(stats);
-          setError(null);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err.message || 'Failed to load hardware database');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadData();
+        const failed = [cpus, gpus].some((r) => r.status === 'rejected');
+        setError(failed ? 'Could not load the full hardware database. Search still works; upgrade suggestions may be limited.' : null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
   }, []);
 
-  return {
-    cpuList,
-    gpuList,
-    maxStats,
-    loading,
-    error,
-  };
+  return { cpuList, gpuList, maxStats, loading, error };
 }
 
 export default useHardwareData;

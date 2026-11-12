@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { searchCpus, searchGpus } from './services/hardwareService';
 
+const displayNameOf = (item, type) =>
+  item.displayName || (type === 'cpu' ? item.cpuName : item.Device || item.gpuName) || item.canonicalName || '';
+
+/**
+ * CPU/GPU autocomplete. `onSelect(item)` fires on pick; `onSelect(null)` fires as soon as
+ * the user edits the text, so the parent never analyzes hardware the box no longer shows.
+ */
 export default function HardwareSearch({ id, type, onSelect, placeholder, value }) {
   const [query, setQuery] = useState(value || '');
   const [results, setResults] = useState([]);
@@ -9,19 +16,27 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const containerRef = useRef(null);
   const skipNextSearchRef = useRef(false);
+  const requestIdRef = useRef(0);
+  const queryRef = useRef(value || '');
+  const expectedValueRef = useRef(null);
 
-  // Sync internal query state if parent forces a new value (e.g. preset or saved rig)
+  const updateQuery = (text) => {
+    queryRef.current = text;
+    setQuery(text);
+  };
+
+  // Sync parent-driven value changes (loaded rig, reset) without triggering a search.
   useEffect(() => {
-    if (value !== undefined) {
-      setQuery((prevQuery) => {
-        if (value !== prevQuery) {
-          skipNextSearchRef.current = true;
-          setIsOpen(false);
-          return value;
-        }
-        return prevQuery;
-      });
+    const next = value || '';
+    if (expectedValueRef.current !== null && next === expectedValueRef.current) {
+      expectedValueRef.current = null; // echo of our own onSelect(null): keep the typed text
+      return;
     }
+    expectedValueRef.current = null;
+    if (next === queryRef.current) return;
+    skipNextSearchRef.current = true;
+    updateQuery(next);
+    setIsOpen(false);
   }, [value]);
 
   // Close dropdown on outside click
@@ -38,70 +53,65 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
   useEffect(() => {
     if (skipNextSearchRef.current) {
       skipNextSearchRef.current = false;
-      return;
+      return undefined;
     }
 
-    if (!query || query.trim() === '') {
+    if (!query.trim()) {
       setResults([]);
       setIsOpen(false);
       setSelectedIndex(-1);
-      return;
+      return undefined;
     }
 
+    const requestId = ++requestIdRef.current;
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const data = type === 'cpu' ? await searchCpus(query) : await searchGpus(query);
-        const list = data || [];
-        
-        // Deduplicate entries with normalized display names without filtering out legacy items
+        if (requestId !== requestIdRef.current) return; // stale response
+
+        // Deduplicate by display name (case-insensitive)
         const seen = new Set();
         const unique = [];
-        for (const rawItem of list) {
-          const displayName = rawItem.displayName || 
-            (type === 'cpu' ? rawItem.cpuName : (rawItem.Device || rawItem.gpuName)) || 
-            rawItem.canonicalName || '';
-            
-          if (displayName && !seen.has(displayName.toLowerCase())) {
-            seen.add(displayName.toLowerCase());
-            const normalized = {
-              ...rawItem,
-              displayName,
-              canonicalName: rawItem.canonicalName || displayName,
-              cpuName: displayName,
-              Device: displayName,
-              gpuName: displayName,
-              hardwareId: rawItem.hardwareId || null,
-              hardwareSource: rawItem.hardwareSource || 'legacy',
-              legacyId: rawItem.legacyId || (rawItem.hardwareSource === 'legacy' ? String(rawItem._id) : null),
-              rawRecord: rawItem.rawRecord || rawItem,
-            };
-            unique.push(normalized);
+        for (const item of Array.isArray(data) ? data : []) {
+          const name = displayNameOf(item, type);
+          const key = name.toLowerCase();
+          if (name && !seen.has(key)) {
+            seen.add(key);
+            unique.push({ ...item, displayName: name });
           }
         }
 
         setResults(unique);
         setSelectedIndex(-1);
-        if (unique.length > 0) {
-          setIsOpen(true);
-        }
-      } catch (err) {
-        console.error('Hardware search error:', err.message);
+        setIsOpen(unique.length > 0);
+      } catch {
+        if (requestId === requestIdRef.current) setResults([]);
       } finally {
-        setLoading(false);
+        if (requestId === requestIdRef.current) setLoading(false);
       }
-    }, 250); // 250ms debounce
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [query, type]);
 
+  const handleChange = (text) => {
+    skipNextSearchRef.current = false;
+    updateQuery(text);
+    if (value) {
+      expectedValueRef.current = '';
+      onSelect(null);
+    }
+  };
+
   const handleSelect = (item) => {
-    const itemName = item.displayName || (type === 'cpu' ? item.cpuName : item.Device);
+    requestIdRef.current += 1; // ignore pending responses
     skipNextSearchRef.current = true;
-    setQuery(itemName);
+    updateQuery(item.displayName);
     setIsOpen(false);
     setResults([]);
     setSelectedIndex(-1);
+    setLoading(false);
     onSelect(item);
   };
 
@@ -134,10 +144,7 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
         className="form-control"
         placeholder={placeholder}
         value={query}
-        onChange={(e) => {
-          skipNextSearchRef.current = false;
-          setQuery(e.target.value);
-        }}
+        onChange={(e) => handleChange(e.target.value)}
         onFocus={() => {
           if (results.length > 0 && query.trim() !== '') {
             setIsOpen(true);
@@ -177,7 +184,7 @@ export default function HardwareSearch({ id, type, onSelect, placeholder, value 
           }}
         >
           {results.map((item, idx) => {
-            const name = item.displayName || (type === 'cpu' ? item.cpuName : item.Device);
+            const name = item.displayName;
             const key = item._id || `${name}_${idx}`;
             const isSelected = idx === selectedIndex;
             return (

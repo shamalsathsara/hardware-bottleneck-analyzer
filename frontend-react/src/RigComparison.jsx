@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { analyzeBottleneck } from './utils/BottleneckLogic';
-import { fetchAllCpusLightweight, fetchAllGpusLightweight, searchCpus, searchGpus } from './services/hardwareService';
+import { searchCpus, searchGpus } from './services/hardwareService';
 import { fetchUserRigs } from './services/rigService';
 import HardwareSearch from './HardwareSearch';
 
@@ -191,7 +191,7 @@ function RigPanel({ label, rig, onChange, onClear, savedRigs }) {
           type="cpu" 
           placeholder="Type to search CPUs (e.g. Ryzen 7 7800X3D, Core i5-12400F)..." 
           value={rig.cpu}
-          onSelect={(item) => onChange({ ...rig, cpu: item.displayName || item.canonicalName || item.cpuName, cpuData: item })} 
+          onSelect={(item) => onChange({ ...rig, cpu: item ? item.displayName : '', cpuData: item })}
         />
       </div>
 
@@ -204,7 +204,7 @@ function RigPanel({ label, rig, onChange, onClear, savedRigs }) {
           type="gpu" 
           placeholder="Type to search GPUs (e.g. RTX 4070, RX 7800 XT)..." 
           value={rig.gpu}
-          onSelect={(item) => onChange({ ...rig, gpu: item.displayName || item.canonicalName || item.Device, gpuData: item })} 
+          onSelect={(item) => onChange({ ...rig, gpu: item ? item.displayName : '', gpuData: item })}
         />
       </div>
 
@@ -270,14 +270,14 @@ function RigPanel({ label, rig, onChange, onClear, savedRigs }) {
   );
 }
 
-// FPS Summary Card (top row)
-function FpsSummaryCard({ label, accent, result, isWinner, isTied }) {
-  const { fps, bottleneck, rigName } = result;
-  const fpsInt = Math.round(parseFloat(fps));
-  const severity = bottleneck?.severity !== undefined ? bottleneck.severity : 0;
+// Balance Summary Card (top row). Rig comparison has no target game, so it compares
+// bottleneck balance; game FPS lives in the Analyzer.
+function BalanceSummaryCard({ label, accent, result, isWinner, isTied }) {
+  const { bottleneck, rigName } = result;
+  const severity = bottleneck?.severity ?? 0;
   const bkColor = bottleneck?.color || '#10b981';
   const bkType = bottleneck?.type
-    ? bottleneck.type.charAt(0).toUpperCase() + bottleneck.type.slice(1) + ' Bottleneck'
+    ? bottleneck.type.toUpperCase() + ' Bottleneck'
     : 'Balanced';
 
   return (
@@ -287,7 +287,7 @@ function FpsSummaryCard({ label, accent, result, isWinner, isTied }) {
     >
       {isWinner && !isTied && (
         <div className="cmp-fps-badge-winner">
-          <IconTrophy /> Winner
+          <IconTrophy /> Better Balanced
         </div>
       )}
       {isTied && (
@@ -299,18 +299,10 @@ function FpsSummaryCard({ label, accent, result, isWinner, isTied }) {
       <div className="cmp-fps-card-label">{label}</div>
       <div className="cmp-fps-card-rigname">{rigName}</div>
 
-      {fps !== null && !isNaN(parseFloat(fps)) ? (
-        <div className="cmp-fps-card-number" style={{ color: isWinner && !isTied ? '#fbbf24' : accent }}>
-          {fpsInt}
-          <span className="cmp-fps-card-unit">FPS</span>
-        </div>
-      ) : (
-        <div className="cmp-fps-card-number" style={{ margin: '0.75rem 0', display: 'flex', alignItems: 'center' }}>
-          <span className="badge-status-pill badge-status-developing" style={{ textTransform: 'none', fontSize: '0.82rem', padding: '4px 10px' }}>
-            FPS Still Developing
-          </span>
-        </div>
-      )}
+      <div className="cmp-fps-card-number" style={{ color: isWinner && !isTied ? '#fbbf24' : accent }}>
+        {severity}%
+        <span className="cmp-fps-card-unit">bottleneck</span>
+      </div>
 
       <div className="cmp-fps-bk-row">
         <div className="cmp-fps-bk-bar-track">
@@ -323,14 +315,33 @@ function FpsSummaryCard({ label, accent, result, isWinner, isTied }) {
 }
 
 // Main Component
-export default function RigComparison({ cpuList, gpuList, onBack, initialRig, currentUser }) {
+const normalizeName = (s) => String(s || '').trim().toLowerCase();
+
+/** Exact (case-insensitive) name match only: never silently analyze a different part. */
+async function resolveByName(name, list, search, namesOf) {
+  const target = normalizeName(name);
+  if (!target) return null;
+  try {
+    const matches = await search(name.trim());
+    const exact = (Array.isArray(matches) ? matches : []).find((m) => namesOf(m).some((n) => normalizeName(n) === target));
+    if (exact) return exact;
+  } catch {
+    // fall back to the preloaded list
+  }
+  return (list || []).find((item) => namesOf(item).some((n) => normalizeName(n) === target)) || null;
+}
+
+const cpuNames = (c) => [c.displayName, c.canonicalName, c.cpuName];
+const gpuNames = (g) => [g.displayName, g.canonicalName, g.Device, g.gpuName];
+
+export default function RigComparison({ cpuList, gpuList, maxStats, onBack, initialRig, currentUser }) {
   const [rigA, setRigA] = useState(() => initialRig
     ? {
         cpu:        initialRig.cpu || '',
         gpu:        initialRig.gpu || '',
         ram:        String(initialRig.ram || '16'),
         resolution: initialRig.resolution || '1920x1080',
-        settings:   initialRig.settings || 'High',
+        settings:   initialRig.settings || 'Medium',
       }
     : emptyRig()
   );
@@ -340,112 +351,29 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
-  const [localCpuList, setLocalCpuList] = useState(cpuList || []);
-  const [localGpuList, setLocalGpuList] = useState(gpuList || []);
   const [savedRigs, setSavedRigs] = useState([]);
 
   useEffect(() => {
-    if (cpuList && cpuList.length > 0) setLocalCpuList(cpuList);
-    if (gpuList && gpuList.length > 0) setLocalGpuList(gpuList);
-  }, [cpuList, gpuList]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function init() {
-      if ((!cpuList || cpuList.length === 0) || (!gpuList || gpuList.length === 0)) {
-        try {
-          const [c, g] = await Promise.all([
-            fetchAllCpusLightweight().catch(() => []),
-            fetchAllGpusLightweight().catch(() => []),
-          ]);
-          if (isMounted) {
-            if (c.length > 0) setLocalCpuList(c);
-            if (g.length > 0) setLocalGpuList(g);
-          }
-        } catch {
-          // silently handle
-        }
-      }
-
-      try {
-        const rigs = await fetchUserRigs();
-        if (isMounted && Array.isArray(rigs)) {
-          setSavedRigs(rigs);
-        }
-      } catch {
-        // user may not be logged in
-      }
+    if (!currentUser) {
+      setSavedRigs([]);
+      return undefined;
     }
-
-    init();
-
+    let cancelled = false;
+    fetchUserRigs()
+      .then((rigs) => {
+        if (!cancelled) setSavedRigs(Array.isArray(rigs) ? rigs : []);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedRigs([]);
+      });
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
-  }, [cpuList, gpuList, currentUser]);
-
-  const resolveCpu = async (cpuName) => {
-    if (!cpuName) return null;
-    const clean = cpuName.trim();
-    const lower = clean.toLowerCase();
-
-    let found = localCpuList.find(c => 
-      (c.cpuName && c.cpuName.trim() === clean) || 
-      (c.canonicalName && c.canonicalName.trim() === clean)
-    );
-    if (found) return found;
-
-    found = localCpuList.find(c => 
-      (c.cpuName && c.cpuName.toLowerCase().trim() === lower) || 
-      (c.canonicalName && c.canonicalName.toLowerCase().trim() === lower)
-    );
-    if (found) return found;
-
-    try {
-      const searchRes = await searchCpus(clean);
-      if (Array.isArray(searchRes) && searchRes.length > 0) {
-        return searchRes[0];
-      }
-    } catch {
-      // ignore
-    }
-
-    return null;
-  };
-
-  const resolveGpu = async (gpuName) => {
-    if (!gpuName) return null;
-    const clean = gpuName.trim();
-    const lower = clean.toLowerCase();
-
-    let found = localGpuList.find(g => 
-      (g.Device && g.Device.trim() === clean) || 
-      (g.canonicalName && g.canonicalName.trim() === clean)
-    );
-    if (found) return found;
-
-    found = localGpuList.find(g => 
-      (g.Device && g.Device.toLowerCase().trim() === lower) || 
-      (g.canonicalName && g.canonicalName.toLowerCase().trim() === lower)
-    );
-    if (found) return found;
-
-    try {
-      const searchRes = await searchGpus(clean);
-      if (Array.isArray(searchRes) && searchRes.length > 0) {
-        return searchRes[0];
-      }
-    } catch {
-      // ignore
-    }
-
-    return null;
-  };
+  }, [currentUser]);
 
   const analyzeRig = async (rig) => {
-    const fullCpu = rig.cpuData || await resolveCpu(rig.cpu);
-    const fullGpu = rig.gpuData || await resolveGpu(rig.gpu);
+    const fullCpu = rig.cpuData || await resolveByName(rig.cpu, cpuList, searchCpus, cpuNames);
+    const fullGpu = rig.gpuData || await resolveByName(rig.gpu, gpuList, searchGpus, gpuNames);
 
     if (!fullCpu) {
       throw new Error(`CPU not found: "${rig.cpu}". Please choose from the autocomplete suggestions.`);
@@ -456,18 +384,14 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
 
     // RigComparison has no target game — FPS prediction requires a specific game via Model V2.
     // General bottleneck analysis is performed instead (same as no-game mode in the Analyzer).
-    const analysis = analyzeBottleneck(fullCpu, fullGpu);
+    const analysis = analyzeBottleneck(fullCpu, fullGpu, maxStats);
 
     const rigName =
       (rig.cpu || 'CPU').split(' ').slice(0, 3).join(' ') +
       ' + ' +
       (rig.gpu || 'GPU').split(' ').slice(0, 3).join(' ');
 
-    return { 
-      fps: null, 
-      bottleneck: analysis, 
-      rigName 
-    };
+    return { bottleneck: analysis, rigName };
   };
 
   const handleCompare = async () => {
@@ -487,7 +411,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
       const [resA, resB] = await Promise.all([analyzeRig(rigA), analyzeRig(rigB)]);
       setResults({ a: resA, b: resB });
     } catch (err) {
-      setError(err.message || 'Analysis failed. Make sure backend and ML services are running.');
+      setError(err.message || 'Comparison failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -495,52 +419,20 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
 
   const handleReset = () => { setResults(null); setError(null); };
 
-  const hasFpsA = results?.a?.fps !== null && !isNaN(parseFloat(results?.a?.fps));
-  const hasFpsB = results?.b?.fps !== null && !isNaN(parseFloat(results?.b?.fps));
-  const fpsA  = hasFpsA ? (parseFloat(results.a.fps) || 0) : null;
-  const fpsB  = hasFpsB ? (parseFloat(results.b.fps) || 0) : null;
-  const aWins = results && hasFpsA && hasFpsB && fpsA > fpsB;
-  const bWins = results && hasFpsA && hasFpsB && fpsB > fpsA;
-  const tied  = results && hasFpsA && hasFpsB && Math.abs(fpsA - fpsB) < 0.05;
+  const sevA = results?.a?.bottleneck?.severity ?? 0;
+  const sevB = results?.b?.bottleneck?.severity ?? 0;
+  const tied = Boolean(results) && sevA === sevB;
+  const aWins = Boolean(results) && sevA < sevB;
+  const bWins = Boolean(results) && sevB < sevA;
 
   const buildVerdict = () => {
     if (!results) return '';
-    if (!hasFpsA || !hasFpsB) {
-      const wBk = results.a.bottleneck;
-      const lBk = results.b.bottleneck;
-      if (wBk.severity < lBk.severity) {
-        return `Rig A has lower bottleneck severity (${wBk.severity}% vs ${lBk.severity}%), giving it better architectural balance. Game-specific FPS is available in the Analyzer when a game is selected.`;
-      } else if (lBk.severity < wBk.severity) {
-        return `Rig B has lower bottleneck severity (${lBk.severity}% vs ${wBk.severity}%), giving it better architectural balance. Game-specific FPS is available in the Analyzer when a game is selected.`;
-      }
-      return 'Both configurations have balanced component allocations. Game-specific FPS is available in the Analyzer when a game is selected.';
-    }
-    if (tied) return 'Both rigs produce identical performance at these settings. Consider changing resolution or quality to see a difference.';
-
-    const winner    = aWins ? 'Rig A' : 'Rig B';
-    const loserSide = aWins ? 'Rig B' : 'Rig A';
-    
-    const fpsDiff   = Math.abs(fpsA - fpsB).toFixed(1);
-    const minFps    = Math.max(1, Math.min(fpsA, fpsB));
-    const pctRaw    = ((Math.abs(fpsA - fpsB) / minFps) * 100);
-    const pct       = (Number.isFinite(pctRaw) ? pctRaw : 0).toFixed(0);
-    
-    const wBk       = aWins ? results.a.bottleneck : results.b.bottleneck;
-    const lBk       = aWins ? results.b.bottleneck : results.a.bottleneck;
-
-    let text = `${winner} wins by ${fpsDiff} FPS (${pct}% faster). `;
-
-    if (wBk && lBk) {
-      if (wBk.type === null && lBk.type !== null) {
-        text += `${winner} has a perfectly balanced build, while ${loserSide} suffers a ${String(lBk.type).toUpperCase()} bottleneck — this is the primary reason for the performance gap.`;
-      } else if (wBk.severity < lBk.severity) {
-        text += `${winner} has a lower bottleneck severity (${wBk.severity}% vs ${lBk.severity}%), giving it a significant efficiency advantage.`;
-      } else {
-        text += `${winner}'s components are better matched for the selected resolution and quality settings.`;
-      }
-    }
-
-    return text;
+    const note = ' For game-specific FPS, pick a game in the Analyzer.';
+    if (tied) return `Both configurations are equally balanced (${sevA}% bottleneck).${note}`;
+    const [winner, loser, w, l] = aWins ? ['Rig A', 'Rig B', sevA, sevB] : ['Rig B', 'Rig A', sevB, sevA];
+    const loserType = (aWins ? results.b : results.a).bottleneck?.type;
+    const detail = loserType ? ` ${loser} has a ${loserType.toUpperCase()} bottleneck.` : '';
+    return `${winner} is better balanced (${w}% vs ${l}% bottleneck severity).${detail}${note}`;
   };
 
   return (
@@ -654,7 +546,7 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
 
           {/* ── 1. FPS Summary Row ── */}
           <div className="cmp-fps-summary-row">
-            <FpsSummaryCard
+            <BalanceSummaryCard
               label="Rig A"
               accent="var(--primary)"
               result={results.a}
@@ -664,43 +556,21 @@ export default function RigComparison({ cpuList, gpuList, onBack, initialRig, cu
 
             {/* Center Verdict Pill */}
             <div className="cmp-center-verdict">
-              {(() => {
-                if (!hasFpsA || !hasFpsB) {
-                  return (
-                    <>
-                      <div className="cmp-cv-icon" style={{ color: '#38bdf8' }}>ℹ️</div>
-                      <div className="cmp-cv-label" style={{ color: '#38bdf8', fontSize: '0.78rem' }}>Resolution Developing</div>
-                      <div className="cmp-cv-diff" style={{ fontSize: '0.72rem', color: '#94a3b8' }}>See bottleneck below</div>
-                    </>
-                  );
-                }
-                const fpsAv = parseFloat(results.a.fps) || 0;
-                const fpsBv = parseFloat(results.b.fps) || 0;
-                const absDiff = Math.abs(fpsAv - fpsBv);
-                const pctRaw = (absDiff / Math.max(1, Math.min(fpsAv, fpsBv))) * 100;
-                const pct = Number.isFinite(pctRaw) ? Math.round(pctRaw) : 0;
-                const isTooClose = absDiff < 2 || pct < 3;
-
-                if (isTooClose) {
-                  return (
-                    <>
-                      <div className="cmp-cv-icon cmp-cv-icon--tied"><IconEquals /></div>
-                      <div className="cmp-cv-label">Essentially Tied</div>
-                      <div className="cmp-cv-diff">≈ 0%</div>
-                    </>
-                  );
-                }
-                return (
-                  <>
-                    <div className="cmp-cv-icon"><IconSwords /></div>
-                    <div className="cmp-cv-label">{aWins ? 'Rig A Wins' : 'Rig B Wins'}</div>
-                    <div className="cmp-cv-diff">{pct}% faster</div>
-                  </>
-                );
-              })()}
+              {tied ? (
+                <>
+                  <div className="cmp-cv-icon cmp-cv-icon--tied"><IconEquals /></div>
+                  <div className="cmp-cv-label">Equally Balanced</div>
+                </>
+              ) : (
+                <>
+                  <div className="cmp-cv-icon"><IconSwords /></div>
+                  <div className="cmp-cv-label">{aWins ? 'Rig A' : 'Rig B'} Better Balanced</div>
+                  <div className="cmp-cv-diff">{Math.abs(sevA - sevB)} pts lower bottleneck</div>
+                </>
+              )}
             </div>
 
-            <FpsSummaryCard
+            <BalanceSummaryCard
               label="Rig B"
               accent="#818cf8"
               result={results.b}

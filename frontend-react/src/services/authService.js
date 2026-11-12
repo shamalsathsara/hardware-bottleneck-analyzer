@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient, { TOKEN_KEY, USER_KEY } from './apiClient';
 
 export async function loginUser(email, password) {
   const { data } = await apiClient.post('/api/auth/login', { email, password });
@@ -27,18 +27,21 @@ export async function resetPassword(email, code, newPassword) {
 
 export function getCurrentUser() {
   try {
-    return JSON.parse(localStorage.getItem('aura_user')) || null;
+    if (!localStorage.getItem(TOKEN_KEY)) return null;
+    return JSON.parse(localStorage.getItem(USER_KEY)) || null;
   } catch {
     return null;
   }
 }
 
 export function setSession(token, user) {
-  localStorage.setItem('aura_token', token);
-  localStorage.setItem('aura_user', JSON.stringify(user));
+  if (!token || !user) throw new Error('Invalid session returned by the server.');
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function clearSession() {
-  localStorage.removeItem('aura_token');
-  localStorage.removeItem('aura_user');
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('token'); // legacy key from older builds
 }

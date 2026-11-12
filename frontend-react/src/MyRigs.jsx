@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchUserRigs, deleteUserRig } from './services/rigService';
+import { getErrorMessage } from './services/apiClient';
 
 // Icons
 const IconTrash = () => (
@@ -29,29 +30,32 @@ export default function MyRigs({ currentUser, onLoadRig, onBack }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadRigs();
+    let cancelled = false;
+    fetchUserRigs()
+      .then((data) => {
+        if (cancelled) return;
+        setRigs(Array.isArray(data) ? data : []);
+        setError(null);
+      })
+      .catch(() => {
+        if (!cancelled) setError('Could not load your saved rigs. Please try again.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  const loadRigs = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchUserRigs();
-      setRigs(data);
-      setError(null);
-    } catch {
-      setError('Could not load your saved rigs. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDeleteRig = async (rigId) => {
     if (!window.confirm('Delete this saved rig?')) return;
     try {
       const data = await deleteUserRig(rigId);
-      setRigs(data);
-    } catch {
-      alert('Failed to delete rig.');
+      setRigs(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to delete rig.'));
     }
   };
 

@@ -1,4 +1,4 @@
-export default function PrivacyPage() {
+export default function PrivacyPage({ onNavigate }) {
   return (
     <div className="info-page">
       <div className="info-container">
@@ -69,7 +69,7 @@ export default function PrivacyPage() {
         <section className="info-card">
           <h2 className="info-section-title">5. Data Retention &amp; Deletion</h2>
           <p>
-            You may delete any of your saved PC configurations at any time directly from the "My Rigs" dashboard. If you wish to delete your entire user account, you may submit a request through our <a href="/contact" style={{ color: 'var(--primary)' }}>Contact Page</a>.
+            You may delete any of your saved PC configurations at any time directly from the "My Rigs" dashboard. If you wish to delete your entire user account, you may submit a request through our <a href="/contact" onClick={(e) => { e.preventDefault(); onNavigate?.('/contact'); }} style={{ color: 'var(--primary)' }}>Contact Page</a>.
           </p>
         </section>
 

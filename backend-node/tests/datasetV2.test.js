@@ -774,8 +774,8 @@ describe('Milestone V2.1.3E — Dataset V2 Builder Foundation Test Suite', () =>
     });
 
     test('48. Model V1 artifacts and preprocessing remain completely intact and unmodified', () => {
-      const aiColsPath = path.resolve(__dirname, '../../ai_columns.joblib');
-      const modelPath = path.resolve(__dirname, '../../project_aura.joblib');
+      const aiColsPath = path.resolve(__dirname, '../../ai-python/ai_columns.joblib');
+      const modelPath = path.resolve(__dirname, '../../ai-python/project_aura.joblib');
       expect(fs.existsSync(aiColsPath)).toBe(true);
       expect(fs.existsSync(modelPath)).toBe(true);
     });

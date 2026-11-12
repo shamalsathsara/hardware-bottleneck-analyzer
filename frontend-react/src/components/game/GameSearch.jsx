@@ -1,44 +1,88 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { searchGames } from '../../services/gameService';
 
+/**
+ * Game autocomplete. `onSelectGame(game)` fires on pick; `onSelectGame(null)` fires
+ * as soon as the user edits or clears the text, so the parent never keeps a stale game.
+ */
 export default function GameSearch({ value = '', onSelectGame, placeholder = 'Search supported PC games (e.g. Cyberpunk, GTA, CS2)...' }) {
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const requestIdRef = useRef(0);
+  const skipSearchRef = useRef(false);
+  const blurTimerRef = useRef(null);
+  const queryRef = useRef(value || '');
+  const expectedValueRef = useRef(null); // value we just emitted to the parent
 
-  useEffect(() => {
-    setQuery(value || '');
-  }, [value]);
+  const updateQuery = (text) => {
+    queryRef.current = text;
+    setQuery(text);
+  };
 
+  // Sync parent-driven changes ("Clear Game", Game Detail page, loaded rig) without searching.
   useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
+    const next = value || '';
+    if (expectedValueRef.current !== null && next === expectedValueRef.current) {
+      expectedValueRef.current = null; // echo of our own onSelectGame call: keep the user's text
       return;
     }
+    expectedValueRef.current = null;
+    if (next === queryRef.current) return;
+    skipSearchRef.current = true;
+    updateQuery(next);
+    setIsOpen(false);
+  }, [value]);
 
+  useEffect(() => () => clearTimeout(blurTimerRef.current), []);
+
+  useEffect(() => {
+    if (skipSearchRef.current) {
+      skipSearchRef.current = false;
+      return undefined;
+    }
+    if (!query.trim()) {
+      setResults([]);
+      setIsOpen(false);
+      return undefined;
+    }
+
+    const requestId = ++requestIdRef.current;
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const data = await searchGames(query);
-        setResults(data || []);
+        if (requestId !== requestIdRef.current) return; // a newer query is in flight
+        setResults(Array.isArray(data) ? data : []);
         setIsOpen(true);
-      } catch (err) {
-        console.error('Game search error:', err.message);
+      } catch {
+        if (requestId === requestIdRef.current) setResults([]);
       } finally {
-        setLoading(false);
+        if (requestId === requestIdRef.current) setLoading(false);
       }
     }, 300);
 
     return () => clearTimeout(timer);
   }, [query]);
 
-  const handleSelect = (game) => {
-    setQuery(game.name);
-    setIsOpen(false);
-    if (onSelectGame) {
-      onSelectGame(game);
+  const handleChange = (text) => {
+    skipSearchRef.current = false;
+    updateQuery(text);
+    if (value && onSelectGame) {
+      expectedValueRef.current = ''; // editing invalidates the previous selection
+      onSelectGame(null);
     }
+  };
+
+  const handleSelect = (game) => {
+    requestIdRef.current += 1; // ignore any pending response
+    skipSearchRef.current = true;
+    updateQuery(game.name);
+    setResults([]);
+    setIsOpen(false);
+    setLoading(false);
+    if (onSelectGame) onSelectGame(game);
   };
 
   return (
@@ -49,9 +93,13 @@ export default function GameSearch({ value = '', onSelectGame, placeholder = 'Se
         className="form-control"
         placeholder={placeholder}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
         onFocus={() => { if (results.length > 0) setIsOpen(true); }}
-        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        onBlur={() => {
+          clearTimeout(blurTimerRef.current);
+          blurTimerRef.current = setTimeout(() => setIsOpen(false), 200);
+        }}
+        autoComplete="off"
         style={{
           width: '100%',
           padding: '0.85rem 1.2rem',

@@ -11,6 +11,7 @@ export const ROUTES = {
   CONTACT: '/contact',
   AUTH: '/auth',
   QUOTATION: '/quotation',
+  NOT_FOUND: '/404',
 };
 
 export const ROUTE_TITLES = {
@@ -26,21 +27,37 @@ export const ROUTE_TITLES = {
   [ROUTES.CONTACT]: 'Contact & Support – Project Aura',
   [ROUTES.AUTH]: 'Sign In / Register – Project Aura',
   [ROUTES.QUOTATION]: 'Hardware Pricing Quotation – Project Aura',
+  [ROUTES.NOT_FOUND]: 'Page Not Found – Project Aura',
+};
+
+const GAME_DETAIL_RE = /^\/games\/([a-z0-9][a-z0-9-]*)$/;
+
+/** Returns the game slug for a /games/:slug route, or null. */
+export function getGameSlug(route) {
+  const match = GAME_DETAIL_RE.exec(route);
+  return match ? match[1] : null;
+}
+
+export function getRouteTitle(route) {
+  if (getGameSlug(route)) return 'Game Performance & Requirements – Project Aura';
+  return ROUTE_TITLES[route] || 'Project Aura – PC Bottleneck Analyzer';
+}
+
+// Accepted aliases for each canonical route.
+const ALIASES = {
+  '/bottleneck': ROUTES.BOTTLENECK_CALCULATOR,
+  '/rigs': ROUTES.MY_RIGS,
+  '/login': ROUTES.AUTH,
+  '/register': ROUTES.AUTH,
+  '/quote': ROUTES.QUOTATION,
 };
 
 export function getNormalizedRoute(pathname = window.location.pathname) {
-  const path = pathname.toLowerCase();
-  if (path === '' || path === '/') return ROUTES.HOME;
-  if (path.startsWith('/bottleneck')) return ROUTES.BOTTLENECK_CALCULATOR;
-  if (path.startsWith('/compare')) return ROUTES.COMPARE;
-  if (path.startsWith('/games')) return path; // Returns exact path like '/games' or '/games/cyberpunk-2077'
-  if (path.startsWith('/my-rigs') || path.startsWith('/rigs')) return ROUTES.MY_RIGS;
-  if (path.startsWith('/about')) return ROUTES.ABOUT;
-  if (path.startsWith('/method')) return ROUTES.METHODOLOGY;
-  if (path.startsWith('/privacy')) return ROUTES.PRIVACY;
-  if (path.startsWith('/terms')) return ROUTES.TERMS;
-  if (path.startsWith('/contact')) return ROUTES.CONTACT;
-  if (path.startsWith('/auth') || path.startsWith('/login') || path.startsWith('/register')) return ROUTES.AUTH;
-  if (path.startsWith('/quotation') || path.startsWith('/quote')) return ROUTES.QUOTATION;
-  return ROUTES.HOME;
+  // Lowercase and strip trailing slashes ("/games/x/" -> "/games/x").
+  const path = (pathname || '/').toLowerCase().replace(/\/+$/, '') || '/';
+
+  if (Object.values(ROUTES).includes(path)) return path;
+  if (ALIASES[path]) return ALIASES[path];
+  if (getGameSlug(path)) return path;
+  return ROUTES.NOT_FOUND;
 }
